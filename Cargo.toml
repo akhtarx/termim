@@ -1,0 +1,22 @@
+[package]
+name = "termim"
+version = "1.0.0"
+edition = "2021"
+description = "Project-aware terminal history and command intelligence"
+repository = "https://github.com/akhtarx/termim"
+license = "MIT"
+keywords = ["terminal", "history", "productivity", "shell", "intelligence"]
+categories = ["command-line-utilities", "development-tools"]
+
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dirs = "5.0"
+sha2 = "0.10"
+
+[[bin]]
+name = "termim"
+path = "src/main.rs"
+

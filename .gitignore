@@ -1,0 +1,25 @@
+# Rust Build Artifacts
+/target/
+**/*.rs.bk
+**/*.pdb
+
+# Binaries & Executables
+*.exe
+*.dll
+*.so
+*.dylib
+*.msi
+
+# Local Termim Data (Private History)
+.termim/
+registry.txt
+global_stats.txt
+projects/
+shell/*.sh.bk
+shell/*.ps1.bk
+
+# Temporary & Debug Logs
+build_errors_cli.txt
+*.log
+.DS_Store
+Thumbs.db
