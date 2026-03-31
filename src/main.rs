@@ -14,27 +14,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Some(Commands::Log { command_str }) => {
             // Instant Direct-to-Disk Logging
-            let projects_dir = dirs::home_dir().unwrap_or_default().join(".termim").join(PROJECTS_DIR);
+            let projects_dir = dirs::home_dir()
+                .unwrap_or_default()
+                .join(".termim")
+                .join(PROJECTS_DIR);
             let _ = std::fs::create_dir_all(&projects_dir);
             let project_file = projects_dir.join(format!("{}.txt", hash));
-            
-            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&project_file) {
+
+            if let Ok(mut f) = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&project_file)
+            {
                 use std::io::Write;
                 let _ = writeln!(f, "{}", command_str);
             }
 
             // Global Stats backup (File-based)
-            let global_path = dirs::home_dir().unwrap_or_default().join(".termim").join("global_stats.txt");
-            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&global_path) {
+            let global_path = dirs::home_dir()
+                .unwrap_or_default()
+                .join(".termim")
+                .join("global_stats.txt");
+            if let Ok(mut f) = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&global_path)
+            {
                 use std::io::Write;
                 let _ = writeln!(f, "{}", command_str);
             }
         }
 
         Some(Commands::Query) => {
-            let projects_dir = dirs::home_dir().unwrap_or_default().join(".termim").join(PROJECTS_DIR);
+            let projects_dir = dirs::home_dir()
+                .unwrap_or_default()
+                .join(".termim")
+                .join(PROJECTS_DIR);
             let hist_file = projects_dir.join(format!("{}.txt", hash));
-            
+
             if let Ok(content) = std::fs::read_to_string(&hist_file) {
                 let mut seen = std::collections::HashSet::new();
                 for line in content.lines().rev() {
@@ -47,9 +64,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Some(Commands::Suggest { prefix }) => {
             // Hybrid Direct Suggestions
-            let projects_dir = dirs::home_dir().unwrap_or_default().join(".termim").join(PROJECTS_DIR);
+            let projects_dir = dirs::home_dir()
+                .unwrap_or_default()
+                .join(".termim")
+                .join(PROJECTS_DIR);
             let hist_file = projects_dir.join(format!("{}.txt", hash));
-            
+
             let mut merged = Vec::new();
             let mut seen = std::collections::HashSet::new();
 
@@ -63,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let profile = analyze_project(&root);
             let intel_filtered = filter_suggestions(&profile.suggestions, &prefix);
-            
+
             for s in intel_filtered {
                 if seen.insert(s.command.clone()) {
                     merged.push(s.command.clone());
@@ -79,7 +99,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Stats) => {
-            let global_path = dirs::home_dir().unwrap_or_default().join(".termim").join("global_stats.txt");
+            let global_path = dirs::home_dir()
+                .unwrap_or_default()
+                .join(".termim")
+                .join("global_stats.txt");
             if let Ok(content) = std::fs::read_to_string(&global_path) {
                 println!("Global usage statistics (from ~/.termim/global_stats.txt):");
                 // In a future version, this can perform frequency analysis.
@@ -93,19 +116,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Doctor) => {
             println!("=== termim doctor (Pure CLI v1.0.0) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon)");
-            
+
             let mut home = dirs::home_dir().unwrap_or_default();
             home.push(".termim");
-            
+
             let projects = home.join(PROJECTS_DIR);
-            println!("Projects: {} {}", projects.display(), if projects.exists() { "✓" } else { "✗" });
-            
+            println!(
+                "Projects: {} {}",
+                projects.display(),
+                if projects.exists() { "✓" } else { "✗" }
+            );
+
             let registry = home.join("registry.txt");
-            println!("Registry: {} {}", registry.display(), if registry.exists() { "✓" } else { "✗" });
+            println!(
+                "Registry: {} {}",
+                registry.display(),
+                if registry.exists() { "✓" } else { "✗" }
+            );
 
             println!("\nShell plugins:");
             for shell in &["zsh.sh", "powershell.ps1"] {
-                let exists = if home.join("shell").join(shell).exists() { "✓" } else { "✗" };
+                let exists = if home.join("shell").join(shell).exists() {
+                    "✓"
+                } else {
+                    "✗"
+                };
                 println!("  ~/.termim/shell/{} {}", shell, exists);
             }
         }
@@ -116,15 +151,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let _ = std::fs::create_dir_all(registry.parent().unwrap());
             let content = std::fs::read_to_string(&registry).unwrap_or_default();
             let current_dir_str = current_dir.to_string_lossy().to_string();
-            
+
             if content.lines().any(|l| l == current_dir_str) {
                 println!("Project already registered locally.");
             } else {
                 use std::io::Write;
-                match std::fs::OpenOptions::new().create(true).append(true).open(&registry) {
+                match std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(&registry)
+                {
                     Ok(mut f) => {
                         let _ = writeln!(f, "{}", current_dir_str);
-                        println!("Initialized Termim project (Global Registry) in {}", current_dir.display());
+                        println!(
+                            "Initialized Termim project (Global Registry) in {}",
+                            current_dir.display()
+                        );
                     }
                     Err(e) => eprintln!("Error: Failed to update project registry: {}", e),
                 }
@@ -133,17 +175,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         None => {
             let profile = analyze_project(&root);
-            
+
             let eco_str = if profile.ecosystems.is_empty() {
                 "Generic Project".to_string()
             } else {
-                profile.ecosystems.iter()
+                profile
+                    .ecosystems
+                    .iter()
                     .map(|e| format!("{:?}", e))
                     .collect::<Vec<_>>()
                     .join(", ")
             };
 
-            println!(r#"
+            println!(
+                r#"
   _____                   _
  |_   _|__ _ __ _ __ ___ (_)_ __ ___
    | |/ _ \ '__| '_ ` _ \| | '_ ` _ \
@@ -163,7 +208,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   • termim suggest : Show intelligent command suggestions
   • termim stats   : Global usage statistics
   • termim doctor  : Health check & diagnostics
-"#, root.display(), eco_str);
+"#,
+                root.display(),
+                eco_str
+            );
         }
     }
 

@@ -8,4 +8,3 @@ pub const MAX_COMMANDS_PER_PROJECT: i64 = 1000;
 pub const READ_BUF_SIZE: usize = 131072;
 /// Project history subdirectory name
 pub const PROJECTS_DIR: &str = "projects";
-

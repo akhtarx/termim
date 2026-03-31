@@ -1,2 +1,2 @@
-pub mod project;
 pub mod intelligence;
+pub mod project;

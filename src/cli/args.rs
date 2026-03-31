@@ -1,9 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "termim")]
-#[command(version = "0.2.0")]
-#[command(about = "Project-aware terminal history + command intelligence", long_about = None)]
+#[command(name = "termim", version = "1.0.0", about = "Industry-Grade Project-Aware Terminal context")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -11,23 +9,24 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Log a command to the project history
+    /// Log a command to the project-specific history.
+    /// This is called automatically by shell hooks.
     Log {
         /// The command string to log
         command_str: String,
     },
-    /// Query ranked project history (used by Up-arrow)
+    /// Query the ranked, project-specific history for the current context.
+    /// Used by shell buffer-swapping for 0ms lag history.
     Query,
-    /// Show intelligent suggestions for this project (history + ecosystem detection)
+    /// Display intelligent command suggestions based on the project tech-stack.
     Suggest {
         /// Optional prefix to filter suggestions
-        #[arg(default_value = "")]
         prefix: String,
     },
-    /// Show usage statistics for this project
+    /// Show global usage statistics analyzed from ~/.termim/global_stats.txt.
     Stats,
-    /// Run health diagnostics (checks daemon, DB, config)
+    /// Perform a diagnostic health check of the Termim installation and shell plugins.
     Doctor,
-    /// Manually initialize a project in the current folder (creates a .termim marker)
+    /// Manually register a directory as a Termim project (Zero-Pollution via Global Registry).
     Init,
 }

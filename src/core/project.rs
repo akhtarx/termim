@@ -1,6 +1,5 @@
+use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
-use sha2::{Sha256, Digest};
-
 
 pub fn detect_project_root(current_dir: &Path) -> PathBuf {
     let markers = [
