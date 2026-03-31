@@ -90,6 +90,6 @@ Termim is licensed under the **MIT License.** See [LICENSE](LICENSE) for more de
 ---
 
 <p align="center">
-  Built with ❤️ by <strong>Md Mim Akhtar</strong> (@akhtarx) <br/>
+  Built with ❤️ by <strong>Md Mim Akhtar</strong><br/>
   Part of the <strong>AkhtarX Labs</strong>
 </p>
