@@ -1,38 +1,8 @@
 # Termim Professional Shell Integration (v1.0.0)
-# Mastery Edition: Global Gold Standard (Resilient & Silky Smooth)
+# Mastery Edition: Stateful Native Navigation (Silky Smooth)
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
-# --- 1. Universal Path Strategy & Fallback ---
-
-$Global:TermimBin = ""
-$userHome = [System.Environment]::GetFolderPath("UserProfile")
-$possiblePaths = @(
-    "$HOME\.termim\bin\termim.exe", 
-    "$userHome\.termim\bin\termim.exe",
-    "C:\Users\$($env:USERNAME)\.termim\bin\termim.exe"
-)
-
-foreach ($p in $possiblePaths) {
-    if (Test-Path $p) {
-        $Global:TermimBin = $p
-        $binDir = [System.IO.Path]::GetDirectoryName($p)
-        if ($env:PATH -notlike "*$binDir*") { $env:PATH = "$binDir;$env:PATH" }
-        break
-    }
-}
-
-function Invoke-Termim {
-    param([string]$cmd, [string]$args_str)
-    if ($Global:TermimBin) {
-        try {
-            # Execute with speed and silence
-            & $Global:TermimBin $cmd $args_str 2>$null
-        } catch { return $null }
-    }
-    return $null
-}
-
-# --- 2. Core Logic & Registry ---
+# --- 1. Core Logic & Registry ---
 
 $Global:TermimIdx = 0
 $Global:TermimOriginalInput = ""
@@ -43,8 +13,7 @@ function Get-TermimProjectRoot {
     $registry = "$HOME\.termim\registry.txt"
     if (-not (Test-Path $registry)) { return $null }
     
-    $roots = Get-Content $registry -ErrorAction SilentlyContinue
-    if (-not $roots) { return $null }
+    $roots = Get-Content $registry
     foreach ($root in $roots) {
         if ($current.StartsWith($root, "OrdinalIgnoreCase")) {
             return $root
@@ -53,38 +22,57 @@ function Get-TermimProjectRoot {
     return $null
 }
 
-# --- 3. PSReadLine Key Handlers (Gold Standard Mastery) ---
+function Get-TermimHash($path) {
+    if (-not $path) { return "global" }
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($path.ToLower())
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $hashBytes = $sha256.ComputeHash($bytes)
+    return [System.BitConverter]::ToString($hashBytes).Replace("-", "").ToLower()
+}
+
+# --- 2. History Fetcher ---
+
+function Get-TermimProjectHistory {
+    $root = Get-TermimProjectRoot
+    if ($root) {
+        $hash = Get-TermimHash $root
+        $path = "$HOME\.termim\projects\$hash.txt"
+        if (Test-Path $path) {
+            return Get-Content $path | Select-Object -Unique
+        }
+    }
+    return @()
+}
+
+# --- 3. PSReadLine Key Handlers (Silky Smooth mastery) ---
 
 if (Get-Module PSReadLine) {
     # Up-Arrow Handler
     Set-PSReadLineKeyHandler -Key UpArrow -ScriptBlock {
         param($key, $arg)
         
-        # 1. Initialize Cache on First Press
+        # Initialize Cache on First Press
         if ($Global:TermimIdx -eq 0) {
             $Global:TermimOriginalInput = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
-            $root = Get-TermimProjectRoot
-            if ($root -and $Global:TermimBin) {
-                $Global:TermimCache = & $Global:TermimBin query 2>$null | Select-Object -Unique
-            }
+            $Global:TermimCache = Get-TermimProjectHistory
         }
 
-        # 2. Hard-Lock at boundaries (Industrial Stability)
         if ($Global:TermimCache.Length -eq 0) {
+            [Microsoft.PowerShell.PSConsoleReadLine]::UpArrow($key, $arg)
             return
         }
 
-        # 3. Stateful Navigation (Silky Smooth)
         if ($Global:TermimIdx -lt $Global:TermimCache.Length) {
             $nextIdx = $Global:TermimIdx + 1
             $cmd = $Global:TermimCache[-($nextIdx)]
-            $line = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
+            $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
             
-            # Anti-Flicker: Only update if different
-            if ($cmd -ne $line) {
+            # Anti-Flicker: Only update if the content is DIFFERENT
+            if ($cmd -ne $currentLine) {
                 $Global:TermimIdx = $nextIdx
-                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $cmd)
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
             } else {
+                # Still increment index if the histories are the same, but skip redraw
                 $Global:TermimIdx = $nextIdx
             }
         }
@@ -93,22 +81,23 @@ if (Get-Module PSReadLine) {
     # Down-Arrow Handler
     Set-PSReadLineKeyHandler -Key DownArrow -ScriptBlock {
         param($key, $arg)
-        if ($Global:TermimIdx -le 0) {
+        if ($Global:TermimIdx -le 0 -or $Global:TermimCache.Length -eq 0) {
+            [Microsoft.PowerShell.PSConsoleReadLine]::DownArrow($key, $arg)
             return
         }
 
         $nextIdx = $Global:TermimIdx - 1
-        $line = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
+        $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
         
         if ($nextIdx -eq 0) {
-            if ($line -ne $Global:TermimOriginalInput) {
-                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $Global:TermimOriginalInput)
+            if ($currentLine -ne $Global:TermimOriginalInput) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $Global:TermimOriginalInput)
             }
             $Global:TermimIdx = 0
         } else {
             $cmd = $Global:TermimCache[-($nextIdx)]
-            if ($cmd -ne $line) {
-                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $cmd)
+            if ($cmd -ne $currentLine) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
                 $Global:TermimIdx = $nextIdx
             } else {
                 $Global:TermimIdx = $nextIdx
@@ -121,22 +110,20 @@ if (Get-Module PSReadLine) {
 
 function Invoke-TermimPalette {
     if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
-        Write-Host "`n[termim] install 'fzf' for the palette." -ForegroundColor Yellow
+        Write-Host "`n[termim] install 'fzf' to use the Ctrl+P palette." -ForegroundColor Yellow
         return
     }
 
-    if ($Global:TermimBin) {
-        $history = & $Global:TermimBin query 2>$null | Select-Object -Unique
-        if ($history.Length -gt 0) {
-            $reversed = [array]$history
-            [Array]::Reverse($reversed)
-            $selected = $reversed | fzf --height 40% --reverse --border rounded --prompt "  termim > " --header "Project History" --no-sort
-            if ($selected) {
-                [Microsoft.PowerShell.PSConsoleReadLine]::AddHistory($selected)
-                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $selected)
-                $Global:TermimIdx = 0 
-                $Global:TermimCache = @()
-            }
+    $history = Get-TermimProjectHistory
+    if ($history.Length -gt 0) {
+        $reversed = [array]$history
+        [Array]::Reverse($reversed)
+        $selected = $reversed | fzf --height 40% --reverse --border rounded --prompt "  termim > " --header "Project History" --no-sort
+        if ($selected) {
+            [Microsoft.PowerShell.PSConsoleReadLine]::AddHistory($selected)
+            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $selected)
+            $Global:TermimIdx = 0 
+            $Global:TermimCache = @()
         }
     }
 }
@@ -147,9 +134,13 @@ if (Get-Module PSReadLine) {
     }
 }
 
-# --- 5. Command Hook & Reset ---
+# --- 5. Command Hook & Cache Purge ---
 
 function prompt {
-    $Global:TermimIdx = 0
+    # Silence reset logic: Only reset if index is not 0
+    if ($Global:TermimIdx -ne 0) {
+        $Global:TermimIdx = 0
+        $Global:TermimCache = @()
+    }
     "PS $(Get-Location)> "
 }

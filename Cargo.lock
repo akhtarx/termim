@@ -337,7 +337,7 @@ dependencies = [
 
 [[package]]
 name = "termim"
-version = "1.0.1"
+version = "1.0.0"
 dependencies = [
  "clap",
  "dirs",

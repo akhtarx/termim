@@ -1,26 +1,10 @@
 # Termim Bash Integration — with Stateful Native Mastery
-# Mastery Edition: Global Gold Standard (Resilient & Silky Smooth) v1.0.1
 # Source from ~/.bashrc:  source ~/.termim/shell/bash.sh
 
-# --- 1. Universal Path Strategy & Fallback ---
+# 1. Update PATH for this session
+export PATH="$HOME/.termim/bin:$PATH"
 
-set +e # Ensure script doesn't exit on error
-_TERMIM_BIN=""
-_user_home_win="/c/Users/$USER"
-_user_home_wsl="/mnt/c/Users/$USER"
-
-# Scan Strategy: MSYS2 -> WSL -> Native
-for p in "$_user_home_win/.termim/bin/termim" "$_user_home_wsl/.termim/bin/termim" "$HOME/.termim/bin/termim"; do
-    if [[ -x "$p" ]]; then
-        _TERMIM_BIN="$p"
-        # Ensure it's in PATH for this session
-        export PATH="$(dirname "$p"):$PATH"
-        break
-    fi
-done
-
-# --- 2. State Management (The Mastery Pointer) ---
-
+# 2. State Management (The Mastery Pointer)
 _TERMIM_IDX=0
 _TERMIM_LAST_CMD=""
 _TERMIM_ORIGINAL_INPUT=""
@@ -28,18 +12,16 @@ _TERMIM_CACHE=()
 
 # 3. Silent Command Logging (Direct-to-Disk CLI)
 _termim_log() {
-    # Check for binary existence (Fail-Safe)
-    [[ -z "$_TERMIM_BIN" ]] && return
-    
     local last_cmd
+    # Get the last command from history
     last_cmd=$(HISTTIMEFORMAT='' history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
     
     if [[ -n "$last_cmd" && "$last_cmd" != "$_TERMIM_LAST_CMD" ]]; then
         # Silent Background Logging (Maverick Subshell Trick)
-        ("$_TERMIM_BIN" log "$last_cmd" &>/dev/null &) 
+        (termim log "$last_cmd" &>/dev/null &) 
         _TERMIM_LAST_CMD="$last_cmd"
-        _TERMIM_IDX=0 
-        _TERMIM_CACHE=() 
+        _TERMIM_IDX=0 # Reset history index on new command
+        _TERMIM_CACHE=() # Purge navigation cache
     fi
 }
 
@@ -50,32 +32,22 @@ fi
 
 # 4. Stateful Up-arrow: project history (Native Readline)
 _termim_up() {
-    # Fail-Safe check
-    if [[ -z "$_TERMIM_BIN" ]]; then return; fi
-
-    # 1. Initialize Cache on first press (Industrial Latency Fix)
+    # Initialize Cache on first press (Industrial Latency Fix)
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
-        # Access In-Memory Array for 0ms recall (Bash mapfile syntax)
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query 2>/dev/null)
-    fi
-
-    # 2. Hard-Lock at boundaries (Industrial Stability)
-    if [[ ${#_TERMIM_CACHE[@]} -eq 0 ]]; then
-        return
+        mapfile -t _TERMIM_CACHE < <(termim query 2>/dev/null)
     fi
 
     local next_idx=$((_TERMIM_IDX + 1))
     
+    # Anti-Flicker Master Check
     if [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
         local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
-        # Anti-Flicker: Only update if the content is DIFFERENT
+        # Only redraw if the content is DIFFERENT (Silky Smooth)
         if [[ "$cmd" != "$READLINE_LINE" ]]; then
             _TERMIM_IDX=$next_idx
             READLINE_LINE="$cmd"
             READLINE_POINT=${#cmd}
-        else
-            _TERMIM_IDX=$next_idx
         fi
     fi
 }
@@ -89,7 +61,7 @@ _termim_down() {
     local next_idx=$((_TERMIM_IDX - 1))
     
     if [[ $next_idx -eq 0 ]]; then
-        # Anti-Flicker: Only update if different
+        # Only restore original if it's different to prevent flicker
         if [[ "$READLINE_LINE" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
             _TERMIM_IDX=0
             READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
@@ -103,8 +75,6 @@ _termim_down() {
             _TERMIM_IDX=$next_idx
             READLINE_LINE="$cmd"
             READLINE_POINT=${#cmd}
-        else
-            _TERMIM_IDX=$next_idx
         fi
     fi
 }
@@ -121,10 +91,9 @@ _termim_palette() {
         echo -e "\n[termim] install 'fzf' to use the Ctrl+P palette."
         return 1
     fi
-    [[ -z "$_TERMIM_BIN" ]] && return
 
     local selected
-    selected=$("$_TERMIM_BIN" query 2>/dev/null | fzf \
+    selected=$(termim query 2>/dev/null | fzf \
         --height=40% \
         --reverse \
         --border=rounded \

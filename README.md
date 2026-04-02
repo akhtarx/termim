@@ -5,7 +5,7 @@
 <h1 align="center">Termim</h1>
 
 <p align="center">
-  <strong>A silent, project-aware terminal history engine v1.0.1</strong>
+  <strong>Industry-Grade Project-Aware Terminal context engine v1.0.0</strong>
 </p>
 
 <p align="center">
@@ -16,38 +16,36 @@
 </p>
 
 <p align="center">
-  <a href="#-philosophy">Philosophy</a> •
+  <a href="#-why-termim">Why Termim?</a> •
   <a href="#-features">Features</a> •
   <a href="#-installation">Installation</a> •
   <a href="#-usage">Usage</a> •
-  <a href="#-join-the-laboratory">Contributing</a>
+  <a href="#-contributing">Contributing</a>
 </p>
 
 ---
 
-**Termim** is a high-performance terminal enhancement that optimizes your shell history by providing instant access to relevant commands based on your current project context. It is designed to be invisible, fast, and 100% stable.
+**Termim** is a high-performance terminal enhancement that replaces your monolithic shell history with an **Industrial-Grade Context Engine.** It understands where you are, what you're building, and provides instant access to the right commands with **0ms lag.**
 
-## 🏁 Philosophy
+## 🏁 Why Termim?
 
-We believe that a developer's history is their most valuable asset. Termim treats it with the respect it deserves:
+Other history tools are slow, bulky, or pollute your folders. Termim achieves the "Silver Bullet" of productivity:
 
-- **Silent Performance**: Termim upgrades your shell's native history buffer in real-time, delivering **0ms response times.** ⚡
-- **Zero-Pollution**: We never touch your project folders. No `.termim` markers or `.history` files—your source code stays pristine. 🧼
-- **Zero-Daemon**: No background processes, no databases, no maintenance. Just pure Rust efficiency. 🛡️
-- **Universal Strategy**: Identical, stateful navigation across PowerShell, Bash, Zsh, and Fish.
+- **0ms Lag (Native Mastery)**: Termim upgrades your shell's native history engine by swapping buffers in real-time. Absolute binary speed. ⚡
+- **Universal Windows Architecture**: **One-click installation** for both PowerShell and Git Bash on Windows. 🛡️
+- **Zero-Pollution Philosophy**: No hidden `.termim` markers or `.history` files are ever created in your folders. 🧼
+- **Zero-Daemon Architecture**: No background processes, no databases, no maintenance. Just pure Rust performance. 🛡️
+- **Context-Aware IQ**: Automatically identifies 34+ stacks (Node, Rust, Go, Python, Docker, etc.) and suggests relevant commands without configuration.
 
-## 🏁 Support Matrix
+## 🏁 Project Support Matrix
 
 | Shell | Environment | Status |
 | ----- | ----------- | ------ |
-| **PowerShell** | Windows (Terminal/VSCode) | **Stable** ✅ |
-| **Git Bash** | Windows (MinTTY) | **Stable** ✅ |
-| **Zsh** | Unix / macOS / WSL / MSYS2 | **Experimental (Beta)** 🧪 |
-| **Fish** | Unix / macOS / WSL / MSYS2 | **Experimental (Beta)** 🧪 |
-| **Bash** | Linux / macOS | **Experimental (Beta)** 🧪 |
-
-> [!NOTE]
-> While we have achieved 'Native-Mastery' in our local laboratory (Windows/MSYS2), we are looking for brave developers to help us test and refine the Zsh and Fish integrations on native Linux and macOS systems. Your feedback helps us reach absolute universal stability! 🤝🛡️
+| **PowerShell** | Windows (Terminal/VSCode) | **Production Stable** ✅ |
+| **Git Bash** | Windows (MinTTY) | **Production Stable** ✅ |
+| **Zsh** | Unix / macOS / WSL / MSYS2 | **Experimental (Alpha)** 🧪 |
+| **Fish** | Unix / macOS / WSL / MSYS2 | **Experimental (Alpha)** 🧪 |
+| **Bash** | Linux / macOS | **Experimental (Alpha)** 🧪 |
 
 ---
 
@@ -92,18 +90,15 @@ We believe that a developer's history is their most valuable asset. Termim treat
 | `termim query` | Direct CLI access to project history |
 | `termim suggest` | Intelligence-based command suggestions |
 | `termim init` | Manually register a project (Zero-Pollution) |
-| `termim stats` | Global usage statistics |
-| `termim doctor` | Health check & diagnostics |
+| `termim doctor` | Diagnostic health check |
 
 ---
 
 ## 🛡️ Industrial Stability
 Termim is 100% written in **Safe Rust.** All core logic is database-free and daemon-free, ensuring it is as stable as the shell itself.
 
-## 🤝 Join the Laboratory
-We believe that the best tools are built in the open. We invite you to test, report bugs, and contribute to the Termim ecosystem. Whether you are a shell-wizard or just starting out, your perspective is valuable to us.
-
-Please see our [Contributing Guide](CONTRIBUTING.md) to get started! 🤝🛡️
+## 🤝 Contributing
+We welcome industry-grade contributions! Please see our [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ## 📄 License
 Termim is licensed under the **MIT License.** See [LICENSE](LICENSE) for more details.

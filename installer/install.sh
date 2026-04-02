@@ -9,8 +9,7 @@ TERMIM_DIR="$HOME/.termim"
 BIN_DIR="$TERMIM_DIR/bin"
 SHELL_DIR="$TERMIM_DIR/shell"
 
-echo "=== Termim Unix Installer (Pure CLI) v1.0.1 ==="
-echo "Welcome to the AkhtarX Labs laboratory."
+echo "=== Termim Universal Unix Installer (Industry-Grade) ==="
 echo ""
 
 # 1. Build release binary
