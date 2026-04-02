@@ -32,7 +32,9 @@ _termim_up() {
         READLINE_POINT=${#cmd}
     fi
 }
+# Bind for standard Bash (\e[A) and MinTTY/GitBash (\eOA)
 bind -x '"\e[A": _termim_up'
+bind -x '"\eOA": _termim_up'
 
 # 4. Ctrl+P: Interactive Palette (Requires fzf)
 _termim_palette() {
