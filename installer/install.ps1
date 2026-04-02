@@ -76,16 +76,40 @@ $sourceBashCmd = "source $unixTargetBashPath"
 Copy-Item "shell\bash.sh" $targetBashScript -Force
 Write-Host "  OK: Bash script updated at $targetBashScript" -ForegroundColor Green
 
-if (Test-Path $bashrc) {
-    $bashrcContent = Get-Content $bashrc -ErrorAction SilentlyContinue
-    if ($bashrcContent -notcontains $sourceBashCmd) {
-        Add-Content -Path $bashrc -Value "`n# Termim Integration`n$sourceBashCmd"
-        Write-Host "  OK: Added integration to your Git Bash Profile ($bashrc)" -ForegroundColor Green
-    } else {
-        Write-Host "  OK: Integration already in Git Bash Profile" -ForegroundColor Green
+# 6. Git Bash Integration (Aggressive Detect)
+Write-Host "[6/6] Detecting Git Bash for Windows..." -ForegroundColor Yellow
+$homeDir = [System.Environment]::GetFolderPath("UserProfile")
+
+# Priority list for Git Bash config files
+$bashConfigs = @(".bashrc", ".bash_profile", ".profile")
+$bashConfigUsed = $null
+
+foreach ($config in $bashConfigs) {
+    if (Test-Path (Join-Path $homeDir $config)) {
+        $bashConfigUsed = Join-Path $homeDir $config
+        break
     }
+}
+
+$targetBashScript = Join-Path $shellDir "bash.sh"
+$unixTargetBashPath = "~/.termim/shell/bash.sh"
+$sourceBashCmd = "source $unixTargetBashPath"
+
+Copy-Item "shell\bash.sh" $targetBashScript -Force
+Write-Host "  OK: Bash script updated at $targetBashScript" -ForegroundColor Green
+
+if ($null -eq $bashConfigUsed) {
+    $bashConfigUsed = Join-Path $homeDir ".bash_profile"
+    New-Item -Path $bashConfigUsed -ItemType File -Force | Out-Null
+    Write-Host "  OK: Created new Git Bash profile at $bashConfigUsed" -ForegroundColor Green
+}
+
+$bashContent = Get-Content $bashConfigUsed -ErrorAction SilentlyContinue
+if ($bashContent -notcontains $sourceBashCmd) {
+    Add-Content -Path $bashConfigUsed -Value "`n# Termim Mastery Integration`n$sourceBashCmd"
+    Write-Host "  OK: Added integration to $bashConfigUsed" -ForegroundColor Green
 } else {
-    Write-Host "  Note: Git Bash .bashrc not found at $bashrc. Skipping auto-integration." -ForegroundColor Gray
+    Write-Host "  OK: Integration already in $bashConfigUsed" -ForegroundColor Green
 }
 
 # --- Instant Activation for Current Session (PowerShell) ---
