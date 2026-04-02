@@ -1,30 +1,54 @@
 # Termim Fish Integration — with Stateful Native Mastery (Silky Smooth)
+# Mastery Edition: Global Gold Standard (Resilient & Silky Smooth)
 # Add to ~/.config/fish/config.fish:  source ~/.termim/shell/fish.fish
 
-# 1. Update PATH for this session
-if not contains "$HOME/.termim/bin" $PATH
-    set -gx PATH "$HOME/.termim/bin" $PATH
+# --- 1. Universal Path Strategy & Fallback ---
+
+set -g _TERMIM_BIN ""
+set -l user_home_win "/c/Users/$USER"
+set -l user_home_wsl "/mnt/c/Users/$USER"
+
+# Scan Strategy: MSYS2 -> WSL -> Native
+for p in "$user_home_win/.termim/bin/termim" "$user_home_wsl/.termim/bin/termim" "$HOME/.termim/bin/termim"
+    if test -x "$p"
+        set -g _TERMIM_BIN "$p"
+        # Ensure it's in PATH for this session
+        if not contains (dirname "$p") $PATH
+            set -gx PATH (dirname "$p") $PATH
+        end
+        break
+    end
 end
 
-# 2. State Management (The Mastery Pointer)
+# --- 2. State Management (The Mastery Pointer) ---
+
 set -g _TERMIM_IDX 0
 set -g _TERMIM_CACHE
 set -g _TERMIM_ORIGINAL_INPUT ""
 
 # 3. Command logging (Direct-to-Disk CLI)
 function termim_preexec --on-event fish_preexec
-    # Silent Background Logging (Maverick Subshell Trick)
-    (termim log "$argv[1]" &>/dev/null &) 
+    # Fail-Safe check
+    if test -n "$_TERMIM_BIN"
+        # Silent Background Logging (Native Fish Async)
+        "$_TERMIM_BIN" log "$argv[1]" >/dev/null 2>&1 &
+    end
     set -g _TERMIM_IDX 0 
     set -e _TERMIM_CACHE 
 end
 
 # 4. Stateful Up-arrow: project history (Native Fish Commandline)
 function termim_up
-    # Initialize Cache on first press (Industrial Latency Fix)
+    # Fail-Safe: Native fallback if binary is missing
+    if test -z "$_TERMIM_BIN"
+        commandline -f up-or-search
+        return
+    end
+
+    # 1. Initialize Cache on first press (Industrial Latency Fix)
     if test $_TERMIM_IDX -eq 0
         set -g _TERMIM_ORIGINAL_INPUT (commandline)
-        set -g _TERMIM_CACHE (termim query 2>/dev/null)
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query 2>/dev/null)
     end
 
     if test (count $_TERMIM_CACHE) -eq 0
@@ -34,7 +58,7 @@ function termim_up
 
     set -l next_idx (math $_TERMIM_IDX + 1)
     
-    # Access In-Memory Array for 0ms recall (1-based index)
+    # 2. Access In-Memory Array for 0ms recall (1-based index)
     if test $next_idx -le (count $_TERMIM_CACHE)
         set -l cmd $_TERMIM_CACHE[$next_idx]
         # Anti-Flicker: Only update if the content is DIFFERENT
@@ -84,13 +108,16 @@ bind \eOB termim_down
 
 # 7. Ctrl+P: Interactive Palette (Requires fzf)
 function termim_palette
-    if not command -v fzf &>/dev/null
+    if not command -v fzf >/dev/null 2>&1
         echo -e "\n[termim] install 'fzf' to use the Ctrl+P palette."
         commandline -f repaint
         return 1
     end
+    if test -z "$_TERMIM_BIN"
+        return
+    end
 
-    set -l selected (termim query 2>/dev/null | fzf \
+    set -l selected ("$_TERMIM_BIN" query 2>/dev/null | fzf \
         --height=40% \
         --reverse \
         --border=rounded \
