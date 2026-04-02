@@ -1,49 +1,65 @@
-# Termim Bash Integration — with Stateful Native Mastery
-# Source from ~/.bashrc:  source ~/.termim/shell/bash.sh
+# Find the termim binary
+_TERMIM_BIN="termim"
+userHome=$(eval echo "~$USER")
+possiblePaths=(
+    "$HOME/.termim/bin/termim"
+    "$HOME/.termim/bin/termim.exe"
+    "$userHome/.termim/bin/termim"
+    "/c/Users/$USER/.termim/bin/termim.exe"
+)
 
-# 1. Update PATH for this session
-export PATH="$HOME/.termim/bin:$PATH"
+for p in "${possiblePaths[@]}"; do
+    if [[ -x "$p" || -f "$p" ]]; then
+        _TERMIM_BIN="$p"
+        # Ensure bin is in PATH
+        binDir=$(dirname "$p")
+        [[ ":$PATH:" != *":$binDir:"* ]] && export PATH="$binDir:$PATH"
+        break
+    fi
+done
 
-# 2. State Management (The Mastery Pointer)
+# History navigation state
 _TERMIM_IDX=0
 _TERMIM_LAST_CMD=""
 _TERMIM_ORIGINAL_INPUT=""
 _TERMIM_CACHE=()
 
-# 3. Silent Command Logging (Direct-to-Disk CLI)
+# Log the last executed command
 _termim_log() {
+    # Reset navigation on new prompt
+    _TERMIM_IDX=0
+    _TERMIM_CACHE=()
+
+    # Get the last command from bash history
     local last_cmd
-    # Get the last command from history
-    last_cmd=$(HISTTIMEFORMAT='' history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+    last_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
     
-    if [[ -n "$last_cmd" && "$last_cmd" != "$_TERMIM_LAST_CMD" ]]; then
-        # Silent Background Logging (Maverick Subshell Trick)
-        (termim log "$last_cmd" &>/dev/null &) 
-        _TERMIM_LAST_CMD="$last_cmd"
-        _TERMIM_IDX=0 # Reset history index on new command
-        _TERMIM_CACHE=() # Purge navigation cache
+    if [[ -n "$last_cmd" ]]; then
+        # Run logging in background and disown to keep terminal clean
+        ("$_TERMIM_BIN" log "$last_cmd" &>/dev/null &) 
+        disown 2>/dev/null
     fi
 }
 
-# Attach to PROMPT_COMMAND for automatic logging and index reset
+# Add logging hook to PROMPT_COMMAND
 if [[ "$PROMPT_COMMAND" != *"_termim_log"* ]]; then
     PROMPT_COMMAND="_termim_log; $PROMPT_COMMAND"
 fi
 
-# 4. Stateful Up-arrow: project history (Native Readline)
+# Handle up arrow
 _termim_up() {
-    # Initialize Cache on first press (Industrial Latency Fix)
+    # Fetch project history on first press
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
-        mapfile -t _TERMIM_CACHE < <(termim query 2>/dev/null)
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query 2>/dev/null)
     fi
 
     local next_idx=$((_TERMIM_IDX + 1))
     
-    # Anti-Flicker Master Check
+    # Navigate if history is available
     if [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
         local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
-        # Only redraw if the content is DIFFERENT (Silky Smooth)
+        # Only update if the command is different
         if [[ "$cmd" != "$READLINE_LINE" ]]; then
             _TERMIM_IDX=$next_idx
             READLINE_LINE="$cmd"
@@ -52,7 +68,7 @@ _termim_up() {
     fi
 }
 
-# 5. Stateful Down-arrow: project history
+# Handle down arrow
 _termim_down() {
     if [[ $_TERMIM_IDX -le 0 ]]; then
         return
@@ -61,7 +77,6 @@ _termim_down() {
     local next_idx=$((_TERMIM_IDX - 1))
     
     if [[ $next_idx -eq 0 ]]; then
-        # Only restore original if it's different to prevent flicker
         if [[ "$READLINE_LINE" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
             _TERMIM_IDX=0
             READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
@@ -79,34 +94,79 @@ _termim_down() {
     fi
 }
 
-# 6. Bind standard Bash (\e[A) and MinTTY/GitBash (\eOA)
-bind -x '"\e[A": _termim_up'
-bind -x '"\eOA": _termim_up'
-bind -x '"\e[B": _termim_down'
-bind -x '"\eOB": _termim_down'
+# Bind keys for standard and MinTTY/GitBash terminals
+if [[ $- == *i* ]]; then
+    bind -x '"\e[A": _termim_up'
+    bind -x '"\eOA": _termim_up'
+    bind -x '"\e[B": _termim_down'
+    bind -x '"\eOB": _termim_down'
 
-# 7. Ctrl+P: Interactive Palette (Requires fzf)
-_termim_palette() {
+    # Search for fzf if not in PATH
+    _FZF_BIN="fzf"
     if ! command -v fzf &>/dev/null; then
-        echo -e "\n[termim] install 'fzf' to use the Ctrl+P palette."
-        return 1
+        # Check Windows path
+        win_fzf=$(where.exe fzf 2>/dev/null | head -n 1)
+        if [[ -n "$win_fzf" ]]; then
+            _FZF_BIN=$(cygpath -u "$win_fzf" 2>/dev/null)
+        else
+            # Manual fallbacks
+            fzfPaths=(
+                "/c/ProgramData/chocolatey/bin/fzf.exe"
+                "$HOME/scoop/shims/fzf.exe"
+                "/c/Users/$USER/scoop/shims/fzf.exe"
+                "/c/tools/fzf/fzf.exe"
+            )
+            for p in "${fzfPaths[@]}"; do
+                if [[ -f "$p" ]]; then
+                    _FZF_BIN="$p"
+                    break
+                fi
+            done
+        fi
     fi
 
-    local selected
-    selected=$(termim query 2>/dev/null | fzf \
-        --height=40% \
-        --reverse \
-        --border=rounded \
-        --prompt="  termim > " \
-        --header="Project History" \
-        --no-sort \
-        2>/dev/null)
+    # Interactive search palette
+    _termim_palette() {
+        if ! command -v "$_FZF_BIN" &>/dev/null && [[ ! -f "$_FZF_BIN" ]]; then
+            echo -e "\n[termim] fzf not found. Install fzf to use Ctrl+P."
+            return 1
+        fi
+
+        local fzf_cmd="$_FZF_BIN"
+        # Use winpty for Windows-native fzf in Git Bash
+        if command -v winpty &>/dev/null && "$_FZF_BIN" --version 2>/dev/null | grep -q "windows"; then
+            fzf_cmd="winpty $_FZF_BIN"
+        fi
+
+        # Use temp file to avoid TTY issues with bind -x
+        local tmp_hist
+        tmp_hist=$(mktemp)
+        "$_TERMIM_BIN" query 2>/dev/null > "$tmp_hist"
+
+        local selected
+        selected=$($fzf_cmd \
+            --height=40% \
+            --reverse \
+            --border=rounded \
+            --prompt="  termim > " \
+            --header="Project History" \
+            --no-sort \
+            < "$tmp_hist")
         
-    if [[ -n "$selected" ]]; then
-        READLINE_LINE="$selected"
-        READLINE_POINT=${#selected}
-        _TERMIM_IDX=0 
-        _TERMIM_CACHE=()
-    fi
-}
-bind -x '"\C-p": _termim_palette'
+        rm -f "$tmp_hist"
+            
+        if [[ -n "$selected" ]]; then
+            READLINE_LINE="$selected"
+            READLINE_POINT=${#selected}
+            _TERMIM_IDX=0 
+            _TERMIM_CACHE=()
+        fi
+        
+        # Repaint buffer
+        history -s "$READLINE_LINE"
+    }
+
+    # Bind Ctrl+P to the palette
+    bind -x '"\C-p": _termim_palette'
+    bind -x '"\cp": _termim_palette'
+fi

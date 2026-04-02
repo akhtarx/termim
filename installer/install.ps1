@@ -25,6 +25,31 @@ if (-not (Test-Path $binDir)) {
 }
 Write-Host "  OK: Created" -ForegroundColor Green
 
+# 2.5 Install fzf (Safe Bundle)
+Write-Host "[2.5/4] Bundling fzf for history palette..." -ForegroundColor Yellow
+if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
+    $fzfExe = Join-Path $binDir "fzf.exe"
+    if (-not (Test-Path $fzfExe)) {
+        Write-Host "  fzf not found. Downloading v0.51.0..." -ForegroundColor Gray
+        $fzfUrl = "https://github.com/junegunn/fzf/releases/download/v0.51.0/fzf-0.51.0-windows_amd64.zip"
+        $fzfZip = Join-Path $env:TEMP "fzf.zip"
+        try {
+            $ProgressPreference = 'SilentlyContinue'
+            Invoke-WebRequest -Uri $fzfUrl -OutFile $fzfZip -ErrorAction Stop
+            Expand-Archive -Path $fzfZip -DestinationPath $env:TEMP -Force
+            Move-Item -Path (Join-Path $env:TEMP "fzf.exe") -Destination $fzfExe -Force
+            Remove-Item $fzfZip -Force
+            Write-Host "  OK: fzf installed to $binDir" -ForegroundColor Green
+        } catch {
+            Write-Host "  WARNING: Failed to download fzf ($($_.Exception.Message)). You may need to install it manually." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "  OK: fzf already exists in $binDir" -ForegroundColor Green
+    }
+} else {
+    Write-Host "  OK: fzf already available in PATH" -ForegroundColor Green
+}
+
 # 3. Install binary
 Write-Host "[3/4] Installing binary..." -ForegroundColor Yellow
 Copy-Item "target\release\termim.exe" "$binDir\termim.exe" -Force
@@ -63,20 +88,7 @@ if ($profileContent -notcontains $sourcePsCmd) {
     Write-Host "  OK: Integration already in PowerShell Profile" -ForegroundColor Green
 }
 
-# 6. Git Bash Integration (Optional Detect)
-Write-Host "[6/6] Detecting Git Bash for Windows..." -ForegroundColor Yellow
-$homeDir = [System.Environment]::GetFolderPath("UserProfile")
-$bashrc = Join-Path $homeDir ".bashrc"
-$targetBashScript = Join-Path $shellDir "bash.sh"
-
-# Use forward slashes for Bash compatibility
-$unixTargetBashPath = "~/.termim/shell/bash.sh"
-$sourceBashCmd = "source $unixTargetBashPath"
-
-Copy-Item "shell\bash.sh" $targetBashScript -Force
-Write-Host "  OK: Bash script updated at $targetBashScript" -ForegroundColor Green
-
-# 6. Git Bash Integration (Aggressive Detect)
+# 6. Git Bash Integration
 Write-Host "[6/6] Detecting Git Bash for Windows..." -ForegroundColor Yellow
 $homeDir = [System.Environment]::GetFolderPath("UserProfile")
 
@@ -106,13 +118,13 @@ if ($null -eq $bashConfigUsed) {
 
 $bashContent = Get-Content $bashConfigUsed -ErrorAction SilentlyContinue
 if ($bashContent -notcontains $sourceBashCmd) {
-    Add-Content -Path $bashConfigUsed -Value "`n# Termim Mastery Integration`n$sourceBashCmd"
+    Add-Content -Path $bashConfigUsed -Value "`n# Termim Integration`n$sourceBashCmd"
     Write-Host "  OK: Added integration to $bashConfigUsed" -ForegroundColor Green
 } else {
     Write-Host "  OK: Integration already in $bashConfigUsed" -ForegroundColor Green
 }
 
-# --- Instant Activation for Current Session (PowerShell) ---
+# --- Instant Activation for Current Session ---
 Write-Host ""
 Write-Host "Activating for current session..." -ForegroundColor Yellow
 $env:Path += ";$binDir"
@@ -121,7 +133,7 @@ Write-Host "  OK: Session PATH updated" -ForegroundColor Green
 Write-Host "  OK: PowerShell integration sourced" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "=== Termim v1.0.0 Universal Installation Complete! ===" -ForegroundColor Cyan
+Write-Host "=== Termim Universal Installation Complete! ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "PowerShell: Ready! Try 'Up Arrow' or 'Ctrl+P'."
 Write-Host "Git Bash  : Restart your Git Bash or run 'source ~/.bashrc' to activate."

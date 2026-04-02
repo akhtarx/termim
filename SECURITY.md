@@ -1,18 +1,26 @@
-# Security Policy 💎
+# Security Policy
 
-## 🏁 Supported Versions
+We take the security and privacy of **Termim** users seriously. If you believe you have discovered a security vulnerability, please do NOT open a public issue. Instead, follow the responsible disclosure process below.
+
+---
+
+## 🚦 Supported Versions
+
+Currently, security updates are provided for the following versions:
 
 | Version | Supported          |
-| ------- | ------------------ |
-| v1.0.x  | :white_check_mark: |
-| < v1.0  | :x:                |
+| :--- | :--- |
+| **v1.0.x** | :white_check_mark: |
+| **< v1.0**  | :x: |
+
+---
 
 ## 🛠️ Reporting a Vulnerability
 
-We take the security of **Termim** very seriously. If you believe you have found a security vulnerability, please do NOT open a public issue. Instead, please follow this professional reporting process:
+If you've found a vulnerability, please reach out to the project maintainer directly.
 
-1.  **Direct Contact**: Email the maintainer at `mim@akhtarx.com`.
-2.  **Report Structure**: Include a clear description, reproduction steps, and potential impact.
-3.  **Timeline**: We strive to acknowledge all security reports within 48 hours and provide a fix or mitigation within 7 days.
+1. **Contact**: Email `mim@akhtarx.com` with the subject line `Termim Security Vulnerability`.
+2. **Report Details**: Provide a clear description of the issue, reproduction steps, and potential impact.
+3. **Response**: We aim to acknowledge your report within 48 hours and work with you to resolve it.
 
-**Thank you for helping keep the Termim community safe!** 🚀🏎️🛡️
+**Thank you for helping keep the Termim community safe.** 🚀

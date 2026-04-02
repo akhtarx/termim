@@ -1,9 +1,26 @@
 use clap::Parser;
+use regex::Regex;
 use std::env;
 use termim::cli::args::{Cli, Commands};
-use termim::core::intelligence::{analyze_project, filter_suggestions};
+use termim::core::intelligence::analyze_project;
 use termim::core::project::{detect_project_root, hash_project_path};
 use termim::utils::constants::PROJECTS_DIR;
+
+fn sanitize_command(command: &str) -> String {
+    let mut sanitized = command.to_string();
+
+    // 1. Redact URL passwords: https://user:pass@host -> https://user:***@host
+    if let Ok(re) = Regex::new(r"([a-zA-Z]+://[^:]+:)([^@]+)(@)") {
+        sanitized = re.replace_all(&sanitized, "$1***$3").to_string();
+    }
+
+    // 2. Redact environment variables: KEY=xyz -> KEY=***
+    if let Ok(re) = Regex::new(r"(?i)(KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH|PWD|PRIVATE|SECRET_KEY)=([^\s\t\n]+)") {
+        sanitized = re.replace_all(&sanitized, "$1=***").to_string();
+    }
+
+    sanitized.trim().to_string()
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
@@ -13,6 +30,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match cli.command {
         Some(Commands::Log { command_str }) => {
+            let sanitized_cmd = sanitize_command(&command_str);
+            if sanitized_cmd.is_empty() { return Ok(()); }
+
             // Instant Direct-to-Disk Logging
             let projects_dir = dirs::home_dir()
                 .unwrap_or_default()
@@ -27,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .open(&project_file)
             {
                 use std::io::Write;
-                let _ = writeln!(f, "{}", command_str);
+                let _ = writeln!(f, "{}", sanitized_cmd);
             }
 
             // Global Stats backup (File-based)
@@ -41,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .open(&global_path)
             {
                 use std::io::Write;
-                let _ = writeln!(f, "{}", command_str);
+                let _ = writeln!(f, "{}", sanitized_cmd);
             }
         }
 
@@ -128,7 +148,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut ranked: Vec<_> = counts.into_iter().collect();
                 ranked.sort_by(|a, b| b.1.cmp(&a.1));
 
-                println!("=== Termim Industrial Intelligence Dashboard ===");
+                println!("=== Termim Usage Statistics ===");
                 println!("Total Commands Logged: {}", total);
                 println!("-----------------------------------------------\n");
                 println!("Top 10 Most Used Commands:");

@@ -9,7 +9,7 @@ TERMIM_DIR="$HOME/.termim"
 BIN_DIR="$TERMIM_DIR/bin"
 SHELL_DIR="$TERMIM_DIR/shell"
 
-echo "=== Termim Universal Unix Installer (Industry-Grade) ==="
+echo "=== Termim Universal Unix Installer ==="
 echo ""
 
 # 1. Build release binary
@@ -23,7 +23,44 @@ mkdir -p "$BIN_DIR"
 mkdir -p "$SHELL_DIR"
 echo "  ✓ Created"
 
-# 3. Install binary and shell masters
+# 2.5 Install fzf (Safe Bundle)
+echo "[2.5/4] Bundling fzf for history palette..."
+if ! command -v fzf &>/dev/null && [ ! -f "$BIN_DIR/fzf" ]; then
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+    
+    # Map architecture names
+    case "$ARCH" in
+        x86_64) FZF_ARCH="amd64" ;;
+        aarch64|arm64) FZF_ARCH="arm64" ;;
+        *) FZF_ARCH="amd64" ;;
+    esac
+
+    FZF_VERSION="0.51.0"
+    FZF_URL=""
+
+    if [ "$OS" == "linux" ]; then
+        FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VERSION/fzf-$FZF_VERSION-linux_$FZF_ARCH.tar.gz"
+    elif [ "$OS" == "darwin" ]; then
+        FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VERSION/fzf-$FZF_VERSION-darwin_$FZF_ARCH.tar.gz"
+    fi
+
+    if [ -n "$FZF_URL" ]; then
+        echo "  fzf not found. Downloading v$FZF_VERSION for $OS/$FZF_ARCH..."
+        if curl -fsSL "$FZF_URL" -o "$BIN_DIR/fzf.tar.gz"; then
+            tar -xzf "$BIN_DIR/fzf.tar.gz" -C "$BIN_DIR" fzf
+            rm "$BIN_DIR/fzf.tar.gz"
+            chmod +x "$BIN_DIR/fzf"
+            echo "  ✓ fzf installed to $BIN_DIR"
+        else
+            echo "  ! WARNING: Failed to download fzf. You may need to install it manually."
+        fi
+    fi
+else
+    echo "  ✓ fzf already available"
+fi
+
+# 3. Install binary and shell scripts
 echo "[3/4] Installing binary and shell suite..."
 cp target/release/termim "$BIN_DIR/termim"
 chmod +x "$BIN_DIR/termim"
@@ -32,9 +69,9 @@ cp shell/zsh.sh "$SHELL_DIR/zsh.sh"
 cp shell/fish.fish "$SHELL_DIR/fish.fish"
 echo "  ✓ Installed to $TERMIM_DIR"
 
-# 4. Aggressive Shell Configuration
+# 4. Configure shell profiles
 echo "[4/4] Configuring shell profiles..."
-export_path='export PATH="$HOME/.termim/bin:$PATH"'
+export_path="export PATH=\"\$HOME/.termim/bin:\$PATH\""
 
 # Bash & Zsh
 for profile in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
@@ -50,13 +87,12 @@ for profile in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.prof
     fi
 done
 
-# Fish (Modernized Configuration)
+# Fish
 if [ -d "$HOME/.config/fish" ]; then
-    mkdir -p "$HOME/.config/fish"
     fish_config="$HOME/.config/fish/config.fish"
+    mkdir -p "$(dirname "$fish_config")"
     touch "$fish_config"
     
-    # Fish PATH (Native fish command)
     fish_path="set -gx PATH \"\$HOME/.termim/bin\" \$PATH"
     fish_source="source ~/.termim/shell/fish.fish"
     
@@ -66,6 +102,6 @@ if [ -d "$HOME/.config/fish" ]; then
 fi
 
 echo ""
-echo "=== Termim v1.0.0 Universal Installation Complete! ==="
+echo "=== Termim Universal Installation Complete! ==="
 echo ""
 echo "Note: Restart your shell or run 'source ~/.your_shell_rc' to activate."

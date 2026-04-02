@@ -1,117 +1,154 @@
-# Termim Zsh Integration — with Stateful Native Mastery
-# Source from ~/.zshrc:  source ~/.termim/shell/zsh.sh
+#!/usr/bin/env zsh
+# Termim Zsh Integration
+# Compatible with MSYS/Git Bash and macOS
 
-# 1. Update PATH for this session
-export PATH="$HOME/.termim/bin:$PATH"
+# Find the termim binary
+_TERMIM_BIN="termim"
+userHome=$(eval echo "~$USER")
+possiblePaths="$HOME/.termim/bin/termim $HOME/.termim/bin/termim.exe $userHome/.termim/bin/termim /c/Users/$USER/.termim/bin/termim.exe"
+for p in $possiblePaths; do
+    if [[ -f "$p" || -x "$p" ]]; then
+        _TERMIM_BIN="$p"
+        binDir=$(dirname "$p")
+        [[ ":$PATH:" != *":$binDir:"* ]] && export PATH="$binDir:$PATH"
+        break
+    fi
+done
 
-# 2. State Management (The Mastery Pointer)
+# Navigation state
 _TERMIM_IDX=0
-_TERMIM_LAST_CMD=""
 _TERMIM_CACHE=()
 _TERMIM_ORIGINAL_INPUT=""
 
-# 3. Silent Command Logging (Direct-to-Disk CLI)
+# Background logging hook
 _termim_log() {
-    local last_cmd
-    last_cmd=$(history | tail -n 1 | sed 's/^[ ]*[0-9]*[ ]*//')
-    
-    if [[ -n "$last_cmd" && "$last_cmd" != "$_TERMIM_LAST_CMD" ]]; then
-        # Silent Background Logging (Maverick Subshell Trick)
-        (termim log "$last_cmd" &>/dev/null &) 
-        _TERMIM_LAST_CMD="$last_cmd"
-        _TERMIM_IDX=0 # Reset history index on new command
-        _TERMIM_CACHE=() # Purge navigation cache
-    fi
+    local cmd="$1"
+    [[ -z "$cmd" ]] && return
+    "$_TERMIM_BIN" log "$cmd" >/dev/null 2>&1 &!
+    _TERMIM_IDX=0 
+    _TERMIM_CACHE=() 
 }
-
-# Attach to Zsh preexec hook for automatic logging
 autoload -Uz add-zsh-hook
 add-zsh-hook preexec _termim_log
 
-# 4. Stateful Up-arrow: project history (Native ZLE Widget)
+# Up arrow: cycle project history
 _termim_up() {
-    # Initialize Cache on first press (Industrial Latency Fix)
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$BUFFER"
-        # Load history into Zsh array (split by newline)
-        _TERMIM_CACHE=(${(f)"$(termim query 2>/dev/null)"})
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query 2>/dev/null)}")
     fi
-
-    local next_idx=$((_TERMIM_IDX + 1))
-    
-    # Access In-Memory Array for 0ms recall
-    if [[ $next_idx -le ${#_TERMIM_CACHE} ]]; then
-        local cmd="${_TERMIM_CACHE[$next_idx]}"
-        # Anti-Flicker: Only update if the content is DIFFERENT
-        if [[ "$cmd" != "$BUFFER" ]]; then
-            _TERMIM_IDX=$next_idx
-            BUFFER="$cmd"
+    local NEXT_IDX=$((_TERMIM_IDX + 1))
+    if [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then
+        local CURR_CMD="${_TERMIM_CACHE[$NEXT_IDX]}"
+        if [[ "$CURR_CMD" != "$BUFFER" ]]; then
+            _TERMIM_IDX=$NEXT_IDX
+            BUFFER="$CURR_CMD"
             CURSOR=$#BUFFER
         else
-            _TERMIM_IDX=$next_idx
+            _TERMIM_IDX=$NEXT_IDX
         fi
     fi
 }
 zle -N _termim_up
 
-# 5. Stateful Down-arrow: project history
+# Down arrow: restore or cycle next
 _termim_down() {
     if [[ $_TERMIM_IDX -le 0 ]]; then
         return
     fi
-
-    local next_idx=$((_TERMIM_IDX - 1))
-    
-    if [[ $next_idx -eq 0 ]]; then
+    local NEXT_IDX=$((_TERMIM_IDX - 1))
+    if [[ $NEXT_IDX -eq 0 ]]; then
         if [[ "$BUFFER" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
             BUFFER="$_TERMIM_ORIGINAL_INPUT"
             CURSOR=$#BUFFER
         fi
         _TERMIM_IDX=0
-    elif [[ $next_idx -le ${#_TERMIM_CACHE} ]]; then
-        local cmd="${_TERMIM_CACHE[$next_idx]}"
-        if [[ "$cmd" != "$BUFFER" ]]; then
-            _TERMIM_IDX=$next_idx
-            BUFFER="$cmd"
+    elif [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then
+        local CURR_CMD="${_TERMIM_CACHE[$NEXT_IDX]}"
+        if [[ "$CURR_CMD" != "$BUFFER" ]]; then
+            _TERMIM_IDX=$NEXT_IDX
+            BUFFER="$CURR_CMD"
             CURSOR=$#BUFFER
         else
-            _TERMIM_IDX=$next_idx
+            _TERMIM_IDX=$NEXT_IDX
         fi
     fi
 }
 zle -N _termim_down
 
-# 6. Bind standard Zsh escape sequences
-bindkey '^[[A' _termim_up
-bindkey '^[OA' _termim_up
-bindkey '^[[B' _termim_down
-bindkey '^[OB' _termim_down
+# Find fzf across platforms
+_FZF_BIN="fzf"
+if ! command -v fzf &>/dev/null; then
+    # Native discovery
+    _FZF_BIN=$(whence -p fzf 2>/dev/null)
+    
+    if [[ -z "$_FZF_BIN" ]]; then
+        # Platform-specific searches
+        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+            # Windows/MSYS search 
+            local win_where="/c/Windows/System32/where.exe"
+            [[ ! -x "$win_where" ]] && win_where="where.exe"
+            local win_fzf=$($win_where fzf 2>/dev/null | head -n 1 | tr -d '\r')
+            if [[ -z "$win_fzf" ]]; then
+                local ps_exe="/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+                [[ ! -x "$ps_exe" ]] && ps_exe="powershell.exe"
+                win_fzf=$($ps_exe -NoProfile -Command "(Get-Command fzf -ErrorAction SilentlyContinue).Definition" 2>/dev/null | tr -d '\r')
+            fi
+            [[ -n "$win_fzf" ]] && _FZF_BIN=$(cygpath -u "$win_fzf" 2>/dev/null)
+        fi
 
-# 7. Ctrl+P: Interactive Palette (Requires fzf)
-_termim_palette() {
-    if ! command -v fzf &>/dev/null; then
-        echo -e "\n[termim] install 'fzf' to use the Ctrl+P palette."
+        # Common fallback paths
+        if [[ -z "$_FZF_BIN" || "$_FZF_BIN" == "fzf" ]]; then
+            local fzfPaths=(
+                "/usr/local/bin/fzf"
+                "/opt/homebrew/bin/fzf"
+                "/usr/bin/fzf"
+                "/bin/fzf"
+                "/c/ProgramData/chocolatey/bin/fzf.exe"
+                "$HOME/scoop/shims/fzf.exe"
+                "/c/Users/$USER/scoop/shims/fzf.exe"
+            )
+            for p in "${fzfPaths[@]}"; do
+                [[ -f "$p" ]] && _FZF_BIN="$p" && break
+            done
+        fi
+    fi
+fi
+[[ -z "$_FZF_BIN" ]] && _FZF_BIN="fzf"
+
+# Key bindings
+if [[ -o interactive ]]; then
+    bindkey '^[[A' _termim_up
+    bindkey '^[OA' _termim_up
+    bindkey '^[[B' _termim_down
+    bindkey '^[OB' _termim_down
+
+    _termim_palette() {
+        if ! command -v "$_FZF_BIN" &>/dev/null && [[ ! -f "$_FZF_BIN" ]]; then
+            echo -e "\n[termim] fzf not found. Install fzf to use Ctrl+P."
+            zle reset-prompt
+            return 1
+        fi
+        local fzf_cmd="$_FZF_BIN"
+        if command -v winpty &>/dev/null && "$_FZF_BIN" --version 2>/dev/null | grep -q "windows"; then
+            fzf_cmd="winpty $_FZF_BIN"
+        fi
+        local tmp_hist=$(mktemp)
+        "$_TERMIM_BIN" query 2>/dev/null > "$tmp_hist"
+        local selected=$($fzf_cmd \
+            --height=40% --reverse --border=rounded \
+            --prompt="  termim > " --header="Project History" --no-sort \
+            < "$tmp_hist")
+        rm -f "$tmp_hist"
+        if [[ -n "$selected" ]]; then
+            BUFFER="$selected"
+            CURSOR=$#BUFFER
+            _TERMIM_IDX=0 
+            _TERMIM_CACHE=()
+        fi
         zle reset-prompt
-        return 1
-    fi
-
-    local selected
-    selected=$(termim query 2>/dev/null | fzf \
-        --height=40% \
-        --reverse \
-        --border=rounded \
-        --prompt="  termim > " \
-        --header="Project History" \
-        --no-sort \
-        2>/dev/null)
-        
-    if [[ -n "$selected" ]]; then
-        BUFFER="$selected"
-        CURSOR=$#BUFFER
-        _TERMIM_IDX=0 
-        _TERMIM_CACHE=()
-    fi
-    zle reset-prompt
-}
-zle -N _termim_palette
-bindkey '^P' _termim_palette
+    }
+    zle -N _termim_palette
+    bindkey '^P' _termim_palette
+    bindkey '^p' _termim_palette
+fi

@@ -1,29 +1,36 @@
-# Contributing to Termim 💎
+# Contributing to Termim
 
-First off, thank you for considering contributing to **Termim!** It’s people like you that make Termim a world-class contextual history engine.
+Thank you for your interest in contributing to **Termim!** Contributions from the community help make this project more robust and useful for everyone.
 
-## 🏁 Code of Conduct
+---
 
-By participating in this project, you agree to abide by our code of conduct. We strive to maintain a professional, inclusive, and welcoming environment for everyone.
+## 🚦 Code of Conduct
+
+By participating in this project, you agree to maintain a professional, inclusive, and welcoming environment for all contributors. 
+
+---
 
 ## 🛠️ How to Contribute
 
 ### 1. Reporting Bugs
+- Please search the existing issues before reporting a new bug.
 - Use the **Bug Report** template when opening an issue.
-- Include your `termim doctor` output.
-- Describe the expected vs. actual behavior clearly.
+- Include the output of `termim doctor` to help us diagnose the environment.
 
 ### 2. Suggesting Enhancements
-- Check if the feature has already been suggested.
-- Provide a clear use case for why this enhancement is "Industry-Grade."
+- Feature requests are welcome! Please provide a clear description of the problem your enhancement would solve.
+- Be specific about the expected behavior and how it benefits the user experience.
 
-### 3. Pull Requests (The Mastery Standard)
-- **Branching**: Use descriptive branch names (e.g., `feat/fuzzy-search`, `fix/registry-parsing`).
-- **Code Quality**: Run `cargo fmt` and `cargo clippy` before submitting.
-- **Documentation**: All public functions and structs must have Rustdoc comments.
-- **Tests**: Ensure all tests pass.
+### 3. Pull Requests
+- **Branching**: Use a descriptive branch name (e.g., `feat/fuzzy-search` or `fix/registry-parsing`).
+- **Code Quality**: We use Rust for the core logic. Please run `cargo fmt` and `cargo clippy` before submitting your PR.
+- **Documentation**: If you're adding a new feature or changing a shell script, please update the relevant comments or documentation.
+- **Tests**: Ensure all existing tests pass and add new tests where applicable.
+
+---
 
 ## ⚖️ License
+
 By contributing to Termim, you agree that your contributions will be licensed under the project's **MIT License.**
 
-**Let's build the future of terminal productivity together!** 🚀🏎️🔥
+**Thank you for helping build a smarter terminal experience!** 🚀
