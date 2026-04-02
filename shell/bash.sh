@@ -1,9 +1,10 @@
 # Termim Bash Integration — with Stateful Native Mastery
-# Mastery Edition: Global Gold Standard (Resilient & Silky Smooth)
+# Mastery Edition: Global Gold Standard (Resilient & Silky Smooth) v1.0.1
 # Source from ~/.bashrc:  source ~/.termim/shell/bash.sh
 
 # --- 1. Universal Path Strategy & Fallback ---
 
+set +e # Ensure script doesn't exit on error
 _TERMIM_BIN=""
 _user_home_win="/c/Users/$USER"
 _user_home_wsl="/mnt/c/Users/$USER"
@@ -50,13 +51,18 @@ fi
 # 4. Stateful Up-arrow: project history (Native Readline)
 _termim_up() {
     # Fail-Safe check
-    [[ -z "$_TERMIM_BIN" ]] && return
+    if [[ -z "$_TERMIM_BIN" ]]; then return; fi
 
     # 1. Initialize Cache on first press (Industrial Latency Fix)
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
-        # Access In-Memory Array for 0ms recall
+        # Access In-Memory Array for 0ms recall (Bash mapfile syntax)
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query 2>/dev/null)
+    fi
+
+    # 2. Hard-Lock at boundaries (Industrial Stability)
+    if [[ ${#_TERMIM_CACHE[@]} -eq 0 ]]; then
+        return
     fi
 
     local next_idx=$((_TERMIM_IDX + 1))

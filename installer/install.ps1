@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 $termimDir = Join-Path $HOME ".termim"
 $binDir = Join-Path $termimDir "bin"
 
-Write-Host "=== Termim Windows Installer (Pure CLI) ===" -ForegroundColor Cyan
+Write-Host "`n=== Termim Windows Installer (Pure CLI) v1.0.1 ===" -ForegroundColor Cyan
 Write-Host ""
 
 # 1. Build release binary

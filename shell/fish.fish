@@ -39,9 +39,8 @@ end
 
 # 4. Stateful Up-arrow: project history (Native Fish Commandline)
 function termim_up
-    # Fail-Safe: Native fallback if binary is missing
+    # Fail-Safe: Hard-Lock if binary is missing
     if test -z "$_TERMIM_BIN"
-        commandline -f up-or-search
         return
     end
 
@@ -51,8 +50,8 @@ function termim_up
         set -g _TERMIM_CACHE ("$_TERMIM_BIN" query 2>/dev/null)
     end
 
+    # 2. Hard-Lock at boundaries (Industrial Stability)
     if test (count $_TERMIM_CACHE) -eq 0
-        commandline -f up-or-search
         return
     end
 
@@ -75,7 +74,6 @@ end
 # 5. Stateful Down-arrow: project history
 function termim_down
     if test $_TERMIM_IDX -le 0
-        commandline -f down-or-search
         return
     end
 
@@ -110,7 +108,6 @@ bind \eOB termim_down
 function termim_palette
     if not command -v fzf >/dev/null 2>&1
         echo -e "\n[termim] install 'fzf' to use the Ctrl+P palette."
-        commandline -f repaint
         return 1
     end
     if test -z "$_TERMIM_BIN"
@@ -132,6 +129,5 @@ function termim_palette
         set -g _TERMIM_IDX 0
         set -e _TERMIM_CACHE
     end
-    commandline -f repaint
 end
 bind \cp termim_palette

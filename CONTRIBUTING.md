@@ -1,12 +1,12 @@
-# Contributing to Termim 💎
+# Contributing to Termim 🤝🛡️
 
-First off, thank you for considering contributing to **Termim!** It’s people like you that make Termim a world-class contextual history engine.
+We believe that the best tools are built together. Termim is a community-driven project, and we invite you to join our laboratory to help us reach absolute universal stability. Whether you are a shell-wizard, a Rustacean, or a developer with a great idea, your contribution is valuable.
 
-## 🏁 Code of Conduct
-
-By participating in this project, you agree to abide by our code of conduct. We strive to maintain a professional, inclusive, and welcoming environment for everyone.
-
-## 🛠️ How to Contribute
+## 🏁 Our Philosophy
+The Termim ecosystem is built on three pillars:
+1. **Silent Performance**: Every feature must be fast and invisible.
+2. **Zero-Pollution**: We never touch project folders or source code.
+3. **Gentlemanly Excellence**: We interact with the developer community with absolute honesty and respect.
 
 ### 1. Reporting Bugs
 - Use the **Bug Report** template when opening an issue.

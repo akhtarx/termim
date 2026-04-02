@@ -69,9 +69,8 @@ if (Get-Module PSReadLine) {
             }
         }
 
-        # 2. Native Fallback if no project history
+        # 2. Hard-Lock at boundaries (Industrial Stability)
         if ($Global:TermimCache.Length -eq 0) {
-            [Microsoft.PowerShell.PSConsoleReadLine]::UpArrow($key, $arg)
             return
         }
 
@@ -79,12 +78,12 @@ if (Get-Module PSReadLine) {
         if ($Global:TermimIdx -lt $Global:TermimCache.Length) {
             $nextIdx = $Global:TermimIdx + 1
             $cmd = $Global:TermimCache[-($nextIdx)]
-            $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
+            $line = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
             
             # Anti-Flicker: Only update if different
-            if ($cmd -ne $currentLine) {
+            if ($cmd -ne $line) {
                 $Global:TermimIdx = $nextIdx
-                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $cmd)
             } else {
                 $Global:TermimIdx = $nextIdx
             }
@@ -94,23 +93,22 @@ if (Get-Module PSReadLine) {
     # Down-Arrow Handler
     Set-PSReadLineKeyHandler -Key DownArrow -ScriptBlock {
         param($key, $arg)
-        if ($Global:TermimIdx -le 0 -or $Global:TermimCache.Length -eq 0) {
-            [Microsoft.PowerShell.PSConsoleReadLine]::DownArrow($key, $arg)
+        if ($Global:TermimIdx -le 0) {
             return
         }
 
         $nextIdx = $Global:TermimIdx - 1
-        $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
+        $line = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
         
         if ($nextIdx -eq 0) {
-            if ($currentLine -ne $Global:TermimOriginalInput) {
-                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $Global:TermimOriginalInput)
+            if ($line -ne $Global:TermimOriginalInput) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $Global:TermimOriginalInput)
             }
             $Global:TermimIdx = 0
         } else {
             $cmd = $Global:TermimCache[-($nextIdx)]
-            if ($cmd -ne $currentLine) {
-                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
+            if ($cmd -ne $line) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $cmd)
                 $Global:TermimIdx = $nextIdx
             } else {
                 $Global:TermimIdx = $nextIdx

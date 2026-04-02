@@ -1,5 +1,5 @@
 # Termim Zsh Integration — with Stateful Native Mastery
-# Mastery Edition: Global Gold Standard (Resilient & Silky Smooth)
+# Mastery Edition: Global Gold Standard (Resilient & Silky Smooth) v1.0.1
 # Source from ~/.zshrc:  source ~/.termim/shell/zsh.sh
 
 # --- 1. Universal Path Strategy & Fallback ---
