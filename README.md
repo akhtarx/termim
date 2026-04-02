@@ -5,7 +5,7 @@
 <h1 align="center">Termim</h1>
 
 <p align="center">
-  <strong>Project-aware terminal history + command intelligence v1.0.0</strong>
+  <strong>Industry-Grade Project-Aware Terminal context engine v1.0.0</strong>
 </p>
 
 <p align="center">
@@ -32,6 +32,7 @@
 Other history tools are slow, bulky, or pollute your folders. Termim achieves the "Silver Bullet" of productivity:
 
 - **0ms Lag (Native Mastery)**: Termim upgrades your shell's native history engine by swapping buffers in real-time. Absolute binary speed. ⚡
+- **Universal Windows Architecture**: **One-click installation** for both PowerShell and Git Bash on Windows. 🛡️
 - **Zero-Pollution Philosophy**: No hidden `.termim` markers or `.history` files are ever created in your folders. 🧼
 - **Zero-Daemon Architecture**: No background processes, no databases, no maintenance. Just pure Rust performance. 🛡️
 - **Context-Aware IQ**: Automatically identifies 34+ stacks (Node, Rust, Go, Python, Docker, etc.) and suggests relevant commands without configuration.
@@ -43,25 +44,30 @@ Other history tools are slow, bulky, or pollute your folders. Termim achieves th
 - **Fuzzy Search Palette**: Press `Ctrl+P` (requires `fzf`) to search your project history in a premium popup.
 - **Project Isolation**: Your history is segregated by project-root. No more searching through unrelated commands.
 - **Global Registry**: `termim init` registers projects globally, keeping your source code 100% pristine.
-- **Cross-Shell Stability**: Deep, battle-tested integration for **PowerShell**, **Zsh**, **Bash**, and **Fish**.
+- **Cross-Shell Stability**: Deep, battle-tested integration for **PowerShell**, **Zsh**, **Bash** (Git Bash/MinTTY), and **Fish.**
 
 ---
 
 ## 📦 Installation
 
-### Windows (PowerShell)
-```powershell
-git clone https://github.com/akhtarx/termim.git
-cd termim
-.\installer\install.ps1
-```
+### Windows (Universal PowerShell/Git Bash)
+1. Open PowerShell and run:
+   ```powershell
+   git clone https://github.com/akhtarx/termim.git
+   cd termim
+   .\installer\install.ps1
+   ```
+2. **PowerShell**: Ready immediately!
+3. **Git Bash**: Restart or run `source ~/.bashrc` to activate.
 
 ### Unix / macOS (Zsh/Bash/Fish)
-```bash
-git clone https://github.com/akhtarx/termim.git
-cd termim
-bash installer/install.sh
-```
+1. Open your terminal and run:
+   ```bash
+   git clone https://github.com/akhtarx/termim.git
+   cd termim
+   bash installer/install.sh
+   ```
+2. Restart your shell to activate.
 
 ---
 
@@ -90,6 +96,6 @@ Termim is licensed under the **MIT License.** See [LICENSE](LICENSE) for more de
 ---
 
 <p align="center">
-  Built with ❤️ by <strong>Md Mim Akhtar</strong><br/>
+  Built with ❤️ by <strong>Md Mim Akhtar</strong> (@akhtarx) <br/>
   Part of the <strong>AkhtarX Labs</strong>
 </p>

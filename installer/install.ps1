@@ -31,56 +31,75 @@ Copy-Item "target\release\termim.exe" "$binDir\termim.exe" -Force
 Write-Host "  OK: Installed to $binDir" -ForegroundColor Green
 
 # 4. Update PATH
-Write-Host "[4/4] Configuring PATH..." -ForegroundColor Yellow
+Write-Host "[4/6] Configuring PATH..." -ForegroundColor Yellow
 $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($currentPath -notlike "*$binDir*") {
-    $newPath = "$currentPath;$binDir"
+$newBinDir = $binDir
+if ($currentPath -notlike "*$newBinDir*") {
+    $newPath = "$currentPath;$newBinDir"
     [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
-    Write-Host "  OK: $binDir added to User PATH" -ForegroundColor Green
+    Write-Host "  OK: $newBinDir added to User PATH" -ForegroundColor Green
 }
 else {
-    Write-Host "  OK: $binDir already in PATH" -ForegroundColor Green
+    Write-Host "  OK: $newBinDir already in PATH" -ForegroundColor Green
 }
 
 # 5. PowerShell Integration
-Write-Host "[5/5] Configuring PowerShell Integration..." -ForegroundColor Yellow
+Write-Host "[5/6] Configuring PowerShell Integration..." -ForegroundColor Yellow
 $shellDir = Join-Path $termimDir "shell"
 if (-not (Test-Path $shellDir)) { New-Item -ItemType Directory -Path $shellDir -Force | Out-Null }
-$targetShellScript = Join-Path $shellDir "powershell.ps1"
-Remove-Item $targetShellScript -ErrorAction SilentlyContinue
-Copy-Item "shell\powershell.ps1" $targetShellScript -Force
-Write-Host "  OK: Integration script updated at $targetShellScript" -ForegroundColor Green
+
+$targetPsScript = Join-Path $shellDir "powershell.ps1"
+Copy-Item "shell\powershell.ps1" $targetPsScript -Force
+Write-Host "  OK: PowerShell script updated at $targetPsScript" -ForegroundColor Green
 
 $profilePath = $PROFILE.CurrentUserAllHosts
-if (-not (Test-Path $profilePath)) {
-    $null = New-Item -Path $profilePath -ItemType File -Force
-}
-
-$sourceCmd = ". '$targetShellScript'"
+if (-not (Test-Path $profilePath)) { $null = New-Item -Path $profilePath -ItemType File -Force }
+$sourcePsCmd = ". '$targetPsScript'"
 $profileContent = Get-Content $profilePath -ErrorAction SilentlyContinue
-if ($profileContent -notcontains $sourceCmd) {
-    Set-Content -Path $profilePath -Value $profileContent
-    Add-Content -Path $profilePath -Value "`n$sourceCmd"
+if ($profileContent -notcontains $sourcePsCmd) {
+    Add-Content -Path $profilePath -Value "`n$sourcePsCmd"
     Write-Host "  OK: Added integration to your PowerShell Profile" -ForegroundColor Green
-}
-else {
-    Write-Host "  OK: Integration already in Profile" -ForegroundColor Green
+} else {
+    Write-Host "  OK: Integration already in PowerShell Profile" -ForegroundColor Green
 }
 
-# --- Instant Activation for Current Session ---
+# 6. Git Bash Integration (Optional Detect)
+Write-Host "[6/6] Detecting Git Bash for Windows..." -ForegroundColor Yellow
+$homeDir = [System.Environment]::GetFolderPath("UserProfile")
+$bashrc = Join-Path $homeDir ".bashrc"
+$targetBashScript = Join-Path $shellDir "bash.sh"
+
+# Use forward slashes for Bash compatibility
+$unixTargetBashPath = "~/.termim/shell/bash.sh"
+$sourceBashCmd = "source $unixTargetBashPath"
+
+Copy-Item "shell\bash.sh" $targetBashScript -Force
+Write-Host "  OK: Bash script updated at $targetBashScript" -ForegroundColor Green
+
+if (Test-Path $bashrc) {
+    $bashrcContent = Get-Content $bashrc -ErrorAction SilentlyContinue
+    if ($bashrcContent -notcontains $sourceBashCmd) {
+        Add-Content -Path $bashrc -Value "`n# Termim Integration`n$sourceBashCmd"
+        Write-Host "  OK: Added integration to your Git Bash Profile ($bashrc)" -ForegroundColor Green
+    } else {
+        Write-Host "  OK: Integration already in Git Bash Profile" -ForegroundColor Green
+    }
+} else {
+    Write-Host "  Note: Git Bash .bashrc not found at $bashrc. Skipping auto-integration." -ForegroundColor Gray
+}
+
+# --- Instant Activation for Current Session (PowerShell) ---
 Write-Host ""
 Write-Host "Activating for current session..." -ForegroundColor Yellow
 $env:Path += ";$binDir"
-if (Test-Path $targetShellScript) {
-    . $targetShellScript
-}
+if (Test-Path $targetPsScript) { . $targetPsScript }
 Write-Host "  OK: Session PATH updated" -ForegroundColor Green
-Write-Host "  OK: Integration script sourced" -ForegroundColor Green
+Write-Host "  OK: PowerShell integration sourced" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "=== Termim installed and ACTIVATED successfully! ===" -ForegroundColor Cyan
+Write-Host "=== Termim v1.0.0 Universal Installation Complete! ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "You can use it right now in this terminal window."
-Write-Host "Try pressing 'Up Arrow' or 'Ctrl+P'!"
+Write-Host "PowerShell: Ready! Try 'Up Arrow' or 'Ctrl+P'."
+Write-Host "Git Bash  : Restart your Git Bash or run 'source ~/.bashrc' to activate."
 Write-Host ""
 Write-Host "Note: Binary is at $binDir\termim.exe" -ForegroundColor Gray
