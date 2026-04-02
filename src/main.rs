@@ -63,37 +63,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Suggest { prefix }) => {
-            // Hybrid Direct Suggestions
+            // 1. Analyze Project Context
+            let profile = analyze_project(&root);
+            let mut candidates = Vec::new();
+            let mut seen = std::collections::HashSet::new();
+
+            // 2. Fetch Project History (Weighted by frequency in future)
             let projects_dir = dirs::home_dir()
                 .unwrap_or_default()
                 .join(".termim")
                 .join(PROJECTS_DIR);
             let hist_file = projects_dir.join(format!("{}.txt", hash));
-
-            let mut merged = Vec::new();
-            let mut seen = std::collections::HashSet::new();
-
             if let Ok(content) = std::fs::read_to_string(&hist_file) {
                 for line in content.lines().rev() {
                     if !line.is_empty() && seen.insert(line.to_string()) {
-                        merged.push(line.to_string());
+                        candidates.push(line.to_string());
                     }
                 }
             }
 
-            let profile = analyze_project(&root);
-            let intel_filtered = filter_suggestions(&profile.suggestions, &prefix);
-
-            for s in intel_filtered {
+            // 3. Add Ecosystem Defaults (Proactive Advisor)
+            for s in &profile.suggestions {
                 if seen.insert(s.command.clone()) {
-                    merged.push(s.command.clone());
+                    candidates.push(s.command.clone());
                 }
             }
 
-            let lower_prefix = prefix.to_lowercase();
-            for cmd in merged {
-                if lower_prefix.is_empty() || cmd.to_lowercase().contains(&lower_prefix) {
-                    println!("{}", cmd);
+            // 4. Performance Filter & Sort
+            let prefix_str = prefix.unwrap_or_default().to_lowercase();
+            let filtered: Vec<_> = candidates
+                .into_iter()
+                .filter(|c| prefix_str.is_empty() || c.to_lowercase().contains(&prefix_str))
+                .take(10) // Only show the Top 10 for Industrial clarity
+                .collect();
+
+            if filtered.is_empty() {
+                println!("No suggestions found for this context.");
+            } else {
+                if prefix_str.is_empty() {
+                    println!("Proactive Advice for {} project:", if profile.ecosystems.is_empty() { "this" } else { "this stack" });
+                }
+                for cmd in filtered {
+                    println!(" {}", cmd);
                 }
             }
         }
@@ -103,11 +114,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .unwrap_or_default()
                 .join(".termim")
                 .join("global_stats.txt");
+
             if let Ok(content) = std::fs::read_to_string(&global_path) {
-                println!("Global usage statistics (from ~/.termim/global_stats.txt):");
-                // In a future version, this can perform frequency analysis.
-                // For now, it shows the raw history log for global context.
-                println!("\n{}", content);
+                let mut counts = std::collections::HashMap::new();
+                let mut total = 0;
+                for line in content.lines() {
+                    if !line.is_empty() {
+                        *counts.entry(line.to_string()).or_insert(0) += 1;
+                        total += 1;
+                    }
+                }
+
+                let mut ranked: Vec<_> = counts.into_iter().collect();
+                ranked.sort_by(|a, b| b.1.cmp(&a.1));
+
+                println!("=== Termim Industrial Intelligence Dashboard ===");
+                println!("Total Commands Logged: {}", total);
+                println!("-----------------------------------------------\n");
+                println!("Top 10 Most Used Commands:");
+
+                for (cmd, count) in ranked.iter().take(10) {
+                    let pct = (*count as f64 / total as f64) * 100.0;
+                    let bar_len = (pct / 5.0) as usize;
+                    let bar = "█".repeat(bar_len);
+                    println!("{:>5.1}% | {:<12} | {}", pct, bar, cmd);
+                }
+                println!("\n-----------------------------------------------");
             } else {
                 println!("No statistics recorded yet.");
             }
@@ -204,6 +236,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   • Ecosystems: {}
 
   Quick Commands:
+  • termim init    : Register a project for zero-pollution history
   • termim query   : Show ranked history for this project
   • termim suggest : Show intelligent command suggestions
   • termim stats   : Global usage statistics

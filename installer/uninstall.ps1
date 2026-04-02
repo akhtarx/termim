@@ -1,43 +1,55 @@
-# Termim Uninstaller for Windows
-Write-Host "=== Termim Uninstaller ===" -ForegroundColor Cyan
+# Termim Windows Uninstaller (Universal: PowerShell + Git Bash)
+# Usage: .\installer\uninstall.ps1
 
-# 1. Stop the daemon
-Write-Host "[1/4] Stopping Termim daemon..." -ForegroundColor Yellow
-$process = Get-Process -Name termimd -ErrorAction SilentlyContinue
-if ($process) {
-    Stop-Process -Name termimd -Force
-    Write-Host "  OK: Stopped" -ForegroundColor Green
-}
-else {
-    Write-Host "  OK: Daemon not running" -ForegroundColor Gray
-}
+$ErrorActionPreference = "SilentlyContinue"
 
-# 2. Remove from PowerShell Profile
-Write-Host "[2/4] Removing integration from $PROFILE..." -ForegroundColor Yellow
-if (Test-Path $PROFILE) {
-    $content = Get-Content $PROFILE
-    $newContent = $content | Where-Object { $_ -notmatch "[\/\\]\.termim[\/\\]shell[\/\\]powershell\.ps1" }
-    $newContent | Set-Content $PROFILE
-    Write-Host "  OK: Profile cleaned" -ForegroundColor Green
+Write-Host "=== Termim Windows Uninstaller (Industry-Grade) ===" -ForegroundColor Cyan
+Write-Host ""
+
+$termimDir = Join-Path $HOME ".termim"
+$binDir = Join-Path $termimDir "bin"
+
+# 1. PowerShell Profile Cleanup
+Write-Host "[1/4] Cleaning PowerShell Integration..." -ForegroundColor Yellow
+$profilePath = $PROFILE.CurrentUserAllHosts
+if (Test-Path $profilePath) {
+    $content = Get-Content $profilePath
+    $newContent = $content | Where-Object { $_ -notlike "*\.termim\shell\powershell.ps1*" }
+    Set-Content -Path $profilePath -Value $newContent
+    Write-Host "  OK: PowerShell Profile cleaned" -ForegroundColor Green
 }
 
-# 3. Remove .termim directory
-Write-Host "[3/4] Removing files from $HOME\.termim..." -ForegroundColor Yellow
-$termimDir = "$HOME\.termim"
+# 2. Git Bash Cleanup
+Write-Host "[2/4] Cleaning Git Bash Integration..." -ForegroundColor Yellow
+$homeDir = [System.Environment]::GetFolderPath("UserProfile")
+foreach ($config in @(".bashrc", ".bash_profile", ".profile")) {
+    $path = Join-Path $homeDir $config
+    if (Test-Path $path) {
+        $content = Get-Content $path
+        $newContent = $content | Where-Object { $_ -notlike "*source ~/.termim/shell/bash.sh*" }
+        Set-Content -Path $path -Value $newContent
+        Write-Host "  OK: $config cleaned" -ForegroundColor Green
+    }
+}
+
+# 3. PATH Sanitization
+Write-Host "[3/4] Removing from PATH..." -ForegroundColor Yellow
+$currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($currentPath -like "*$binDir*") {
+    $pathArray = $currentPath -split ";"
+    $newPath = ($pathArray | Where-Object { $_ -ne $binDir }) -join ";"
+    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    Write-Host "  OK: PATH sanitized" -ForegroundColor Green
+}
+
+# 4. Final Purge
+Write-Host "[4/4] Deleting $termimDir..." -ForegroundColor Yellow
 if (Test-Path $termimDir) {
-    Remove-Item -Recurse -Force $termimDir
-    Write-Host "  OK: Directory removed" -ForegroundColor Green
+    Remove-Item -Path $termimDir -Recurse -Force
+    Write-Host "  OK: $termimDir deleted" -ForegroundColor Green
 }
 
-# 4. Remove from PATH (User Environment)
-Write-Host "[4/4] Removing from PATH..." -ForegroundColor Yellow
-$path = [Environment]::GetEnvironmentVariable("PATH", "User")
-$termimBin = "$HOME\.termim\bin"
-if ($path -like "*$termimBin*") {
-    $newPath = ($path -split ';' | Where-Object { $_ -ne $termimBin }) -join ';'
-    [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-    Write-Host "  OK: PATH cleaned" -ForegroundColor Green
-}
-
-Write-Host "`nTermim has been completely uninstalled." -ForegroundColor Cyan
-Write-Host "Please restart your terminal to apply all changes." -ForegroundColor Gray
+Write-Host ""
+Write-Host "=== Termim v1.0.0 successfully removed from this machine! ===" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Note: You can close this terminal window to finalize the changes."

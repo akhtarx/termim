@@ -1,5 +1,5 @@
 # Termim Professional Shell Integration (v1.0.0)
-# Mastery Edition: Stateful Native Navigation (Cache-Enabled)
+# Mastery Edition: Stateful Native Navigation (Silky Smooth)
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # --- 1. Core Logic & Registry ---
@@ -38,21 +38,20 @@ function Get-TermimProjectHistory {
         $hash = Get-TermimHash $root
         $path = "$HOME\.termim\projects\$hash.txt"
         if (Test-Path $path) {
-            # Unique history (reversed for easy indexing)
             return Get-Content $path | Select-Object -Unique
         }
     }
     return @()
 }
 
-# --- 3. PSReadLine Key Handlers (Cache Mastery) ---
+# --- 3. PSReadLine Key Handlers (Silky Smooth mastery) ---
 
 if (Get-Module PSReadLine) {
     # Up-Arrow Handler
     Set-PSReadLineKeyHandler -Key UpArrow -ScriptBlock {
         param($key, $arg)
         
-        # Initialize Cache on First Press (Industrial Latency Fix)
+        # Initialize Cache on First Press
         if ($Global:TermimIdx -eq 0) {
             $Global:TermimOriginalInput = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
             $Global:TermimCache = Get-TermimProjectHistory
@@ -64,10 +63,18 @@ if (Get-Module PSReadLine) {
         }
 
         if ($Global:TermimIdx -lt $Global:TermimCache.Length) {
-            $Global:TermimIdx++
-            # Access In-Memory Array for 0ms recall
-            $cmd = $Global:TermimCache[-($Global:TermimIdx)]
-            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $cmd)
+            $nextIdx = $Global:TermimIdx + 1
+            $cmd = $Global:TermimCache[-($nextIdx)]
+            $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
+            
+            # Anti-Flicker: Only update if the content is DIFFERENT
+            if ($cmd -ne $currentLine) {
+                $Global:TermimIdx = $nextIdx
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
+            } else {
+                # Still increment index if the histories are the same, but skip redraw
+                $Global:TermimIdx = $nextIdx
+            }
         }
     }
 
@@ -79,14 +86,22 @@ if (Get-Module PSReadLine) {
             return
         }
 
-        $Global:TermimIdx--
-        if ($Global:TermimIdx -eq 0) {
-            # Restore original from memory
-            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $Global:TermimOriginalInput)
+        $nextIdx = $Global:TermimIdx - 1
+        $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
+        
+        if ($nextIdx -eq 0) {
+            if ($currentLine -ne $Global:TermimOriginalInput) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $Global:TermimOriginalInput)
+            }
+            $Global:TermimIdx = 0
         } else {
-            # Access In-Memory Array for 0ms recall
-            $cmd = $Global:TermimCache[-($Global:TermimIdx)]
-            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $cmd)
+            $cmd = $Global:TermimCache[-($nextIdx)]
+            if ($cmd -ne $currentLine) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
+                $Global:TermimIdx = $nextIdx
+            } else {
+                $Global:TermimIdx = $nextIdx
+            }
         }
     }
 }
@@ -108,7 +123,7 @@ function Invoke-TermimPalette {
             [Microsoft.PowerShell.PSConsoleReadLine]::AddHistory($selected)
             [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $selected)
             $Global:TermimIdx = 0 
-            $Global:TermimCache = @() # Clear cache on palette exit
+            $Global:TermimCache = @()
         }
     }
 }
@@ -122,7 +137,10 @@ if (Get-Module PSReadLine) {
 # --- 5. Command Hook & Cache Purge ---
 
 function prompt {
-    $Global:TermimIdx = 0
-    $Global:TermimCache = @() # Purge navigation cache on every command
+    # Silence reset logic: Only reset if index is not 0
+    if ($Global:TermimIdx -ne 0) {
+        $Global:TermimIdx = 0
+        $Global:TermimCache = @()
+    }
     "PS $(Get-Location)> "
 }

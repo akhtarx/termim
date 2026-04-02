@@ -35,18 +35,20 @@ _termim_up() {
     # Initialize Cache on first press (Industrial Latency Fix)
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
-        # Load history into memory once
         mapfile -t _TERMIM_CACHE < <(termim query 2>/dev/null)
     fi
 
     local next_idx=$((_TERMIM_IDX + 1))
     
-    # Access In-Memory Array for 0ms recall
+    # Anti-Flicker Master Check
     if [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
         local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
-        _TERMIM_IDX=$next_idx
-        READLINE_LINE="$cmd"
-        READLINE_POINT=${#cmd}
+        # Only redraw if the content is DIFFERENT (Silky Smooth)
+        if [[ "$cmd" != "$READLINE_LINE" ]]; then
+            _TERMIM_IDX=$next_idx
+            READLINE_LINE="$cmd"
+            READLINE_POINT=${#cmd}
+        fi
     fi
 }
 
@@ -59,16 +61,21 @@ _termim_down() {
     local next_idx=$((_TERMIM_IDX - 1))
     
     if [[ $next_idx -eq 0 ]]; then
-        # Restore the original input line from memory
-        _TERMIM_IDX=0
-        READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
-        READLINE_POINT=${#_TERMIM_ORIGINAL_INPUT}
+        # Only restore original if it's different to prevent flicker
+        if [[ "$READLINE_LINE" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
+            _TERMIM_IDX=0
+            READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
+            READLINE_POINT=${#_TERMIM_ORIGINAL_INPUT}
+        else
+            _TERMIM_IDX=0
+        fi
     elif [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
-        # Access In-Memory Array for 0ms recall
         local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
-        _TERMIM_IDX=$next_idx
-        READLINE_LINE="$cmd"
-        READLINE_POINT=${#cmd}
+        if [[ "$cmd" != "$READLINE_LINE" ]]; then
+            _TERMIM_IDX=$next_idx
+            READLINE_LINE="$cmd"
+            READLINE_POINT=${#cmd}
+        fi
     fi
 }
 

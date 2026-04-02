@@ -1,102 +1,117 @@
-# Termim Zsh Integration (Smart Hybrid Mode)
+# Termim Zsh Integration — with Stateful Native Mastery
 # Source from ~/.zshrc:  source ~/.termim/shell/zsh.sh
 
 # 1. Update PATH for this session
 export PATH="$HOME/.termim/bin:$PATH"
 
-# 2. Native Project Detection (Zero Lag)
-_termim_get_root() {
-    local current="$PWD"
-    local markers=(".git" "package.json" "Cargo.toml" "go.mod" "pyproject.toml" "Makefile" "docker-compose.yml")
-    local registry="$HOME/.termim/registry.txt"
+# 2. State Management (The Mastery Pointer)
+_TERMIM_IDX=0
+_TERMIM_LAST_CMD=""
+_TERMIM_CACHE=()
+_TERMIM_ORIGINAL_INPUT=""
 
-    while [[ "$current" != "/" ]]; do
-        # Check standard markers
-        for m in $markers; do
-            if [[ -e "$current/$m" ]]; then
-                echo "$current"
-                return 0
-            fi
-        done
-        
-        # Check Global Registry (Zero-Pollution manual projects)
-        if [[ -f "$registry" ]]; then
-            if grep -Fxq "$current" "$registry"; then
-                echo "$current"
-                return 0
-            fi
+# 3. Silent Command Logging (Direct-to-Disk CLI)
+_termim_log() {
+    local last_cmd
+    last_cmd=$(history | tail -n 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+    
+    if [[ -n "$last_cmd" && "$last_cmd" != "$_TERMIM_LAST_CMD" ]]; then
+        # Silent Background Logging (Maverick Subshell Trick)
+        (termim log "$last_cmd" &>/dev/null &) 
+        _TERMIM_LAST_CMD="$last_cmd"
+        _TERMIM_IDX=0 # Reset history index on new command
+        _TERMIM_CACHE=() # Purge navigation cache
+    fi
+}
+
+# Attach to Zsh preexec hook for automatic logging
+autoload -Uz add-zsh-hook
+add-zsh-hook preexec _termim_log
+
+# 4. Stateful Up-arrow: project history (Native ZLE Widget)
+_termim_up() {
+    # Initialize Cache on first press (Industrial Latency Fix)
+    if [[ $_TERMIM_IDX -eq 0 ]]; then
+        _TERMIM_ORIGINAL_INPUT="$BUFFER"
+        # Load history into Zsh array (split by newline)
+        _TERMIM_CACHE=(${(f)"$(termim query 2>/dev/null)"})
+    fi
+
+    local next_idx=$((_TERMIM_IDX + 1))
+    
+    # Access In-Memory Array for 0ms recall
+    if [[ $next_idx -le ${#_TERMIM_CACHE} ]]; then
+        local cmd="${_TERMIM_CACHE[$next_idx]}"
+        # Anti-Flicker: Only update if the content is DIFFERENT
+        if [[ "$cmd" != "$BUFFER" ]]; then
+            _TERMIM_IDX=$next_idx
+            BUFFER="$cmd"
+            CURSOR=$#BUFFER
+        else
+            _TERMIM_IDX=$next_idx
         fi
-
-        current=$(dirname "$current")
-    done
-    return 1
+    fi
 }
+zle -N _termim_up
 
-_termim_get_hash() {
-    local root=$1
-    if [[ -z "$root" ]]; then return 1; fi
-    # Normalize to lowercase and remove trailing slash for consistent hashing
-    echo -n "${root:l}" | sha256sum | awk '{print $1}'
+# 5. Stateful Down-arrow: project history
+_termim_down() {
+    if [[ $_TERMIM_IDX -le 0 ]]; then
+        return
+    fi
+
+    local next_idx=$((_TERMIM_IDX - 1))
+    
+    if [[ $next_idx -eq 0 ]]; then
+        if [[ "$BUFFER" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
+            BUFFER="$_TERMIM_ORIGINAL_INPUT"
+            CURSOR=$#BUFFER
+        fi
+        _TERMIM_IDX=0
+    elif [[ $next_idx -le ${#_TERMIM_CACHE} ]]; then
+        local cmd="${_TERMIM_CACHE[$next_idx]}"
+        if [[ "$cmd" != "$BUFFER" ]]; then
+            _TERMIM_IDX=$next_idx
+            BUFFER="$cmd"
+            CURSOR=$#BUFFER
+        else
+            _TERMIM_IDX=$next_idx
+        fi
+    fi
 }
+zle -N _termim_down
 
-# 3. Ctrl+P: Interactive Palette (Native ZLE)
-termim-palette() {
+# 6. Bind standard Zsh escape sequences
+bindkey '^[[A' _termim_up
+bindkey '^[OA' _termim_up
+bindkey '^[[B' _termim_down
+bindkey '^[OB' _termim_down
+
+# 7. Ctrl+P: Interactive Palette (Requires fzf)
+_termim_palette() {
     if ! command -v fzf &>/dev/null; then
-        echo "\n[termim] install 'fzf' to use the Ctrl+P palette."
+        echo -e "\n[termim] install 'fzf' to use the Ctrl+P palette."
         zle reset-prompt
         return 1
     fi
 
     local selected
-    # Use 'termim query' for history or 'termim suggest' for hybrid
-    selected=$(termim query 2>/dev/null | fzf --height=40% --reverse --border=rounded --prompt="  termim > " --header="Project History" --no-sort 2>/dev/null)
-    
+    selected=$(termim query 2>/dev/null | fzf \
+        --height=40% \
+        --reverse \
+        --border=rounded \
+        --prompt="  termim > " \
+        --header="Project History" \
+        --no-sort \
+        2>/dev/null)
+        
     if [[ -n "$selected" ]]; then
-        # On Zsh, we can either insert into buffer or execute immediately.
-        # Here we just insert into the line buffer.
-        LBUFFER="$selected"
+        BUFFER="$selected"
+        CURSOR=$#BUFFER
+        _TERMIM_IDX=0 
+        _TERMIM_CACHE=()
     fi
     zle reset-prompt
 }
-zle -N termim-palette
-bindkey '^P' termim-palette
-
-# 4. Instant Smart Context Swapping
-_termim_native_histfile="$HISTFILE"
-_termim_last_hash=""
-
-precmd() {
-    local root
-    root=$(_termim_get_root)
-    local status=$?
-    
-    if [[ $status -eq 0 ]]; then
-        # MODE: Project-Aware History
-        local hash=$(_termim_get_hash "$root")
-        if [[ "$hash" != "$_termim_last_hash" ]]; then
-            _termim_last_hash="$hash"
-            
-            local projects_dir="$HOME/.termim/projects"
-            mkdir -p "$projects_dir"
-            local hist_file="$projects_dir/$hash.txt"
-            touch "$hist_file"
-
-            # Point Zsh natively to the project file (0ms Lag)
-            HISTFILE="$hist_file"
-            if [[ -f "$hist_file" ]]; then
-                fc -p "$hist_file"
-                fc -R "$hist_file"
-            fi
-        fi
-    else
-        # MODE: Global Native History (Clean & Silent)
-        if [[ -n "$_termim_last_hash" ]]; then
-            _termim_last_hash=""
-            if [[ -n "$_termim_native_histfile" ]]; then
-                # Restore original shell history
-                fc -P
-                HISTFILE="$_termim_native_histfile"
-            fi
-        fi
-    fi
-}
+zle -N _termim_palette
+bindkey '^P' _termim_palette

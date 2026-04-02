@@ -21,7 +21,7 @@ pub enum Commands {
     /// Display intelligent command suggestions based on the project tech-stack.
     Suggest {
         /// Optional prefix to filter suggestions
-        prefix: String,
+        prefix: Option<String>,
     },
     /// Show global usage statistics analyzed from ~/.termim/global_stats.txt.
     Stats,

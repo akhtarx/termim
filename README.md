@@ -37,6 +37,16 @@ Other history tools are slow, bulky, or pollute your folders. Termim achieves th
 - **Zero-Daemon Architecture**: No background processes, no databases, no maintenance. Just pure Rust performance. 🛡️
 - **Context-Aware IQ**: Automatically identifies 34+ stacks (Node, Rust, Go, Python, Docker, etc.) and suggests relevant commands without configuration.
 
+## 🏁 Project Support Matrix
+
+| Shell | Environment | Status |
+| ----- | ----------- | ------ |
+| **PowerShell** | Windows (Terminal/VSCode) | **Production Stable** ✅ |
+| **Git Bash** | Windows (MinTTY) | **Production Stable** ✅ |
+| **Zsh** | Unix / macOS / WSL / MSYS2 | **Experimental (Alpha)** 🧪 |
+| **Fish** | Unix / macOS / WSL / MSYS2 | **Experimental (Alpha)** 🧪 |
+| **Bash** | Linux / macOS | **Experimental (Alpha)** 🧪 |
+
 ---
 
 ## 🚀 Features
@@ -44,7 +54,7 @@ Other history tools are slow, bulky, or pollute your folders. Termim achieves th
 - **Fuzzy Search Palette**: Press `Ctrl+P` (requires `fzf`) to search your project history in a premium popup.
 - **Project Isolation**: Your history is segregated by project-root. No more searching through unrelated commands.
 - **Global Registry**: `termim init` registers projects globally, keeping your source code 100% pristine.
-- **Cross-Shell Stability**: Deep, battle-tested integration for **PowerShell**, **Zsh**, **Bash** (Git Bash/MinTTY), and **Fish.**
+- **Cross-Shell Architecture**: Universal integration suite for all major shells.
 
 ---
 
