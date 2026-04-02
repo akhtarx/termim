@@ -1,114 +1,128 @@
-# Termim PowerShell Integration (Smart Hybrid Mode)
-# Source from $PROFILE:  . ~/.termim/shell/powershell.ps1
+# Termim Professional Shell Integration (v1.0.0)
+# Mastery Edition: Stateful Native Navigation (Cache-Enabled)
+# Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
-$termimDir = "$HOME\.termim"
-$binDir = Join-Path $termimDir "bin"
-$projectsDir = Join-Path $termimDir "projects"
-$registryFile = Join-Path $termimDir "registry.txt"
+# --- 1. Core Logic & Registry ---
 
-# 1. Add to PATH for this session
-if ($env:Path -notlike "*$binDir*") {
-    $env:Path = "$binDir;$env:Path"
-}
+$Global:TermimIdx = 0
+$Global:TermimOriginalInput = ""
+$Global:TermimCache = @()
 
-# 2. Native Project Detection Logic (Zero Lag)
 function Get-TermimProjectRoot {
-    param($Path)
-    $markers = @(".git", "package.json", "Cargo.toml", "go.mod", "pyproject.toml", "Makefile", "docker-compose.yml")
-    $current = $Path
-    while ($current -and (Test-Path $current)) {
-        foreach ($m in $markers) {
-            if (Test-Path (Join-Path $current $m)) { return $current }
-        }
-        $parent = Split-Path $current -Parent
-        if ($parent -eq $current -or !$parent) { break }
-        $current = $parent
-    }
+    $current = (Get-Location).Path
+    $registry = "$HOME\.termim\registry.txt"
+    if (-not (Test-Path $registry)) { return $null }
     
-    # 3. Check Global Registry (Zero-Pollution manual projects)
-    if (Test-Path $registryFile) {
-        $registry = Get-Content $registryFile -ErrorAction SilentlyContinue
-        foreach ($p in $registry) {
-            if ($Path.StartsWith($p)) { return $p }
+    $roots = Get-Content $registry
+    foreach ($root in $roots) {
+        if ($current.StartsWith($root, "OrdinalIgnoreCase")) {
+            return $root
         }
     }
-    
     return $null
 }
 
-function Get-TermimHash {
-    param($PathStr)
-    $sha = [System.Security.Cryptography.SHA256]::Create()
-    $hash = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($PathStr.ToLower()))
-    return ($hash | ForEach-Object { $_.ToString("x2") }) -join ""
+function Get-TermimHash($path) {
+    if (-not $path) { return "global" }
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($path.ToLower())
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $hashBytes = $sha256.ComputeHash($bytes)
+    return [System.BitConverter]::ToString($hashBytes).Replace("-", "").ToLower()
 }
 
-# 4. State Management
-if ($null -eq $global:TermimNativeHistPath) {
-    if (Get-Module PSReadLine) {
-        $global:TermimNativeHistPath = (Get-PSReadLineOption).HistorySavePath
-    }
-}
-$global:TermimLastHash = ""
+# --- 2. History Fetcher ---
 
-# 5. Instant Smart Context Swapping
-if ($null -eq $global:__TermimHooked) {
-    $global:__TermimHooked = $true
-    
-    if ($null -eq (Get-Command -Name "TermimOriginalPrompt" -ErrorAction SilentlyContinue)) {
-        $origPrompt = Get-Content -Path "function:prompt" -ErrorAction SilentlyContinue
-        if ($null -ne $origPrompt) {
-            Set-Item -Path "function:TermimOriginalPrompt" -Value ([scriptblock]::Create($origPrompt)) -ErrorAction SilentlyContinue
+function Get-TermimProjectHistory {
+    $root = Get-TermimProjectRoot
+    if ($root) {
+        $hash = Get-TermimHash $root
+        $path = "$HOME\.termim\projects\$hash.txt"
+        if (Test-Path $path) {
+            # Unique history (reversed for easy indexing)
+            return Get-Content $path | Select-Object -Unique
         }
     }
+    return @()
+}
 
-    function prompt {
-        # 1. Smart Detection
-        $root = Get-TermimProjectRoot $PWD.Path
+# --- 3. PSReadLine Key Handlers (Cache Mastery) ---
+
+if (Get-Module PSReadLine) {
+    # Up-Arrow Handler
+    Set-PSReadLineKeyHandler -Key UpArrow -ScriptBlock {
+        param($key, $arg)
         
-        if ($null -ne $root) {
-            # MODE: Project-Aware History
-            $hash = Get-TermimHash $root
-            if ($hash -ne $global:TermimLastHash) {
-                $global:TermimLastHash = $hash
-                $histFile = Join-Path $projectsDir "$hash.txt"
-                if (!(Test-Path $projectsDir)) { New-Item $projectsDir -ItemType Directory | Out-Null }
-                if (!(Test-Path $histFile)) { New-Item $histFile -ItemType File | Out-Null }
-                
-                # Point to Project history (Native Speed)
-                if (Get-Module PSReadLine) {
-                    try {
-                        Set-PSReadLineOption -HistorySavePath $histFile
-                        [Microsoft.PowerShell.PSConsoleReadLine]::ReadHistoryFile($histFile)
-                    } catch {}
-                }
-            }
-        } else {
-            # MODE: Global Native History (Clean & Silent)
-            if ($global:TermimLastHash -ne "") {
-                $global:TermimLastHash = ""
-                if (Get-Module PSReadLine -and $null -ne $global:TermimNativeHistPath) {
-                    try {
-                        Set-PSReadLineOption -HistorySavePath $global:TermimNativeHistPath
-                        [Microsoft.PowerShell.PSConsoleReadLine]::ReadHistoryFile($global:TermimNativeHistPath)
-                    } catch {}
-                }
-            }
+        # Initialize Cache on First Press (Industrial Latency Fix)
+        if ($Global:TermimIdx -eq 0) {
+            $Global:TermimOriginalInput = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content
+            $Global:TermimCache = Get-TermimProjectHistory
         }
 
-        # 2. Call Original Prompt
-        if (Get-Command -Name "TermimOriginalPrompt" -ErrorAction SilentlyContinue) { return TermimOriginalPrompt }
-        return "PS $($ExecutionContext.SessionState.Path.CurrentLocation)> "
+        if ($Global:TermimCache.Length -eq 0) {
+            [Microsoft.PowerShell.PSConsoleReadLine]::UpArrow($key, $arg)
+            return
+        }
+
+        if ($Global:TermimIdx -lt $Global:TermimCache.Length) {
+            $Global:TermimIdx++
+            # Access In-Memory Array for 0ms recall
+            $cmd = $Global:TermimCache[-($Global:TermimIdx)]
+            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $cmd)
+        }
+    }
+
+    # Down-Arrow Handler
+    Set-PSReadLineKeyHandler -Key DownArrow -ScriptBlock {
+        param($key, $arg)
+        if ($Global:TermimIdx -le 0 -or $Global:TermimCache.Length -eq 0) {
+            [Microsoft.PowerShell.PSConsoleReadLine]::DownArrow($key, $arg)
+            return
+        }
+
+        $Global:TermimIdx--
+        if ($Global:TermimIdx -eq 0) {
+            # Restore original from memory
+            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $Global:TermimOriginalInput)
+        } else {
+            # Access In-Memory Array for 0ms recall
+            $cmd = $Global:TermimCache[-($Global:TermimIdx)]
+            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $cmd)
+        }
     }
 }
 
-# 6. Ctrl+P Fuzzy Search Palette (Requires fzf)
-if (Get-Command "fzf" -ErrorAction SilentlyContinue) {
-    Set-PSReadLineKeyHandler -Key "Ctrl+p" -ScriptBlock {
-        $cmd = termim query | fzf --height 40% --reverse --header="Termim Project History"
-        if ($cmd) {
-            [Microsoft.PowerShell.PSConsoleReadLine]::DeleteLine()
-            [Microsoft.PowerShell.PSConsoleReadLine]::Insert($cmd)
+# --- 4. Ctrl+P: Interactive Palette ---
+
+function Invoke-TermimPalette {
+    if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
+        Write-Host "`n[termim] install 'fzf' to use the Ctrl+P palette." -ForegroundColor Yellow
+        return
+    }
+
+    $history = Get-TermimProjectHistory
+    if ($history.Length -gt 0) {
+        $reversed = [array]$history
+        [Array]::Reverse($reversed)
+        $selected = $reversed | fzf --height 40% --reverse --border rounded --prompt "  termim > " --header "Project History" --no-sort
+        if ($selected) {
+            [Microsoft.PowerShell.PSConsoleReadLine]::AddHistory($selected)
+            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content.Length, $selected)
+            $Global:TermimIdx = 0 
+            $Global:TermimCache = @() # Clear cache on palette exit
         }
     }
+}
+
+if (Get-Module PSReadLine) {
+    Set-PSReadLineKeyHandler -Key "Ctrl+p" -ScriptBlock {
+        Invoke-TermimPalette
+    }
+}
+
+# --- 5. Command Hook & Cache Purge ---
+
+function prompt {
+    $Global:TermimIdx = 0
+    $Global:TermimCache = @() # Purge navigation cache on every command
+    "PS $(Get-Location)> "
 }
