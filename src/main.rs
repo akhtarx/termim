@@ -166,7 +166,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== termim doctor (Pure CLI v1.0.0) ===\n");
+            println!("=== termim doctor (Pure CLI v1.0.1) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon)");
 
             let mut home = dirs::home_dir().unwrap_or_default();
@@ -247,7 +247,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
    | |  __/ |  | | | | | | | | | | | |
    |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.0.0
+  Project-aware terminal history + intelligence v1.0.1
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
 

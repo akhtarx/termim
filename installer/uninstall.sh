@@ -38,6 +38,6 @@ if [ -d "$TERMIM_DIR" ]; then
 fi
 
 echo ""
-echo "=== Termim v1.0.0 successfully removed! ==="
+echo "=== Termim v1.0.1 successfully removed! ==="
 echo ""
 echo "Note: You can close this terminal window to finalize the changes."

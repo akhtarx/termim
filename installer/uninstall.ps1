@@ -50,6 +50,6 @@ if (Test-Path $termimDir) {
 }
 
 Write-Host ""
-Write-Host "=== Termim v1.0.0 successfully removed from this machine! ===" -ForegroundColor Cyan
+Write-Host "=== Termim v1.0.1 successfully removed from this machine! ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Note: You can close this terminal window to finalize the changes."

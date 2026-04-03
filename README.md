@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://github.com/akhtarx/termim/releases"><img src="https://img.shields.io/github/v/release/akhtarx/termim?style=for-the-badge&color=7C3AED" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/akhtarx/termim?style=for-the-badge&color=3B82F6" alt="License"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Changelog-v1.0.1-4C1D95?style=for-the-badge" alt="Changelog"></a>
   <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=for-the-badge&color=10B981" alt="PRs Welcome">
   <img src="https://img.shields.io/badge/Rust-2021-orange.svg?style=for-the-badge&color=EA580C" alt="Rust 2021">
 </p>
@@ -36,13 +37,26 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ## 📊 Strategic Positioning
 
-| Feature | Termim | Native Ctrl+R | Autosuggest | Atuin |
-| :--- | :---: | :---: | :---: | :---: |
-| **Project-Aware History** | ✅ | ❌ | ❌ | ❌ |
-| **Native Execution Speed** | ✅ | ✅ | ⚠️ | ❌ |
-| **No Background Daemon** | ✅ | ✅ | ✅ | ❌ |
-| **Zero-Database (Text-based)** | ✅ | ✅ | ✅ | ❌ |
-| **Hard-Locked Isolation** | ✅ | ❌ | ❌ | ❌ |
+| Feature | Termim | Native Ctrl+R | Autosuggest | Atuin | McFly | HSTR |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Project-Aware History** | ✅ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
+| **Native Execution Speed** | ✅ | ✅ | ⚠️ | ❌ | ⚠️ | ✅ |
+| **No Background Daemon** | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| **Zero-Database (Text-based)** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| **Hard-Locked Isolation** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+---
+
+## 🌊 A Day in the Life with Termim
+Imagine you are switching between a **React frontend** and a **Rust backend**:
+
+1. **Frontend Context**: `cd ~/dev/my-app-ui`
+   - Press `Up Arrow`: You see `npm run dev`, `vitest`, and `tailwind build`.
+   - Your global history noise (`cargo build`, `docker-compose up`) is **filtered out**.
+2. **The Context Shift**: `cd ~/dev/my-app-api`
+   - Instantly, `Up Arrow` shows `cargo run`, `sqlx migrate`, and `tokio-console`.
+3. **The Frictionless Escape**: You need a hidden command from another project?
+   - Keep pressing `Up Arrow`. Once project-specific history is exhausted, Termim seamlessly transitions into your **global shell history**.
 
 ---
 
@@ -77,10 +91,28 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ---
 
+## 📦 Troubleshooting
+- **Commands not saving?** Run `termim doctor` to check if your registry is writeable.
+- **Up Arrow feels like default?** Ensure you have sourced the integration in your profile (`.zshrc`, `Microsoft.PowerShell_profile.ps1`).
+- **Git Bash issues?** Ensure `winpty` is installed for the best `fzf` experience.
+
+---
+
+---
+
+## 🛡️ Security & Privacy
+Termim is designed with a **Privacy-First** architecture. 
+
+### Automatic Redaction
+Before any command is saved to disk, Termim's **Redaction Engine** scrubs it for sensitive data using high-performance regex:
+- **Credentials**: `https://user:password@host` becomes `https://user:***@host`.
+- **Secrets**: Environment variables like `API_KEY`, `TOKEN`, `SECRET`, and `PASSWORD` are automatically masked.
+- **Local Isolation**: All data stays on your machine at `~/.termim/`. No data ever leaves your computer.
+
 ## 🧬 How it Works
 Termim uses a **Shadow Registry** system to manage project history without polluting your source code.
 
-1. **Heuristic Detection**: When you run a command, Termim identifies the current project root using common markers (`.git`, `package.json`, `Cargo.toml`, etc.) or your manual `termim init` registry.
+1. **Recursive Marker Discovery**: When you run a command, Termim identifies the current project root using explicit markers (`.git`, `package.json`, `Cargo.toml`, etc.) or your manual `termim init` registry.
 2. **Contextual Hashing**: The project root is hashed to a unique identifier. History is stored in isolated files within `~/.termim/projects/`.
 3. **Direct-to-Disk Logging**: Commands are sanitized (redacting secrets/keys) and appended directly to the project-specific history file with zero intermediate layers.
 4. **Frictionless Escape**: Navigation is isolated to project history first. When the project history is exhausted, Termim seamlessly falls back to global shell history.

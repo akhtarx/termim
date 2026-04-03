@@ -18,7 +18,7 @@ Termim is built on the principle of **Passive Integration**. Most developer tool
 ### The Shadow Registry
 Termim avoids "Project Pollution" (littering `.history` or `.termim` files inside your source code directories). Instead, it maintains a **Centralized Shadow Registry** at `~/.termim/`.
 
-- **Project Identification**: Termim uses a recursive heuristic scan to identify project boundaries (searching for `.git`, `package.json`, `Cargo.toml`, etc.).
+- **Project Identification**: Termim uses a recursive marker scan to identify project boundaries (searching for `.git`, `package.json`, `Cargo.toml`, etc.).
 - **Path Hashing**: Project roots are normalized (lowercased on Windows to prevent casing duplication) and hashed using **SHA-256**.
 - **Filesystem Isolation**: History for each project is stored in a unique, plain-text file: `~/.termim/projects/{hash}.txt`. This architecture prevents history "bleeding" and allows for easy manual inspection.
 
