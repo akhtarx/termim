@@ -116,30 +116,32 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
         .and_then(|s| serde_json::from_str(s).ok());
 
     // ── Node / JavaScript / TypeScript ───────────────────
-    // ── Node / JavaScript / TypeScript ───────────────────
     if pkg_json_path.exists() {
         ecosystems.push(Ecosystem::Node);
-        // Use cached JSON — no extra disk read
+        
+        // 1. Extract Scripts (if possible)
         if let Some(ref json) = pkg_json_value {
             if let Some(scripts) = json.get("scripts").and_then(|s| s.as_object()) {
                 for name in scripts.keys() {
                     suggestions.push(extracted(format!("npm run {}", name), 10));
                 }
             }
-            // Detect package manager preference from lock files (all cached in dir_files)
-            let pm = if dir_files.contains("yarn.lock") {
-                "yarn"
-            } else if dir_files.contains("pnpm-lock.yaml") {
-                "pnpm"
-            } else if dir_files.contains("bun.lockb") {
-                "bun"
-            } else {
-                "npm"
-            };
-            suggestions.push(default(&format!("{} install", pm), 4));
-            suggestions.push(default(&format!("{} test", pm), 3));
-            suggestions.push(default(&format!("{} run build", pm), 3));
         }
+
+        // 2. Resilient Ecosystem Defaults
+        // Detect package manager preference from lock files
+        let pm = if dir_files.contains("yarn.lock") {
+            "yarn"
+        } else if dir_files.contains("pnpm-lock.yaml") {
+            "pnpm"
+        } else if dir_files.contains("bun.lockb") {
+            "bun"
+        } else {
+            "npm"
+        };
+        suggestions.push(default(&format!("{} install", pm), 10)); // Baseline Excellence
+        suggestions.push(default(&format!("{} test", pm), 8));
+        suggestions.push(default(&format!("{} run build", pm), 8));
     }
 
     // ── Rust ─────────────────────────────────────────────
@@ -251,7 +253,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
             "composer update",
             "composer dump-autoload",
         ] {
-            suggestions.push(default(cmd, 4));
+            suggestions.push(default(cmd, 10)); // Baseline Excellence
         }
     }
 

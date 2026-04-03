@@ -20,22 +20,43 @@ _TERMIM_IDX=0
 _TERMIM_CACHE=()
 _TERMIM_ORIGINAL_INPUT=""
 
-# Background logging hook
-_termim_log() {
-    local cmd="$1"
-    [[ -z "$cmd" ]] && return
-    "$_TERMIM_BIN" log "$cmd" >/dev/null 2>&1 &!
+_TERMIM_PENDING_CMD=""
+
+# Pre-execution hook: Mark command as pending
+_termim_preexec() {
+    _TERMIM_PENDING_CMD="$1"
     _TERMIM_IDX=0 
     _TERMIM_CACHE=() 
 }
+
+# Post-execution hook: Capture exit code and log to termim
+_termim_precmd() {
+    local exit_status=$?
+    if [[ -n "$_TERMIM_PENDING_CMD" ]]; then
+        # Penultimate command (the one before the command that just target finished)
+        local prev_cmd="$history[$((HISTNO-2))]"
+        
+        # Log to Termim with exit-code awareness
+        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" >/dev/null 2>&1 &!
+        
+        _TERMIM_PENDING_CMD=""
+    fi
+}
+
 autoload -Uz add-zsh-hook
-add-zsh-hook preexec _termim_log
+add-zsh-hook preexec _termim_preexec
+add-zsh-hook precmd _termim_precmd
 
 # Up arrow: cycle project history
 _termim_up() {
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$BUFFER"
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query 2>/dev/null)}")
+        
+        # Capture context for predictive ranking
+        local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
+        
+        # Fetch frequency-ranked navigation stack
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --prev "$prev_cmd" 2>/dev/null)}")
     fi
     local NEXT_IDX=$((_TERMIM_IDX + 1))
     if [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then

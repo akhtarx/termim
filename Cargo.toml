@@ -1,6 +1,6 @@
 [package]
 name = "termim"
-version = "1.0.1"
+version = "1.0.3"
 edition = "2021"
 description = "Project-aware terminal history and command intelligence"
 repository = "https://github.com/akhtarx/termim"
@@ -15,7 +15,8 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dirs = "5.0"
 sha2 = "0.10"
-regex = "1.12.3"
+fd-lock = "4.0"
+tempfile = "3.8"
 
 [[bin]]
 name = "termim"

@@ -4,8 +4,24 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.0.3] - 2026-04-03
+### ✨ Added
+- **Weighted Behavioral Ranking**: 1000x multiplier for Markov-based command transitions.
+- **Ecosystem Advice Priority**: 50x multiplier for stack-defining commands (e.g., npm, composer).
+- **Resilient Project Detection**: Improved fallback logic for Node, PHP, and Go projects with minimal configuration files.
+- **Version Synchronization**: Unified version alignment (v1.0.3) across all interfaces.
+
+## [1.0.2] - 2026-04-03
+### 🛠️ Hardening
+- **Performance Optimization**: Removed heavy dependencies to achieve **15ms average latency**.
+- **Advisory File Locking**: Integrated **`fd-lock`** for atomic file safety across parallel terminal sessions.
+- **Ecosystem Isolation**: Boundary detection for Rust, Node.js, PHP, and Go projects.
+- **Privacy Sieve**: High-performance manual redactor for masking credentials and secrets.
+- **Success-Only Learning**: Captures exit codes to filter out failed commands from learning models.
+
 ## [1.0.1] - 2026-04-03
 ### ✨ Added
+- **Predictive Behavioral Ranking**: First-order Markov Chain implementation that re-ranks history based on your previous command context.
 - **Frictionless History Escape**: Seamlessly transition from project-specific history to global shell history when context is exhausted.
 - **Recursive Marker Discovery**: Deterministic project root identification via explicit markers (`.git`, `package.json`, `Cargo.toml`, etc.).
 - **Strategic Positioning Matrix**: High-impact comparison guide against Atuin, McFly, HSTR, and native tools.

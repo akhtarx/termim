@@ -26,6 +26,8 @@ _TERMIM_CACHE=()
 
 # Log the last executed command
 _termim_log() {
+    local last_status=$? # Capture exit status immediately (must be first action)
+    
     # Reset navigation on new prompt
     _TERMIM_IDX=0
     _TERMIM_CACHE=()
@@ -34,9 +36,13 @@ _termim_log() {
     local last_cmd
     last_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
     
+    # Predictive Context: Get the penultimate command for transition recording
+    local prev_cmd
+    prev_cmd=$(fc -ln -2 -2 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
+    
     if [[ -n "$last_cmd" ]]; then
-        # Run logging in background and disown to keep terminal clean
-        ("$_TERMIM_BIN" log "$last_cmd" &>/dev/null &) 
+        # Run logging in background with exit status awareness
+        ("$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" &>/dev/null &) 
         disown 2>/dev/null
     fi
 }
@@ -46,12 +52,16 @@ if [[ "$PROMPT_COMMAND" != *"_termim_log"* ]]; then
     PROMPT_COMMAND="_termim_log; $PROMPT_COMMAND"
 fi
 
-# Handle up arrow
-_termim_up() {
     # Fetch project history on first press
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query 2>/dev/null)
+        
+        # Capture context for predictive ranking
+        local current_prev
+        current_prev=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
+        
+        # Fetch frequency-ranked navigation stack
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --prev "$current_prev" 2>/dev/null)
     fi
     local next_idx=$((_TERMIM_IDX + 1))
     

@@ -10,27 +10,26 @@ By participating in this project, you agree to maintain a professional, inclusiv
 
 ---
 
+## 🧠 Technical Standards & Performance
+
+Termim is built on the principle of **High-Performance Efficiency.** Every contribution should adhere to these core technical standards:
+
+1. **The Performance Moat**: Core logic should avoid heavy dependencies (like `regex` or `once_cell`) that incur a startup tax. We aim for sub-20ms total execution time.
+2. **Concurrency Safety**: All file-write operations must use **Universal Advisory Locking (`fd-lock`)** and atomic swap logic to ensure data integrity across parallel sessions.
+3. **Contextual Isolation**: Project detection must strictly follow the established markers to ensure accurate ecosystem isolation (Rust, Node, PHP, etc).
+4. **Privacy-First Sanitization**: Credentials and secrets must be scrubbed using the established manual sieve *before* they are logged to disk.
+
 ## 🛠️ How to Contribute
 
-### 1. Reporting Bugs
-- Please search the existing issues before reporting a new bug.
-- Use the **Bug Report** template when opening an issue.
-- Include the output of `termim doctor` to help us diagnose the environment.
-
-### 2. Suggesting Enhancements
-- Feature requests are welcome! Please provide a clear description of the problem your enhancement would solve.
-- Be specific about the expected behavior and how it benefits the user experience.
-
-### 3. Pull Requests
-- **Branching**: Use a descriptive branch name (e.g., `feat/fuzzy-search` or `fix/registry-parsing`).
+### 1. Pull Requests
 - **Code Quality**: We use Rust for the core logic. Please run `cargo fmt` and `cargo clippy` before submitting your PR.
-- **Documentation**: If you're adding a new feature or changing a shell script, please update the relevant comments or documentation.
-- **Tests**: Ensure all existing tests pass and add new tests where applicable.
+- **Performance Benchmarking**: Ensure that your changes do not significantly increase binary startup or execution latency.
+- **Locking Integrity**: Any new history or stat tracking must respect the `fd-lock` advisory standard.
 
 ---
 
 ## ⚖️ License
 
-By contributing to Termim, you agree that your contributions will be licensed under the project's **MIT License.**
+By contributing to Termim, you agree that your contributions will be licensed under the project's **MIT License.** 
 
-**Thank you for helping build a smarter terminal experience!** 🚀
+**Thank you for helping build a smarter, indestructible terminal experience!** 🚀

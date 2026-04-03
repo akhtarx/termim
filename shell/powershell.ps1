@@ -27,12 +27,17 @@ $Global:TermimLogger.Runspace = [runspacefactory]::CreateRunspace()
 $Global:TermimLogger.Runspace.Open()
 
 function Global:Invoke-TermimLogAsync {
-    param([string]$command)
+    param([string]$command, [int]$exitCode = 0)
     if (-not $Global:TermimBin) { return }
     
     # Run logging in a separate thread to avoid blocking
     try {
-        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' 2>&1 | Out-Null")
+        $history = [Microsoft.PowerShell.PSConsoleReadLine]::GetHistoryItems()
+        # For post-exec logging, the command that just finished is the last one in history.
+        # The 'previous' command is the one before that.
+        $prev = if ($history.Count -ge 2) { $history[-2].CommandLine } else { "" }
+        
+        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode 2>&1 | Out-Null")
         $Global:TermimLogger.Commands.Clear()
         $Global:TermimLogger.AddScript($sb)
         $Global:TermimLogger.BeginInvoke() | Out-Null
@@ -60,8 +65,12 @@ if (Get-Module PSReadLine) {
         if ($Global:TermimIdx -eq 0) {
             $Global:TermimOriginalInput = $currentLine
             if ($Global:TermimBin) {
-                # The binary handles project detection and history retrieval internally
-                $Global:TermimCache = & $Global:TermimBin query 2>$null | Select-Object -Unique
+                # Predictive Context: Get the last command run before this navigation
+                $history = [Microsoft.PowerShell.PSConsoleReadLine]::GetHistoryItems()
+                $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
+
+                # Query with transition context
+                $Global:TermimCache = & $Global:TermimBin query --prev "$prev" 2>$null | Select-Object -Unique
             }
         }
 
@@ -99,16 +108,14 @@ if (Get-Module PSReadLine) {
         }
     }
 
-    # Log command on Enter
+    # Log command on Enter (Mark as pending for post-exec logging)
     Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
         $line = ""
         try { $line = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content }
         catch { $l = ""; $c = 0; [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$l, [ref]$c); $line = $l }
 
         if ($line.Trim()) {
-            if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
-                Invoke-TermimLogAsync -command $line
-            }
+            $Global:TermimPendingCommand = $line
         }
         [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
     }
@@ -139,11 +146,24 @@ if (Get-Module PSReadLine) {
     }
 }
 
-# Reset state for every new prompt
+# Post-Execution logic in the prompt function
 function prompt {
+    # 1. Capture exit status immediately (Must be first action)
+    $lastExit = $LASTEXITCODE
+    if ($null -eq $lastExit) { $lastExit = if ($?) { 0 } else { 1 } }
+
+    # 2. Perform background logging for any pending command
+    if ($Global:TermimPendingCommand) {
+        if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
+            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit
+        }
+        $Global:TermimPendingCommand = $null
+    }
+
+    # 3. Reset navigation state for the new prompt
     $Global:TermimIdx = 0
     $Global:TermimCache = @()
     
-    # Generic prompt output
+    # 4. Standard prompt output
     "PS $(Get-Location)> "
 }

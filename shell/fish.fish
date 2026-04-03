@@ -23,21 +23,26 @@ set -g _TERMIM_IDX 0
 set -g _TERMIM_CACHE
 set -g _TERMIM_ORIGINAL_INPUT ""
 
-# Log commands in the background
-function termim_preexec --on-event fish_preexec
+# Post-Execution logic in Fish: Capture exit status and log
+function termim_postexec --on-event fish_postexec
     # Only log if termim is found
     if not type -q "$_TERMIM_BIN"
         return
     end
 
-    # Get the command from the arguments
+    # Command and its exit status from arguments
     set -l cmd $argv[1]
+    set -l exit_status $argv[2]
+    
     if test -z "$cmd"
         return
     end
 
-    # Background logging with disown to stay silent
-    "$_TERMIM_BIN" log "$cmd" >/dev/null 2>&1 &
+    # Behavioral Context: Get the penultimate command (since current is at head)
+    set -l prev (history | head -n 2 | tail -n 1)
+
+    # Log to Termim with exit-awareness
+    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" >/dev/null 2>&1 &
     disown 2>/dev/null
     
     # Reset navigation state on new command
@@ -57,7 +62,10 @@ function termim_up
     # Fetch history if not already cached
     if test $_TERMIM_IDX -eq 0
         set -g _TERMIM_ORIGINAL_INPUT (commandline)
-        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query 2>/dev/null)
+        
+        # Capture context for predictive ranking
+        set -l prev (history | head -n 1)
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --prev "$prev" 2>/dev/null)
     end
 
     set -l next_idx (math $_TERMIM_IDX + 1)

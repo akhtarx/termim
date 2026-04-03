@@ -6,20 +6,32 @@ pub fn detect_project_root(current_dir: &Path) -> PathBuf {
         ".git",
         "package.json",
         "Cargo.toml",
+        "composer.json",
         "go.mod",
+        "Gemfile",
         "pyproject.toml",
+        "requirements.txt",
         "Makefile",
         "docker-compose.yml",
     ];
 
     let mut path = current_dir.to_path_buf();
+    
+    // 1. Initial Check (Current Directory)
+    for marker in &markers {
+        if path.join(marker).exists() {
+            return path;
+        }
+    }
+
+    // 2. Climbing Check (Parents)
     while let Some(parent) = path.parent() {
+        path = parent.to_path_buf();
         for marker in &markers {
             if path.join(marker).exists() {
                 return path;
             }
         }
-        path = parent.to_path_buf();
     }
 
     // 2. Check Global Registry (~/.termim/registry.txt)
