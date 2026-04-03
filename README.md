@@ -77,8 +77,8 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 | :--- | :--- | :--- | :--- | :--- |
 | **PowerShell** | Windows | Stable ✅ | Stable ✅ | Production |
 | **Bash** | Git Bash / Linux | Stable ✅ | Stable ✅ | Production |
-| **Zsh** | macOS / Unix | Stable ✅ | Stable ✅ | Production |
-| **Fish** | macOS / Unix | Stable ✅ | Stable ✅ | Production |
+| **Zsh** | macOS / Unix | Stable ✅ | Beta ⚠️ | Production |
+| **Fish** | macOS / Unix | Stable ✅ | Beta ⚠️ | Production |
 
 ---
 
