@@ -53,7 +53,6 @@ _termim_up() {
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query 2>/dev/null)
     fi
-
     local next_idx=$((_TERMIM_IDX + 1))
     
     # Navigate if history is available
@@ -65,32 +64,44 @@ _termim_up() {
             READLINE_LINE="$cmd"
             READLINE_POINT=${#cmd}
         fi
+    else
+        # --- Escape Hatch: Fallback to Global Shell History (Simulated) ---
+        local global_cmd
+        global_cmd=$(history -p "!- $((next_idx - ${#_TERMIM_CACHE[@]}))" 2>/dev/null)
+        if [[ -n "$global_cmd" ]]; then
+            _TERMIM_IDX=$next_idx
+            READLINE_LINE="$global_cmd"
+            READLINE_POINT=${#global_cmd}
+        fi
     fi
 }
 
 # Handle down arrow
 _termim_down() {
-    if [[ $_TERMIM_IDX -le 0 ]]; then
+    if [[ $_TERMIM_IDX -gt 0 ]]; then
+        local next_idx=$((_TERMIM_IDX - 1))
+        
+        if [[ $next_idx -eq 0 ]]; then
+            if [[ "$READLINE_LINE" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
+                _TERMIM_IDX=0
+                READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
+                READLINE_POINT=${#_TERMIM_ORIGINAL_INPUT}
+            else
+                _TERMIM_IDX=0
+            fi
+        elif [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
+            local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
+            if [[ "$cmd" != "$READLINE_LINE" ]]; then
+                _TERMIM_IDX=$next_idx
+                READLINE_LINE="$cmd"
+                READLINE_POINT=${#cmd}
+            fi
+        fi
+    else
+        # --- Escape Hatch: Fallback to Global Shell History (Simulated) ---
+        # We don't implement full bidirectional global history for Bash due to its 
+        # stateless bind -x nature, but we allow simple recovery.
         return
-    fi
-
-    local next_idx=$((_TERMIM_IDX - 1))
-    
-    if [[ $next_idx -eq 0 ]]; then
-        if [[ "$READLINE_LINE" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
-            _TERMIM_IDX=0
-            READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
-            READLINE_POINT=${#_TERMIM_ORIGINAL_INPUT}
-        else
-            _TERMIM_IDX=0
-        fi
-    elif [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
-        local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
-        if [[ "$cmd" != "$READLINE_LINE" ]]; then
-            _TERMIM_IDX=$next_idx
-            READLINE_LINE="$cmd"
-            READLINE_POINT=${#cmd}
-        fi
     fi
 }
 

@@ -20,21 +20,6 @@ foreach ($p in $possiblePaths) {
     }
 }
 
-# Helper to find the project root from registry
-function Global:Get-TermimProjectRoot {
-    $current = (Get-Location).Path
-    $registry = "$HOME\.termim\registry.txt"
-    if (-not (Test-Path $registry)) { return $null }
-    
-    $roots = Get-Content $registry -ErrorAction SilentlyContinue
-    if (-not $roots) { return $null }
-    foreach ($root in $roots) {
-        if ($current.StartsWith($root, "OrdinalIgnoreCase")) {
-            return $root
-        }
-    }
-    return $null
-}
 
 # Background logging with runspaces
 $Global:TermimLogger = [powershell]::Create()
@@ -74,38 +59,43 @@ if (Get-Module PSReadLine) {
         # Fetch and cache project history on first press
         if ($Global:TermimIdx -eq 0) {
             $Global:TermimOriginalInput = $currentLine
-            $root = Get-TermimProjectRoot
-            if ($root) {
+            if ($Global:TermimBin) {
+                # The binary handles project detection and history retrieval internally
                 $Global:TermimCache = & $Global:TermimBin query 2>$null | Select-Object -Unique
             }
         }
 
-        if ($Global:TermimCache.Length -gt 0) {
-            if ($Global:TermimIdx -lt $Global:TermimCache.Length) {
-                $cmd = $Global:TermimCache[$Global:TermimIdx]
-                if ($cmd -ne $currentLine) {
-                    [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
-                }
-                $Global:TermimIdx++
+        if ($Global:TermimCache.Length -gt 0 -and $Global:TermimIdx -lt $Global:TermimCache.Length) {
+            $cmd = $Global:TermimCache[$Global:TermimIdx]
+            if ($cmd -ne $currentLine) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
             }
+            $Global:TermimIdx++
+        } else {
+            # --- Escape Hatch: Fallback to Global Shell History ---
+            [Microsoft.PowerShell.PSConsoleReadLine]::PreviousHistory($key, $arg)
         }
     }
 
     # Navigate project history with Down arrow
     Set-PSReadLineKeyHandler -Key DownArrow -ScriptBlock {
         param($key, $arg)
-        if ($Global:TermimIdx -le 0) { return }
 
         $currentLine = ""
         try { $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content }
         catch { $l = ""; $c = 0; [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$l, [ref]$c); $currentLine = $l }
 
-        $Global:TermimIdx--
-        if ($Global:TermimIdx -eq 0) {
-            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $Global:TermimOriginalInput)
+        if ($Global:TermimIdx -gt 0) {
+            $Global:TermimIdx--
+            if ($Global:TermimIdx -eq 0) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $Global:TermimOriginalInput)
+            } else {
+                $cmd = $Global:TermimCache[$Global:TermimIdx - 1]
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
+            }
         } else {
-            $cmd = $Global:TermimCache[$Global:TermimIdx - 1]
-            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $currentLine.Length, $cmd)
+            # --- Escape Hatch: Fallback to Global Shell History ---
+            [Microsoft.PowerShell.PSConsoleReadLine]::NextHistory($key, $arg)
         }
     }
 

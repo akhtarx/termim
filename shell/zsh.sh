@@ -40,6 +40,7 @@ _termim_up() {
     local NEXT_IDX=$((_TERMIM_IDX + 1))
     if [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then
         local CURR_CMD="${_TERMIM_CACHE[$NEXT_IDX]}"
+        # Only update if the command is different
         if [[ "$CURR_CMD" != "$BUFFER" ]]; then
             _TERMIM_IDX=$NEXT_IDX
             BUFFER="$CURR_CMD"
@@ -47,31 +48,36 @@ _termim_up() {
         else
             _TERMIM_IDX=$NEXT_IDX
         fi
+    else
+        # --- Escape Hatch: Fallback to Global Shell History ---
+        zle .up-line-or-history
     fi
 }
 zle -N _termim_up
 
 # Down arrow: restore or cycle next
 _termim_down() {
-    if [[ $_TERMIM_IDX -le 0 ]]; then
-        return
-    fi
-    local NEXT_IDX=$((_TERMIM_IDX - 1))
-    if [[ $NEXT_IDX -eq 0 ]]; then
-        if [[ "$BUFFER" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
-            BUFFER="$_TERMIM_ORIGINAL_INPUT"
-            CURSOR=$#BUFFER
+    if [[ $_TERMIM_IDX -gt 0 ]]; then
+        local NEXT_IDX=$((_TERMIM_IDX - 1))
+        if [[ $NEXT_IDX -eq 0 ]]; then
+            if [[ "$BUFFER" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
+                BUFFER="$_TERMIM_ORIGINAL_INPUT"
+                CURSOR=$#BUFFER
+            fi
+            _TERMIM_IDX=0
+        elif [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then
+            local CURR_CMD="${_TERMIM_CACHE[$NEXT_IDX]}"
+            if [[ "$CURR_CMD" != "$BUFFER" ]]; then
+                _TERMIM_IDX=$NEXT_IDX
+                BUFFER="$CURR_CMD"
+                CURSOR=$#BUFFER
+            else
+                _TERMIM_IDX=$NEXT_IDX
+            fi
         fi
-        _TERMIM_IDX=0
-    elif [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then
-        local CURR_CMD="${_TERMIM_CACHE[$NEXT_IDX]}"
-        if [[ "$CURR_CMD" != "$BUFFER" ]]; then
-            _TERMIM_IDX=$NEXT_IDX
-            BUFFER="$CURR_CMD"
-            CURSOR=$#BUFFER
-        else
-            _TERMIM_IDX=$NEXT_IDX
-        fi
+    else
+        # --- Escape Hatch: Fallback to Global Shell History ---
+        zle .down-line-or-history
     fi
 }
 zle -N _termim_down

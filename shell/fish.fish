@@ -61,7 +61,7 @@ function termim_up
     end
 
     set -l next_idx (math $_TERMIM_IDX + 1)
-    
+
     # Cycle through in-memory cache
     if test $next_idx -le (count $_TERMIM_CACHE)
         set -l cmd $_TERMIM_CACHE[$next_idx]
@@ -71,6 +71,9 @@ function termim_up
             commandline $cmd
             commandline -C (string length $cmd)
         end
+    else
+        # --- Escape Hatch: Fallback to Global Shell History ---
+        commandline -f up-line
     end
 end
 
