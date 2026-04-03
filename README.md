@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="Termim Logo" width="200"/>
 </p>
 
-<<h1 align="center">Termim</h1>
+<h1 align="center">Termim</h1>
 
 <p align="center">
   <strong>Your terminal remembers per project.</strong><br/>
@@ -41,13 +41,16 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ## 📊 Strategic Positioning
 
-| Feature | Termim v1.0.3 | Native Ctrl+R | HSTR | Atuin |
-| :--- | :---: | :---: | :---: | :---: |
-| **Project Boundary Lock** | ✅ | ❌ | ❌ | ❌ |
-| **Markov Behavioral Intel** | ✅ (1000x) | ❌ | ❌ | ⚠️ |
-| **Zero-Daemon Architecture** | ✅ | ✅ | ✅ | ⚠️ |
-| **Concurrency Locking** | ✅ | ✅ | ✅ | ❌ |
-| **Sub-20ms Latency** | ✅ | ✅ | ✅ | ❌ |
+| Feature | **Termim v1.0.3** | Atuin | McFly | HSTR | Native |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Project Isolation** | ✅ (Strict) | ⚠️ | ⚠️ | ❌ | ❌ |
+| **Behavioral Intel** | ✅ (1000x) | ⚠️ | ✅ | ❌ | ❌ |
+| **Zero-Daemon** | ✅ | ❌ | ✅ | ✅ | ✅ |
+| **Zero-Database** | ✅ | ❌ | ❌ | ✅ | ✅ |
+| **Native Windows** | ✅ | ⚠️ | ❌ | ❌ | ✅ |
+| **Privacy Sieve** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Success-Only Learning** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Latency Moat** | **~15ms** | > 50ms | > 20ms | < 10ms | < 1ms |
 
 ---
 
@@ -79,6 +82,18 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 | **Bash** | Git Bash / Linux | Stable ✅ | Stable ✅ | Production |
 | **Zsh** | macOS / Unix | Stable ✅ | Beta ⚠️ | Production |
 | **Fish** | macOS / Unix | Stable ✅ | Beta ⚠️ | Production |
+
+---
+
+## 🐚 Shell Authentication Matrix (v1.0.3)
+
+| Feature | PowerShell | Zsh | Bash | Fish | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Exit Status Capture** | ✅ (`prompt`) | ✅ (`precmd`) | ✅ (`PROMPT_CMD`) | ✅ (`postexec`) | **Authentic** |
+| **Markov Context (`--prev`)**| ✅ | ✅ | ✅ | ✅ | **Authentic** |
+| **Success-Only Logging** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
+| **Predictive Navigation** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
+| **Performance Moat** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
 
 ---
 
