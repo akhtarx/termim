@@ -37,13 +37,13 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ## 📊 Strategic Positioning
 
-| Feature | Termim | Native Ctrl+R | Autosuggest | Atuin | McFly | HSTR |
+| Feature | Termim | Native Ctrl+R | HSTR | Autosuggest | McFly | Atuin |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Project-Aware History** | ✅ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
-| **Native Execution Speed** | ✅ | ✅ | ⚠️ | ❌ | ⚠️ | ✅ |
-| **No Background Daemon** | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| **Zero-Database (Text-based)** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
 | **Hard-Locked Isolation** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Project-Aware History** | ✅ | ❌ | ❌ | ❌ | ⚠️ | ❌ |
+| **Zero-Database (Text)** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **No Background Daemon** | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ |
+| **Native Execution Speed** | ✅ | ✅ | ✅ | ⚠️ | ⚠️ | ❌ |
 
 ---
 
