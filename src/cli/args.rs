@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "termim", version = "1.0.1", about = "Project-aware terminal history and contextual intelligence")]
+#[command(name = "termim", version = "1.0.5", about = "Project-aware terminal history and contextual intelligence")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -30,6 +30,15 @@ pub enum Commands {
         /// The previous command executed (to enable predictive ranking)
         #[arg(short, long)]
         prev: Option<String>,
+        /// Override the current working directory for accurate project detection
+        #[arg(long)]
+        cwd: Option<String>,
+        /// Only return pure project history (Recency-First)
+        #[arg(long)]
+        history_only: bool,
+        /// Only return intelligent predictions (Transitions-First)
+        #[arg(long)]
+        suggest_only: bool,
     },
     /// Display intelligent command suggestions based on the project tech-stack.
     Suggest {
@@ -38,6 +47,9 @@ pub enum Commands {
         /// The previous command executed (to enable predictive suggestions)
         #[arg(short, long)]
         prev: Option<String>,
+        /// Override the current working directory for accurate project detection
+        #[arg(long)]
+        cwd: Option<String>,
     },
     /// Show global usage statistics analyzed from ~/.termim/global_stats.txt.
     Stats,

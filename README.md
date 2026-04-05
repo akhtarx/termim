@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Your terminal remembers per project.</strong><br/>
-  A high-performance, behavioral intelligence layer for shell history.
+  A minimalist, context-aware command intelligence layer for shell history.
 </p>
 
 <p align="center">
@@ -29,20 +29,24 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 - **Ctrl+R = A workaround, not a solution**
 
 ## ⚡ Technical Core
-**Termim v1.0.3** converts your global shell history into a **behavioral contextual memory layer**. It is built for engineers who switch contexts frequently and demand zero impact on terminal performance.
+**Termim v1.0.5** converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
 
-- **1000x Adaptive Intelligence**: Termim learns your habits (Markov Chain) and prioritizes them with an absolute 1000x weight. Your unique "Next Steps" take the top recommendation spot.
-- **Project Isolation Mastery**: History is isolated by project root across all ecosystems (Rust, Node.js, PHP, Go, Python). `Up Arrow` provides stack-specific commands for your current work.
-- **Robust Concurrency**: Powered by **Universal Advisory Locking (`fd-lock`)** and **Atomic Swap** logic. Termim is safe across parallel terminal instances and background pruning.
-- **Performance Moat**: Core logic is dependency-free to eliminate the "Library Startup Tax." Average logic latency is **~15ms** (indiscernible from native shell speed).
-- **Privacy Sieve**: A high-performance manual redaction sieve scrubs credentials and multi-token secrets (`TOKEN=***`, `https://user:***@host`) before they ever touch your disk.
+- **🔄 Symmetrical Navigation**: A deterministic state machine providing 1:1 parity between PowerShell, Bash, Zsh, and Fish. Up-Arrow for history traversal; Down-Arrow for global-to-local hand-off.
+- **🚀 Fundamentals Engine**: A static, zero-latency dispatch registry providing O(1) follow-up suggestions (e.g., Git, Cargo, NPM) without disk I/O.
+- **1000x Adaptive Intelligence**: Weighted Markov Chain transitions prioritize your unique behavioral patterns with a high-coefficient multiplier.
+- **Deterministic Context Isolation**: Normalization-based project detection (v1.1.8). History is segregated by canonical filesystem identity across Rust, Node, and POSIX environments.
+- **Atomic Concurrency**: Powered by **Universal Advisory Locking (`fd-lock`)**. Termim ensures data integrity across parallel terminal instances and background pruning cycles.
+- **Minimalist Latency**: Dependency-free core logic eliminates the library startup tax, achieving an average latency of **~15ms**.
+- **Privacy Sieve**: A character-based redaction engine masks credentials and secrets in-memory before persistent logging occurs.
 
 ---
 
 ## 📊 Strategic Positioning
 
-| Feature | **Termim v1.0.3** | Atuin | McFly | HSTR | Native |
+| Feature | **Termim v1.0.5** | Atuin | McFly | HSTR | Native |
 | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Symmetric Symmetry**| ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Fundamentals Engine**| ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Project Isolation** | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
 | **Behavioral Intel** | ✅ | ⚠️ | ✅ | ❌ | ❌ |
 | **Zero-Daemon** | ✅ | ❌ | ✅ | ✅ | ✅ |
@@ -58,8 +62,8 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 | Key | Action |
 | :--- | :--- |
-| **Up Arrow** | Cycle through project-specific history. |
-| **Down Arrow** | Cycle forward or restore the original input. |
+| **Up Arrow** | Cycle through project-specific history → Global History. |
+| **Down Arrow** | Cycle back from Global → Project → **Predictions**. |
 | **Ctrl + P** | Open the interactive fuzzy-search history palette (requires `fzf`). |
 
 ### CLI Command Reference
@@ -85,7 +89,7 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ---
 
-## 🐚 Shell Authentication Matrix (v1.0.3)
+## 🐚 Shell Authentication Matrix (v1.0.5)
 
 | Feature | PowerShell | Zsh | Bash | Fish | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -99,7 +103,7 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ## 🧬 Architecture
 
-Termim v1.0.3 is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for sub-20ms execution and 100% data integrity.
+Termim v1.0.5 is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for sub-20ms execution and 100% data integrity.
 
 ### 1. Performance Moat (Zero-Library Tax)
 Termim eliminates the "Library Startup Tax" by using zero-dependency core logic for its most critical paths.
@@ -111,14 +115,14 @@ Every file-write operation (History Logging, Prediction Recording, Stats, and Tr
 - **Atomic Harmony**: Prevents race conditions between multiple parallel terminal sessions.
 - **Safety**: Atomic write-rename logic ensures that history files are never corrupted, even during project pruning or extreme concurrency.
 
-### 3. Adaptive Intelligence (Markov 1000x)
-Termim uses a **Unified Weighted Ranking Engine** to prioritize advice:
-- **Behavioral Habits (1000x)**: Proactive suggestions based on your literal next-step habits.
-- **Ecosystem Standards (50x)**: Stack-specific best practices (e.g., `npm install`, `cargo build`).
-- **Project History (1x)**: Local frequency-based recall.
+### 3. Adaptive Intelligence (Markov Weighting)
+Termim uses a **Unified Weighted Ranking Engine** to prioritize history and predictions:
+- **Behavioral Transitions**: High-coefficient weighting for literal next-step habits based on Markov Chain analysis.
+- **Ecosystem Defaults**: O(1) static dispatch for stack-defining commands (e.g., `git init` -> `git status`).
+- **Project Context**: Frequency-based ranking within the local project boundary.
 
-### 4. Ecosystem Isolation
-Termim uses **Marker-Primary Resolution** to prevent cross-project pollution. It identifies its identity within Node.js, PHP, Go, and Python environments, ensuring you only see advice relevant to your current project's root.
+### 4. Deterministic Shell Hand-off
+All four shell hooks share a synchronized state machine logic. By tracking the `_TERMIM_IDX` across project cache boundaries, Termim manages the transition from project-local history into the global shell history stack in a non-destructive, symmetrical manner.
 
 ---
 

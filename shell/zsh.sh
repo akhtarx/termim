@@ -2,10 +2,27 @@
 # Termim Zsh Integration
 # Compatible with MSYS/Git Bash and macOS
 
+# [v1.0.5] Universal Home Discovery: Find the physical .termim home on any platform
+_TERMIM_HOME="$HOME/.termim"
+if [[ ! -d "$_TERMIM_HOME" ]]; then
+    # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
+    winHome="/c/Users/$USER/.termim"
+    if [[ -d "$winHome" ]]; then
+        _TERMIM_HOME="$winHome"
+    else
+        # Last resort: Try common drive letters
+        for drive in i d e f; do
+            if [[ -d "/$drive/Users/$USER/.termim" ]]; then
+                _TERMIM_HOME="/$drive/Users/$USER/.termim"
+                break
+            fi
+        done
+    fi
+fi
+
 # Find the termim binary
 _TERMIM_BIN="termim"
-userHome=$(eval echo "~$USER")
-possiblePaths="$HOME/.termim/bin/termim $HOME/.termim/bin/termim.exe $userHome/.termim/bin/termim /c/Users/$USER/.termim/bin/termim.exe"
+possiblePaths=("$_TERMIM_HOME/bin/termim.exe" "$_TERMIM_HOME/bin/termim" "$HOME/.termim/bin/termim.exe" "$HOME/.termim/bin/termim")
 for p in $possiblePaths; do
     if [[ -f "$p" || -x "$p" ]]; then
         _TERMIM_BIN="$p"
@@ -14,6 +31,12 @@ for p in $possiblePaths; do
         break
     fi
 done
+
+# Ensure log path exists or fallback to null
+_TERMIM_LOG="$_TERMIM_HOME/termim.log"
+if [[ ! -d "$(dirname "$_TERMIM_LOG" 2>/dev/null)" ]]; then
+    _TERMIM_LOG="/dev/null"
+fi
 
 # Navigation state
 _TERMIM_IDX=0
@@ -39,7 +62,7 @@ _termim_precmd() {
         local prev_cmd="$history[$((HISTNO-2))]"
         
         # Log to Termim with explicit CWD and diagnostic logging
-        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$HOME/.termim/termim.log" &!
+        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$_TERMIM_LOG" &!
         
         _TERMIM_PENDING_CMD=""
         _TERMIM_PREEXEC_DIR=""
@@ -50,58 +73,78 @@ autoload -Uz add-zsh-hook
 add-zsh-hook preexec _termim_preexec
 add-zsh-hook precmd _termim_precmd
 
-# Up arrow: cycle project history
+# Up arrow: cycle project history (Past)
 _termim_up() {
-    if [[ $_TERMIM_IDX -eq 0 ]]; then
+    # First press: Capture input and fetch HISTORY ONLY
+    if [[ $_TERMIM_IDX -le 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$BUFFER"
         
-        # Capture context for predictive ranking
+        # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Fetch frequency-ranked navigation stack
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --prev "$prev_cmd" 2>/dev/null)}")
+        # Termim: Project-aware terminal history and contextual intelligence v1.0.5
+# ---------------------------------------------------------------------
+        # Fetch strictly history-only results (Recency)
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")
+        _TERMIM_IDX=1
+    else
+        _TERMIM_IDX=$((_TERMIM_IDX + 1))
     fi
-    local NEXT_IDX=$((_TERMIM_IDX + 1))
-    if [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then
-        local CURR_CMD="${_TERMIM_CACHE[$NEXT_IDX]}"
-        # Only update if the command is different
-        if [[ "$CURR_CMD" != "$BUFFER" ]]; then
-            _TERMIM_IDX=$NEXT_IDX
-            BUFFER="$CURR_CMD"
+    
+    if [[ $_TERMIM_IDX -le ${#_TERMIM_CACHE} ]]; then
+        local cmd="${_TERMIM_CACHE[$_TERMIM_IDX]}"
+        if [[ "$cmd" != "$BUFFER" ]]; then
+            BUFFER="$cmd"
             CURSOR=$#BUFFER
-        else
-            _TERMIM_IDX=$NEXT_IDX
         fi
     else
-        # --- Escape Hatch: Fallback to Global Shell History ---
+        # Fallback to standard global history
         zle .up-line-or-history
     fi
 }
 zle -N _termim_up
 
-# Down arrow: restore or cycle next
+# Down arrow: Restore OR Intelligent Prediction (Future)
 _termim_down() {
-    if [[ $_TERMIM_IDX -gt 0 ]]; then
-        local NEXT_IDX=$((_TERMIM_IDX - 1))
-        if [[ $NEXT_IDX -eq 0 ]]; then
-            if [[ "$BUFFER" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
-                BUFFER="$_TERMIM_ORIGINAL_INPUT"
-                CURSOR=$#BUFFER
-            fi
-            _TERMIM_IDX=0
-        elif [[ $NEXT_IDX -le ${#_TERMIM_CACHE} ]]; then
-            local CURR_CMD="${_TERMIM_CACHE[$NEXT_IDX]}"
-            if [[ "$CURR_CMD" != "$BUFFER" ]]; then
-                _TERMIM_IDX=$NEXT_IDX
-                BUFFER="$CURR_CMD"
-                CURSOR=$#BUFFER
-            else
-                _TERMIM_IDX=$NEXT_IDX
-            fi
-        fi
-    else
-        # --- Escape Hatch: Fallback to Global Shell History ---
+    if [[ $_TERMIM_IDX -gt ${#_TERMIM_CACHE[@]} ]]; then
+        # ZONE: GLOBAL HISTORY (Symmetric Hand-off)
+        _TERMIM_IDX=$((_TERMIM_IDX - 1))
         zle .down-line-or-history
+    elif [[ $_TERMIM_IDX -gt 0 ]]; then
+        # ZONE: PROJECT HISTORY
+        _TERMIM_IDX=$((_TERMIM_IDX - 1))
+        if [[ $_TERMIM_IDX -eq 0 ]]; then
+            # Neutral zone (Present)
+            BUFFER="$_TERMIM_ORIGINAL_INPUT"
+            CURSOR=$#BUFFER
+        else
+            local cmd="${_TERMIM_CACHE[$_TERMIM_IDX]}"
+            BUFFER="$cmd"
+            CURSOR=$#BUFFER
+        fi
+    elif [[ $_TERMIM_IDX -eq 0 && ${BUFFER// /} == "" ]]; then
+        # INTELLIGENCE TRIGGER (Future): Trigger prediction on empty prompt
+        local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
+        
+        # Fetch strictly predictions-only
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")
+        
+        if [[ ${#_TERMIM_CACHE} -gt 0 ]]; then
+            _TERMIM_IDX=-1
+            local cmd="${_TERMIM_CACHE[1]}"
+            BUFFER="$cmd"
+            CURSOR=$#BUFFER
+        fi
+    elif [[ $_TERMIM_IDX -lt 0 ]]; then
+        # Cycling through Predictions (Future)
+        local abs_idx=${_TERMIM_IDX#-}
+        if [[ $abs_idx -lt ${#_TERMIM_CACHE} ]]; then
+            _TERMIM_IDX=$((_TERMIM_IDX - 1))
+            abs_idx=${_TERMIM_IDX#-}
+            local cmd="${_TERMIM_CACHE[$abs_idx]}"
+            BUFFER="$cmd"
+            CURSOR=$#BUFFER
+        fi
     fi
 }
 zle -N _termim_down
@@ -164,7 +207,7 @@ if [[ -o interactive ]]; then
             fzf_cmd="winpty $_FZF_BIN"
         fi
         local tmp_hist=$(mktemp)
-        "$_TERMIM_BIN" query 2>/dev/null > "$tmp_hist"
+        "$_TERMIM_BIN" query --cwd "$PWD" 2>/dev/null > "$tmp_hist"
         local selected=$($fzf_cmd \
             --height=40% --reverse --border=rounded \
             --prompt="  termim > " --header="Project History" --no-sort \

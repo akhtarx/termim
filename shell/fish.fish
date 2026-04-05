@@ -1,11 +1,27 @@
+# [v1.0.5] Universal Home Discovery: Find the physical .termim home on any platform
+set -g _TERMIM_HOME "$HOME/.termim"
+if not test -d "$_TERMIM_HOME"
+    # Fallback for Windows MSYS2/Git Bash/Fish: Map virtual home to physical Windows home
+    set -l winHome "/c/Users/$USER/.termim"
+    if test -d "$winHome"
+        set -g _TERMIM_HOME "$winHome"
+    else
+        # Last resort: Try common drive letters (I, D, E)
+        for drive in i d e f
+            if test -d "/$drive/Users/$USER/.termim"
+                set -g _TERMIM_HOME "/$drive/Users/$USER/.termim"
+                break
+            end
+        end
+    end
+end
+
 # Find the termim binary
 set -g _TERMIM_BIN "termim"
-set -l userHome (eval echo "~$USER")
-set -l possiblePaths "$HOME/.termim/bin/termim"
+set -l possiblePaths "$_TERMIM_HOME/bin/termim"
+set -a possiblePaths "$_TERMIM_HOME/bin/termim.exe"
+set -a possiblePaths "$HOME/.termim/bin/termim"
 set -a possiblePaths "$HOME/.termim/bin/termim.exe"
-set -a possiblePaths "$userHome/.termim/bin/termim"
-set -a possiblePaths "/c/Users/$USER/.termim/bin/termim.exe"
-set -a possiblePaths "/c/Users/$USER/.termim/bin/termim"
 
 for p in $possiblePaths
     if test -f "$p"; or test -x "$p"
@@ -16,6 +32,12 @@ for p in $possiblePaths
         end
         break
     end
+end
+
+# Ensure log path exists or fallback to null
+set -g _TERMIM_LOG "$_TERMIM_HOME/termim.log"
+if not test -d (dirname "$_TERMIM_LOG" 2>/dev/null)
+    set -g _TERMIM_LOG "/dev/null"
 end
 
 # Navigation state
@@ -48,7 +70,7 @@ function termim_postexec --on-event fish_postexec
     set -l prev (history | head -n 2 | tail -n 1)
 
     # Log to Termim with explicit CWD and diagnostic logging
-    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$HOME/.termim/termim.log" &
+    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$_TERMIM_LOG" &
     disown 2>/dev/null
     
     set -g _TERMIM_PREEXEC_DIR ""
@@ -65,57 +87,73 @@ if status is-interactive
     end
 end
 
-# Use up arrow to navigate project history
+# Use up arrow to navigate project history (Past)
 function termim_up
-    # Fetch history if not already cached
-    if test $_TERMIM_IDX -eq 0
+    # First press: Capture input and fetch HISTORY ONLY
+    if test $_TERMIM_IDX -le 0
         set -g _TERMIM_ORIGINAL_INPUT (commandline)
         
-        # Capture context for predictive ranking
-        set -l prev (history | head -n 1)
-        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --prev "$prev" 2>/dev/null)
+        # Capture context for ranking
+        set -l prev_cmd (history | head -n 1)
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd (pwd) 2>/dev/null)
+        set -g _TERMIM_IDX 1
+    else
+        set -g _TERMIM_IDX (math $_TERMIM_IDX + 1)
     end
 
-    set -l next_idx (math $_TERMIM_IDX + 1)
-
-    # Cycle through in-memory cache
-    if test $next_idx -le (count $_TERMIM_CACHE)
-        set -l cmd $_TERMIM_CACHE[$next_idx]
-        # Only update if the command is different
+    # Cycle through in-memory history cache
+    if test $_TERMIM_IDX -le (count $_TERMIM_CACHE)
+        set -l cmd $_TERMIM_CACHE[$_TERMIM_IDX]
         if test "$cmd" != (commandline)
-            set -g _TERMIM_IDX $next_idx
             commandline $cmd
             commandline -C (string length $cmd)
         end
     else
-        # --- Escape Hatch: Fallback to Global Shell History ---
+        # Fallback to standard global history
         commandline -f up-line
     end
 end
 
-# Down arrow navigation
+# Down arrow navigation: History Restore OR Intelligent Prediction (Future)
 function termim_down
-    if test $_TERMIM_IDX -le 0
-        return
-    end
-
-    set -l next_idx (math $_TERMIM_IDX - 1)
-    
-    if test $next_idx -eq 0
-        # Restore original input
-        if test (commandline) != "$_TERMIM_ORIGINAL_INPUT"
+    if test $_TERMIM_IDX -gt (count $_TERMIM_CACHE)
+        # ZONE: GLOBAL HISTORY (Symmetric Hand-off)
+        set -g _TERMIM_IDX (math $_TERMIM_IDX - 1)
+        commandline -f down-line
+    else if test $_TERMIM_IDX -gt 0
+        # ZONE: PROJECT HISTORY
+        set -g _TERMIM_IDX (math $_TERMIM_IDX - 1)
+        if test $_TERMIM_IDX -eq 0
+            # Neutral zone (Present)
             commandline $_TERMIM_ORIGINAL_INPUT
             commandline -C (string length $_TERMIM_ORIGINAL_INPUT)
-        end
-        set -g _TERMIM_IDX 0
-    else if test $next_idx -le (count $_TERMIM_CACHE)
-        set -l cmd $_TERMIM_CACHE[$next_idx]
-        if test "$cmd" != (commandline)
-            set -g _TERMIM_IDX $next_idx
+        else
+            set -l cmd $_TERMIM_CACHE[$_TERMIM_IDX]
             commandline $cmd
             commandline -C (string length $cmd)
-        else
-            set -g _TERMIM_IDX $next_idx
+        end
+    else if test $_TERMIM_IDX -eq 0; and test (string trim (commandline)) = ""
+        # INTELLIGENCE TRIGGER (Future): Trigger prediction on empty prompt
+        set -l prev_cmd (history | head -n 1)
+        
+        # Fetch strictly predictions-only
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd (pwd) 2>/dev/null)
+        
+        if test (count $_TERMIM_CACHE) -gt 0
+            set -g _TERMIM_IDX -1
+            set -l cmd $_TERMIM_CACHE[1]
+            commandline $cmd
+            commandline -C (string length $cmd)
+        end
+    else if test $_TERMIM_IDX -lt 0
+        # Cycling through Predictions (Future)
+        set -l abs_idx (math abs $_TERMIM_IDX)
+        if test $abs_idx -lt (count $_TERMIM_CACHE)
+            set -g _TERMIM_IDX (math $_TERMIM_IDX - 1)
+            set abs_idx (math abs $_TERMIM_IDX)
+            set -l cmd $_TERMIM_CACHE[$abs_idx]
+            commandline $cmd
+            commandline -C (string length $cmd)
         end
     end
 end
@@ -165,7 +203,7 @@ function termim_palette
 
     # Use temp file to avoid TTY issues
     set -l tmp_hist (mktemp)
-    "$_TERMIM_BIN" query 2>/dev/null > "$tmp_hist"
+    "$_TERMIM_BIN" query --cwd (pwd) 2>/dev/null > "$tmp_hist"
 
     set -l selected (cat "$tmp_hist" | $fzf_cmd \
         --height=40% \

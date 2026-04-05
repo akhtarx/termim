@@ -4,6 +4,22 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.0.5] - 2026-04-05
+### ✨ Added
+- **O(1) Static Dispatch Engine (v1.6.3)**: A compiled-in suggestion registry for common developer context (Git, Cargo, NPM, etc.), achieving zero-latency suggestions via in-memory maps.
+- **Symmetric Future Navigation**: Contextual prediction triggering for empty shell prompts, enabling a non-destructive "Down-Arrow" transition.
+
+### 🛠️ Hardening
+- **Deterministic Shell Parity (v1.5.3)**: Unified 1:1 navigation logic across PowerShell, Bash, Zsh, and Fish. Mathematical symmetry achieved across all pointers.
+- **Identity Normalization (v1.1.8)**: String-based path normalization (Lowercase/UNC-strip) ensures deterministic context detection across Windows and POSIX environments.
+
+## [1.0.4] - 2026-04-03
+### ✨ Added
+- **State-Aware Context Capture**: Precision directory and exit-status capture for PowerShell hooks.
+- **Heuristic Ecosystem Analysis**: Deterministic command suggestions based on project-root file analysis.
+
+---
+
 ## [1.0.3] - 2026-04-03
 ### ✨ Added
 - **Weighted Behavioral Ranking**: 1000x multiplier for Markov-based command transitions.

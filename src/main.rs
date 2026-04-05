@@ -2,18 +2,18 @@ use clap::Parser;
 use regex::Regex;
 use std::env;
 use std::io::{BufRead, BufReader, Write};
-use tempfile::NamedTempFile;
 use termim::cli::args::{Cli, Commands};
 use termim::core::intelligence::analyze_project;
 use termim::core::project::{detect_project_root, hash_project_path};
 use termim::utils::constants::PROJECTS_DIR;
+use termim::core::fundamentals::FundamentalsRegistry;
 
 fn sanitize_command(command: &str) -> String {
     let mut scrubbed = command.trim().to_string();
     if scrubbed.is_empty() { return scrubbed; }
 
     let patterns = [
-        (r"(?i)(-p|--password|--api-key|--token|--pwd)[ =][^ ]+", "$1=[REDACTED]"),
+        (r"(?i)(-p|--password|--api-key|--token|--pwd)[ =]?[^ ]+", "$1=[REDACTED]"),
         (r"(?i)(password|token|api_key|secret)=[^ ]+", "$1=[REDACTED]"),
         (r"(?i)(bearer|auth)[ =][^ ]+", "$1=[REDACTED]"),
         (r"(?i)(://[^:]+:)[^@]+(@)", "${1}[REDACTED]${2}"),
@@ -26,6 +26,15 @@ fn sanitize_command(command: &str) -> String {
     }
 
     scrubbed
+}
+
+pub fn normalize_path_str(path_str: &str) -> String {
+    let mut s = path_str.to_string();
+    // [v1.1.8] Absolute Identity Symmetry: Lowercase + Forward Slash + Strip UNC Prefix
+    if s.starts_with(r"\\?\") {
+        s = s[4..].to_string();
+    }
+    s.replace('\\', "/").to_lowercase()
 }
 
 fn append_to_file_locked(path: &std::path::Path, content: &str) -> std::io::Result<()> {
@@ -42,39 +51,44 @@ fn append_to_file_locked(path: &std::path::Path, content: &str) -> std::io::Resu
     Ok(())
 }
 
+fn read_file_locked(path: &std::path::Path) -> std::io::Result<String> {
+    if !path.exists() { return Ok(String::new()); }
+    let f = std::fs::File::open(path)?;
+    let lock = fd_lock::RwLock::new(f);
+    let guard = lock.read()?;
+    let mut reader = BufReader::new(&*guard);
+    let mut content = String::new();
+    use std::io::Read;
+    reader.read_to_string(&mut content)?;
+    Ok(content)
+}
+
 fn prune_log(path: &std::path::Path, max_lines: usize) -> std::io::Result<()> {
     // 1. FAST-FILTER: Check metadata size before attempting expensive lock-and-read.
-    // 1000 lines is roughly 50-80KB and we want a substantial buffer before pruning.
     if let Ok(meta) = std::fs::metadata(path) {
         if meta.len() < 50_000 { return Ok(()); } 
     }
 
-    let lines: Vec<String>;
+    // 2. Persistent lock-and-rotate sequence
+    let f = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path)?;
+    let mut lock = fd_lock::RwLock::new(f);
+    let mut guard = lock.write()?; 
 
-    // 2. Advisory lock-and-read sequence
-    {
-        let f = std::fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(path)?;
-        let mut lock = fd_lock::RwLock::new(f);
-        let guard = lock.write()?; 
-        let reader = BufReader::new(&*guard);
-        lines = reader.lines().filter_map(Result::ok).collect();
-    } 
+    let reader = BufReader::new(&*guard);
+    let lines: Vec<String> = reader.lines().filter_map(Result::ok).collect();
 
     if lines.len() > max_lines {
-        // 3. Atomic Write-Rename Strategy
-        let parent = path.parent().unwrap_or(std::path::Path::new("."));
-        let mut temp = NamedTempFile::new_in(parent)?;
-        
+        use std::io::Seek;
+        guard.set_len(0)?; // Truncate in-place
+        guard.seek(std::io::SeekFrom::Start(0))?; // Rewind
+
         let start_idx = lines.len() - max_lines;
         for line in lines.iter().skip(start_idx) {
-            writeln!(temp, "{}", line)?;
+            writeln!(guard, "{}", line)?;
         }
-        
-        // Finalize atomic swap
-        temp.persist(path).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
     }
     
     Ok(())
@@ -83,15 +97,25 @@ fn prune_log(path: &std::path::Path, max_lines: usize) -> std::io::Result<()> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     
-    // [v1.0.4] Priority CWD Overriding (Resolves Directory Race Condition)
+    // [v1.1.5] Uniform CWD Context Awareness 
     let current_dir_raw = match &cli.command {
         Some(Commands::Log { cwd, .. }) if cwd.is_some() => {
+            std::path::PathBuf::from(cwd.as_ref().unwrap())
+        }
+        Some(Commands::Query { cwd, .. }) if cwd.is_some() => {
+            std::path::PathBuf::from(cwd.as_ref().unwrap())
+        }
+        Some(Commands::Suggest { cwd, .. }) if cwd.is_some() => {
             std::path::PathBuf::from(cwd.as_ref().unwrap())
         }
         _ => env::current_dir()?,
     };
     
-    let current_dir = std::fs::canonicalize(&current_dir_raw).unwrap_or(current_dir_raw);
+    let current_dir = if let Ok(can) = std::fs::canonicalize(&current_dir_raw) {
+        std::path::PathBuf::from(normalize_path_str(&can.to_string_lossy()))
+    } else {
+        std::path::PathBuf::from(normalize_path_str(&current_dir_raw.to_string_lossy()))
+    };
     let root = detect_project_root(&current_dir);
     let hash = hash_project_path(&root);
 
@@ -115,6 +139,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .join(".termim")
                 .join("global_stats.txt");
             let _ = append_to_file_locked(&global_path, &sanitized_cmd);
+            let _ = prune_log(&global_path, 5000);
 
             // Behavioral Intelligence: Record Markov Transition (Success-Only Learning)
             if let Some(0) = exit {
@@ -132,47 +157,64 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        Some(Commands::Query { prev }) => {
+        Some(Commands::Query { prev, cwd: _, history_only, suggest_only }) => {
             let projects_dir = dirs::home_dir()
                 .unwrap_or_default()
                 .join(".termim")
                 .join(PROJECTS_DIR);
             let hist_file = projects_dir.join(format!("{}.txt", hash));
-            let mut seen = std::collections::HashSet::new();
+            let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-            // 1. Behavioral Prediction: Freq-Ranked Transitions (Hardened Delimiter Parsing)
-            if let Some(p) = prev {
-                let sanitized_p = sanitize_command(&p);
-                let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
-                if let Ok(content) = std::fs::read_to_string(&trans_file) {
-                    let mut transitions = std::collections::HashMap::with_capacity(100);
-                    for line in content.lines() {
-                        let parts: Vec<_> = line.split(" ::: ").collect();
-                        if parts.len() == 2 && parts[0] == sanitized_p {
-                            *transitions.entry(parts[1].to_string()).or_insert(0) += 1;
+            // 1. Behavioral Prediction: Freq-Ranked Transitions (v1.4.0: Optional)
+            if !history_only {
+                if let Some(p) = prev.clone() {
+                    let sanitized_p = sanitize_command(&p);
+                    let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
+                    if let Ok(content) = read_file_locked(&trans_file) {
+                        let mut transitions = std::collections::HashMap::with_capacity(100);
+                        for line in content.lines() {
+                            let parts: Vec<_> = line.split(" ::: ").collect();
+                            if parts.len() == 2 && parts[0] == sanitized_p {
+                                *transitions.entry(parts[1].to_string()).or_insert(0) += 1;
+                            }
+                        }
+                        let mut ranked: Vec<_> = transitions.into_iter().collect();
+                        ranked.sort_by(|a, b| b.1.cmp(&a.1));
+                        for (cmd, _) in ranked {
+                            if seen.insert(cmd.clone()) {
+                                println!("{}", cmd);
+                            }
                         }
                     }
-                    let mut ranked: Vec<_> = transitions.into_iter().collect();
-                    ranked.sort_by(|a, b| b.1.cmp(&a.1));
-                    for (cmd, _) in ranked {
-                        if seen.insert(cmd.clone()) {
-                            println!("{}", cmd);
+                }
+
+                // v1.0.5: Fundamentals Fallback (Sub-millisecond dispatch)
+                if seen.is_empty() {
+                    if let Some(p) = prev {
+                        let fundamentals: Vec<&'static str> = FundamentalsRegistry::get_suggested_follow_ups(&p);
+                        for f in fundamentals {
+                            let f_str: String = f.to_string();
+                            if seen.insert(f_str.clone()) {
+                                println!("{}", f_str);
+                            }
                         }
                     }
                 }
             }
 
-            // 2. Standard History Fallback
-            if let Ok(content) = std::fs::read_to_string(&hist_file) {
-                for line in content.lines().rev() {
-                    if !line.is_empty() && seen.insert(line.to_string()) {
-                        println!("{}", line);
+            // 2. Standard History Fallback (v1.0.5: Symmetrical Atomic Read)
+            if !suggest_only {
+                if let Ok(content) = read_file_locked(&hist_file) {
+                    for line in content.lines().rev() {
+                        if !line.is_empty() && seen.insert(line.to_string()) {
+                            println!("{}", line);
+                        }
                     }
                 }
             }
         }
 
-        Some(Commands::Suggest { prefix, prev }) => {
+        Some(Commands::Suggest { prefix, prev, cwd: _ }) => {
             // 1. Analyze Project Context
             let root = detect_project_root(&env::current_dir()?);
             let profile = analyze_project(&root);
@@ -187,7 +229,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(p) = prev {
                 let sanitized_p = sanitize_command(&p);
                 let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
-                if let Ok(content) = std::fs::read_to_string(&trans_file) {
+                if let Ok(content) = read_file_locked(&trans_file) {
                     for line in content.lines() {
                         let parts: Vec<_> = line.split(" ::: ").collect();
                         if parts.len() == 2 && parts[0] == sanitized_p {
@@ -199,7 +241,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // 2. Project History (1x Weight)
             let hist_file = projects_dir.join(format!("{}.txt", hash));
-            if let Ok(content) = std::fs::read_to_string(&hist_file) {
+            if let Ok(content) = read_file_locked(&hist_file) {
                 for line in content.lines() {
                     if !line.is_empty() {
                         *counts.entry(line.to_string()).or_insert(0) += 1;
@@ -242,12 +284,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .join(".termim")
                 .join("global_stats.txt");
 
-            if let Ok(content) = std::fs::read_to_string(&global_path) {
+            if let Ok(content) = read_file_locked(&global_path) {
                 let mut counts = std::collections::HashMap::new();
                 let mut total = 0;
                 for line in content.lines() {
                     if !line.is_empty() {
-                        *counts.entry(line.to_string()).or_insert(0) += 1;
+                        *counts.entry(line.to_string()).or_insert(0) += 1000;
                         total += 1;
                     }
                 }
@@ -261,7 +303,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Top 10 Most Used Commands:");
 
                 for (cmd, count) in ranked.iter().take(10) {
-                    let pct = (*count as f64 / total as f64) * 100.0;
+                    let pct = (*count as f64 / (total * 1000) as f64) * 100.0;
                     let bar_len = (pct / 5.0) as usize;
                     let bar = "█".repeat(bar_len);
                     println!("{:>5.1}% | {:<12} | {}", pct, bar, cmd);
@@ -273,7 +315,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== Termim Diagnostic Check (v1.0.3) ===\n");
+            println!("=== Termim Diagnostic Check (v1.0.5) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon)");
 
             let mut home = dirs::home_dir().unwrap_or_default();
@@ -294,7 +336,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
 
             println!("\nShell plugins:");
-            for shell in &["zsh.sh", "powershell.ps1"] {
+            for shell in &["bash.sh", "zsh.sh", "fish.fish", "powershell.ps1"] {
                 let exists = if home.join("shell").join(shell).exists() {
                     "✓"
                 } else {
@@ -308,27 +350,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut registry = dirs::home_dir().unwrap_or_default();
             registry.push(".termim/registry.txt");
             let _ = std::fs::create_dir_all(registry.parent().unwrap());
-            let content = std::fs::read_to_string(&registry).unwrap_or_default();
-            let current_dir_str = current_dir.to_string_lossy().to_string();
-
-            if content.lines().any(|l| l == current_dir_str) {
-                println!("Project already registered locally.");
-            } else {
-                use std::io::Write;
-                match std::fs::OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open(&registry)
-                {
-                    Ok(mut f) => {
-                        let _ = writeln!(f, "{}", current_dir_str);
-                        println!(
-                            "Initialized Termim project (Global Registry) in {}",
-                            current_dir.display()
-                        );
-                    }
-                    Err(e) => eprintln!("Error: Failed to update project registry: {}", e),
+            if let Ok(content) = read_file_locked(&registry) {
+                let current_dir_norm = normalize_path_str(&current_dir.to_string_lossy());
+                if content.lines().any(|l| normalize_path_str(l) == current_dir_norm) {
+                    println!("Project already registered locally.");
+                    return Ok(());
                 }
+            }
+
+            use std::io::Write;
+            match std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&registry)
+            {
+                Ok(mut f) => {
+                    let _ = writeln!(f, "{}", current_dir.to_string_lossy());
+                    println!(
+                        "Initialized Termim project (Global Registry) in {}",
+                        current_dir.display()
+                    );
+                }
+                Err(e) => eprintln!("Error: Failed to update project registry: {}", e),
             }
         }
 
@@ -349,12 +392,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 r#"
   _____                   _
- |_   _|__ _ __ _ __ ___ (_)_ __ ___
-   | |/ _ \ '__| '_ ` _ \| | '_ ` _ \
-   | |  __/ |  | | | | | | | | | | | |
-   |_|\___|_|  |_| |_| |_|_|_| |_| |_|
+  |_   _|__ _ __ _ __ ___ (_)_ __ ___
+    | |/ _ \ '__| '_ ` _ \| | '_ ` _ \
+    | |  __/ |  | | | | | | | | | | | |
+    |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.0.3
+  Project-aware terminal history + intelligence v1.0.5
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
 

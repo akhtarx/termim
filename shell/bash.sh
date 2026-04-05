@@ -1,15 +1,26 @@
+# [v1.0.5] Universal Home Discovery: Find the physical .termim home on any platform
+_TERMIM_HOME="$HOME/.termim"
+if [[ ! -d "$_TERMIM_HOME" ]]; then
+    # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
+    winHome="/c/Users/$USER/.termim"
+    if [[ -d "$winHome" ]]; then
+        _TERMIM_HOME="$winHome"
+    else
+        # Last resort: Try common drive letters
+        for drive in i d e f; do
+            if [[ -d "/$drive/Users/$USER/.termim" ]]; then
+                _TERMIM_HOME="/$drive/Users/$USER/.termim"
+                break
+            fi
+        done
+    fi
+fi
+
 # Find the termim binary
 _TERMIM_BIN="termim"
-userHome=$(eval echo "~$USER")
-possiblePaths=(
-    "$HOME/.termim/bin/termim"
-    "$HOME/.termim/bin/termim.exe"
-    "$userHome/.termim/bin/termim"
-    "/c/Users/$USER/.termim/bin/termim.exe"
-)
-
+possiblePaths=("$_TERMIM_HOME/bin/termim.exe" "$_TERMIM_HOME/bin/termim" "$HOME/.termim/bin/termim.exe" "$HOME/.termim/bin/termim")
 for p in "${possiblePaths[@]}"; do
-    if [[ -x "$p" || -f "$p" ]]; then
+    if [[ -x "$p" ]]; then
         _TERMIM_BIN="$p"
         # Ensure bin is in PATH
         binDir=$(dirname "$p")
@@ -23,6 +34,13 @@ _TERMIM_IDX=0
 _TERMIM_LAST_CMD=""
 _TERMIM_ORIGINAL_INPUT=""
 _TERMIM_CACHE=()
+_TERMIM_PREEXEC_DIR=""
+
+# Capture current directory before any command executes
+_termim_preexec() {
+    _TERMIM_PREEXEC_DIR="$PWD"
+}
+trap '_termim_preexec' DEBUG
 
 # Log the last executed command
 _termim_log() {
@@ -41,48 +59,55 @@ _termim_log() {
     prev_cmd=$(fc -ln -2 -2 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
     
     if [[ -n "$last_cmd" ]]; then
-        local current_dir="$PWD"
         # Run logging in background with explicit CWD and diagnostic logging
-        ("$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$current_dir" 2>>"$HOME/.termim/termim.log" &) 
+        ("$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$_TERMIM_LOG" &) 
         disown 2>/dev/null
     fi
 }
 
-# Add logging hook to PROMPT_COMMAND
-if [[ "$PROMPT_COMMAND" != *"_termim_log"* ]]; then
-    PROMPT_COMMAND="_termim_log; $PROMPT_COMMAND"
+# Ensure log path exists or fallback to null (Hardened v1.2.6)
+_TERMIM_LOG="$_TERMIM_HOME/termim.log"
+if [[ ! -d "$(dirname "$_TERMIM_LOG" 2>/dev/null)" ]]; then
+    _TERMIM_LOG="/dev/null"
 fi
 
+# Add logging hook to PROMPT_COMMAND (Hardened v1.2.6)
+if [[ "$PROMPT_COMMAND" != *"_termim_log"* ]]; then
+    if [[ -z "$PROMPT_COMMAND" ]]; then
+        PROMPT_COMMAND="_termim_log"
+    else
+        PROMPT_COMMAND="_termim_log; $PROMPT_COMMAND"
+    fi
+fi
 # Handle up arrow
 _termim_up() {
-    # Fetch project history on first press
-    if [[ $_TERMIM_IDX -eq 0 ]]; then
+    # First press: Capture input and fetch HISTORY ONLY
+    if [[ $_TERMIM_IDX -le 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
         
-        # Capture context for predictive ranking
-        local current_prev
-        current_prev=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
-        
-        # Fetch frequency-ranked navigation stack
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --prev "$current_prev" 2>/dev/null)
+        # Capture penultimate command for ranking
+        local prev_cmd
+        prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
+
+        # Termim: Project-aware terminal history and contextual intelligence v1.0.5
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
+        _TERMIM_IDX=1
+    else
+        _TERMIM_IDX=$((_TERMIM_IDX + 1))
     fi
-    local next_idx=$((_TERMIM_IDX + 1))
     
-    # Navigate if history is available
-    if [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
-        local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
-        # Only update if the command is different
+    if [[ $_TERMIM_IDX -le ${#_TERMIM_CACHE[@]} ]]; then
+        local cmd="${_TERMIM_CACHE[$((_TERMIM_IDX - 1))]}"
         if [[ "$cmd" != "$READLINE_LINE" ]]; then
-            _TERMIM_IDX=$next_idx
             READLINE_LINE="$cmd"
             READLINE_POINT=${#cmd}
         fi
     else
-        # --- Escape Hatch: Fallback to Global Shell History (Simulated) ---
+        # Fallback to standard global history
+        local offset=$((_TERMIM_IDX - ${#_TERMIM_CACHE[@]}))
         local global_cmd
-        global_cmd=$(history -p "!- $((next_idx - ${#_TERMIM_CACHE[@]}))" 2>/dev/null)
+        global_cmd=$(history -p "!- $offset" 2>/dev/null)
         if [[ -n "$global_cmd" ]]; then
-            _TERMIM_IDX=$next_idx
             READLINE_LINE="$global_cmd"
             READLINE_POINT=${#global_cmd}
         fi
@@ -91,30 +116,59 @@ _termim_up() {
 
 # Handle down arrow
 _termim_down() {
-    if [[ $_TERMIM_IDX -gt 0 ]]; then
-        local next_idx=$((_TERMIM_IDX - 1))
-        
-        if [[ $next_idx -eq 0 ]]; then
-            if [[ "$READLINE_LINE" != "$_TERMIM_ORIGINAL_INPUT" ]]; then
-                _TERMIM_IDX=0
-                READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
-                READLINE_POINT=${#_TERMIM_ORIGINAL_INPUT}
-            else
-                _TERMIM_IDX=0
+    if [[ $_TERMIM_IDX -gt ${#_TERMIM_CACHE[@]} ]]; then
+        # ZONE: GLOBAL HISTORY (Symmetric Hand-off)
+        _TERMIM_IDX=$((_TERMIM_IDX - 1))
+        local offset=$((_TERMIM_IDX - ${#_TERMIM_CACHE[@]}))
+        if [[ $offset -gt 0 ]]; then
+            local global_cmd
+            global_cmd=$(history -p "!- $offset" 2>/dev/null)
+            if [[ -n "$global_cmd" ]]; then
+                READLINE_LINE="$global_cmd"
+                READLINE_POINT=${#global_cmd}
             fi
-        elif [[ $next_idx -le ${#_TERMIM_CACHE[@]} ]]; then
-            local cmd="${_TERMIM_CACHE[$((next_idx - 1))]}"
-            if [[ "$cmd" != "$READLINE_LINE" ]]; then
-                _TERMIM_IDX=$next_idx
-                READLINE_LINE="$cmd"
-                READLINE_POINT=${#cmd}
-            fi
+        else
+             # Back to Project History frontier
+             local cmd="${_TERMIM_CACHE[${#_TERMIM_CACHE[@]}-1]}"
+             READLINE_LINE="$cmd"
+             READLINE_POINT=${#cmd}
         fi
-    else
-        # --- Escape Hatch: Fallback to Global Shell History (Simulated) ---
-        # We don't implement full bidirectional global history for Bash due to its 
-        # stateless bind -x nature, but we allow simple recovery.
-        return
+    elif [[ $_TERMIM_IDX -gt 0 ]]; then
+        # ZONE: PROJECT HISTORY
+        _TERMIM_IDX=$((_TERMIM_IDX - 1))
+        if [[ $_TERMIM_IDX -eq 0 ]]; then
+            # Neutral zone (Present)
+            READLINE_LINE="$_TERMIM_ORIGINAL_INPUT"
+            READLINE_POINT=${#_TERMIM_ORIGINAL_INPUT}
+        else
+            local cmd="${_TERMIM_CACHE[$((_TERMIM_IDX - 1))]}"
+            READLINE_LINE="$cmd"
+            READLINE_POINT=${#cmd}
+        fi
+    elif [[ $_TERMIM_IDX -eq 0 && ${READLINE_LINE// /} == "" ]]; then
+        # INTELLIGENCE TRIGGER (Future): Trigger prediction on empty prompt
+        local prev_cmd
+        prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
+        
+        # Fetch strictly predictions-only
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
+        
+        if [[ ${#_TERMIM_CACHE[@]} -gt 0 ]]; then
+            _TERMIM_IDX=-1
+            local cmd="${_TERMIM_CACHE[0]}"
+            READLINE_LINE="$cmd"
+            READLINE_POINT=${#cmd}
+        fi
+    elif [[ $_TERMIM_IDX -lt 0 ]]; then
+        # Cycling through Predictions (Future)
+        local abs_idx=${_TERMIM_IDX#-}
+        if [[ $abs_idx -lt ${#_TERMIM_CACHE[@]} ]]; then
+            _TERMIM_IDX=$((_TERMIM_IDX - 1))
+            abs_idx=${_TERMIM_IDX#-}
+            local cmd="${_TERMIM_CACHE[$((abs_idx - 1))]}"
+            READLINE_LINE="$cmd"
+            READLINE_POINT=${#cmd}
+        fi
     fi
 }
 
@@ -165,7 +219,7 @@ if [[ $- == *i* ]]; then
         # Use temp file to avoid TTY issues with bind -x
         local tmp_hist
         tmp_hist=$(mktemp)
-        "$_TERMIM_BIN" query 2>/dev/null > "$tmp_hist"
+        "$_TERMIM_BIN" query --cwd "$PWD" 2>/dev/null > "$tmp_hist"
 
         local selected
         selected=$($fzf_cmd \
