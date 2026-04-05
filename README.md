@@ -34,7 +34,7 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 - **🔄 Symmetrical Navigation**: A deterministic state machine providing 1:1 parity between PowerShell, Bash, Zsh, and Fish. Up-Arrow for history traversal; Down-Arrow for global-to-local hand-off.
 - **🚀 Fundamentals Engine**: A static, zero-latency dispatch registry providing O(1) follow-up suggestions (e.g., Git, Cargo, NPM) without disk I/O.
 - **1000x Adaptive Intelligence**: Weighted Markov Chain transitions prioritize your unique behavioral patterns with a high-coefficient multiplier.
-- **Deterministic Context Isolation**: Normalization-based project detection (v1.1.8). History is segregated by canonical filesystem identity across Rust, Node, and POSIX environments.
+- **Deterministic Context Isolation**: Normalization-based project detection. History is segregated by canonical filesystem identity across Rust, Node, and POSIX environments.
 - **Atomic Concurrency**: Powered by **Universal Advisory Locking (`fd-lock`)**. Termim ensures data integrity across parallel terminal instances and background pruning cycles.
 - **Minimalist Latency**: Dependency-free core logic eliminates the library startup tax, achieving an average latency of **~15ms**.
 - **Privacy Sieve**: A character-based redaction engine masks credentials and secrets in-memory before persistent logging occurs.
