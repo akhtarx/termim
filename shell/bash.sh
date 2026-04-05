@@ -52,6 +52,8 @@ if [[ "$PROMPT_COMMAND" != *"_termim_log"* ]]; then
     PROMPT_COMMAND="_termim_log; $PROMPT_COMMAND"
 fi
 
+# Handle up arrow
+_termim_up() {
     # Fetch project history on first press
     if [[ $_TERMIM_IDX -eq 0 ]]; then
         _TERMIM_ORIGINAL_INPUT="$READLINE_LINE"
