@@ -12,12 +12,11 @@
 <p align="center">
   <a href="https://github.com/akhtarx/termim/releases"><img src="https://img.shields.io/github/v/release/akhtarx/termim?style=for-the-badge&color=7C3AED" alt="Release"></a>
   <a href="https://github.com/akhtarx/termim/stargazers"><img src="https://img.shields.io/github/stars/akhtarx/termim?style=for-the-badge&color=FBBF24" alt="Stars"></a>
-  <a href="https://github.com/akhtarx/termim/network/members"><img src="https://img.shields.io/github/forks/akhtarx/termim?style=for-the-badge&color=60A5FA" alt="Forks"></a>
-  <a href="https://github.com/akhtarx/termim/releases"><img src="https://img.shields.io/github/downloads/akhtarx/termim/total?style=for-the-badge&color=D946EF" alt="Downloads"></a>
-  <a href="https://github.com/akhtarx/termim/issues"><img src="https://img.shields.io/github/issues/akhtarx/termim?style=for-the-badge&color=EF4444" alt="Issues"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/akhtarx/termim?style=for-the-badge&color=3B82F6" alt="License"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Changelog-v1.0.3-4C1D95?style=for-the-badge" alt="Changelog"></a>
-  <img src="https://img.shields.io/badge/Rust-2021-orange.svg?style=for-the-badge&color=EA580C" alt="Rust 2021">
+  <a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/cgi-bin/badge.svg?url=https%3A%2F%2Fgithub.com%2Fakhtarx%2Ftermim&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false" alt="Hits"></a>
+  <a href="https://github.com/akhtarx/termim/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/m/akhtarx/termim?style=for-the-badge&color=6366F1" alt="Activity"></a>
+  <a href="https://github.com/akhtarx/termim/commits/main"><img src="https://img.shields.io/github/last-commit/akhtarx/termim?style=for-the-badge&color=10B981" alt="Last Commit"></a>
+  <a href="https://github.com/akhtarx/termim"><img src="https://img.shields.io/github/languages/top/akhtarx/termim?style=for-the-badge&color=DEA584" alt="Top Language"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/akhtarx/termim?style=for-the-badge&color=475569" alt="License"></a>
 </p>
 
 ---
@@ -43,8 +42,8 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 | Feature | **Termim v1.0.3** | Atuin | McFly | HSTR | Native |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Project Isolation** | ✅ (Strict) | ⚠️ | ⚠️ | ❌ | ❌ |
-| **Behavioral Intel** | ✅ (1000x) | ⚠️ | ✅ | ❌ | ❌ |
+| **Project Isolation** | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
+| **Behavioral Intel** | ✅ | ⚠️ | ✅ | ❌ | ❌ |
 | **Zero-Daemon** | ✅ | ❌ | ✅ | ✅ | ✅ |
 | **Zero-Database** | ✅ | ❌ | ❌ | ✅ | ✅ |
 | **Native Windows** | ✅ | ⚠️ | ❌ | ❌ | ✅ |
