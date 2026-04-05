@@ -70,7 +70,7 @@ if (Get-Module PSReadLine) {
                 $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
 
                 # Query with transition context
-                $Global:TermimCache = & $Global:TermimBin query --prev "$prev" 2>$null | Select-Object -Unique
+                $Global:TermimCache = @(& $Global:TermimBin query --prev "$prev" 2>$null | Select-Object -Unique)
             }
         }
 

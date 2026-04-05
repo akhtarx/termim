@@ -17,6 +17,7 @@ dirs = "5.0"
 sha2 = "0.10"
 fd-lock = "4.0"
 tempfile = "3.8"
+regex = "1.10"
 
 [[bin]]
 name = "termim"

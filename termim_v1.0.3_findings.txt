@@ -1,0 +1,29 @@
+# Termim v1.0.3 Architectural Audit & Findings
+
+## Background
+A full review of the "Command Lifecycle" (Interception -> Binary Dispatch -> File Persistence) in the freshly checked-out main branch reveals four core vulnerabilities.
+
+## Identified Flaws & Proposed Solutions
+
+### 1. The "Secret Sieve" Gap (Data Privacy Vulnerability)
+- **Location:** `src/main.rs:10` (`sanitize_command`)
+- **Flaw:** The current `sanitize_command` function uses a manual substring loop. It looks for explicit delimiters (`=`, `:`, ` `) after keywords. It will completely miss tight CLI arguments like `mysql -pSuperSecretPassword` because `-p` is not in the list, and there is no space delimiter.
+- **Solution:** Replace the manual loop with the professional `regex` crate to implement a robust, pattern-based redaction engine that accurately catches edge cases.
+
+### 2. The Command Bloom (Data Bloat)
+- **Location:** `src/main.rs:127` (`append_to_file_locked`)
+- **Flaw:** The function blindly appends every executed command to the project history. If a user runs `ls -la`, clears the screen, and runs `ls -la` again, both are stored as separate consecutive entries. This inflates the history text file infinitely and slows down Markov predictions.
+- **Solution:** Implement a Read-Before-Append De-duplication. The binary should quickly read the last line of the `[hash].txt` file and skip writing if the pending command is an exact duplicate of the previous one.
+
+### 3. The "CWD Race Condition" (Data Integrity Mismatch)
+- **Location:** Shell Integrations (`powershell.ps1`, `zsh.sh`, `bash.sh`, `fish.fish`)
+- **Flaw:** Shell hooks (like `prompt` in PowerShell) execute *after* the user's command finishes. Termim logs the command based on the directory it is currently inside when the hook fires. If the user runs a command like `cd ../parent`, Termim initiates logging in `../parent`—incorrectly associating the `cd` command with the destination folder instead of the origin folder where it was typed.
+- **Solution:** 
+  1. Capture the Working Directory inside the `Enter` Key-handler (or Pre-execution hook) in the shell script.
+  2. Add an optional `--cwd` argument to the Rust binary.
+  3. Pass the pre-captured directory to `--cwd` during the post-execution hook.
+
+### 4. The Silent Failure Blackhole (Reliability)
+- **Location:** `shell/powershell.ps1:38` (and equivalent background jobs in other shells)
+- **Flaw:** The async PowerShell Runspace logger uses `2>&1 | Out-Null`. If the Rust binary encounters a permissions error, disk space issue, or panics, the error is utterly destroyed. The user's history will simply stop updating without any visible reason.
+- **Solution:** Remove `Out-Null` and redirect all errors over stderr to a dedicated diagnostic file (`~/.termim/termim.log`) across all 4 shell integrations to allow for debugging via `termim doctor`.

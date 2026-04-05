@@ -1,4 +1,5 @@
 use clap::Parser;
+use regex::Regex;
 use std::env;
 use std::io::{BufRead, BufReader, Write};
 use tempfile::NamedTempFile;
@@ -8,62 +9,35 @@ use termim::core::project::{detect_project_root, hash_project_path};
 use termim::utils::constants::PROJECTS_DIR;
 
 fn sanitize_command(command: &str) -> String {
-    let mut sanitized = command.to_string();
+    let mut scrubbed = command.trim().to_string();
+    if scrubbed.is_empty() { return scrubbed; }
 
-    // 1. HIGH-SPEED SECRET SCANNER (Multi-Token Manual Sieve)
-    let sensitive_keywords = [
-        "token", "key", "secret", "password", "pass", "auth", "bearer", "pwd", "private"
+    let patterns = [
+        (r"(?i)(-p|--password|--api-key|--token|--pwd)[ =][^ ]+", "$1=[REDACTED]"),
+        (r"(?i)(password|token|api_key|secret)=[^ ]+", "$1=[REDACTED]"),
+        (r"(?i)(bearer|auth)[ =][^ ]+", "$1=[REDACTED]"),
+        (r"(?i)(://[^:]+:)[^@]+(@)", "${1}[REDACTED]${2}"),
     ];
 
-    for key in &sensitive_keywords {
-        let mut search_pos = 0;
-        while let Some(pos) = sanitized[search_pos..].to_lowercase().find(key) {
-            let actual_pos = search_pos + pos;
-            let start_of_value = actual_pos + key.len();
-            
-            // Find the delimiter after the keyword (=, :, or space)
-            let remaining = &sanitized[start_of_value..];
-            if let Some(delim_pos) = remaining.find(|c: char| c == '=' || c == ':' || c == ' ') {
-                let actual_delim_pos = start_of_value + delim_pos;
-                // Mask everything after the delimiter until the next space/end
-                let next_space = sanitized[actual_delim_pos + 1..].find(|c: char| c == ' ' || c == '\t' || c == '\n');
-                let end_pos = if let Some(offset) = next_space {
-                    actual_delim_pos + 1 + offset
-                } else {
-                    sanitized.len()
-                };
-                
-                sanitized.replace_range(actual_delim_pos + 1..end_pos, "***");
-                search_pos = actual_delim_pos + 4; // Skip the keyword and mask (***)
-            } else {
-                search_pos = start_of_value; // No delimiter found, skip this match
-            }
-            
-            if search_pos >= sanitized.len() { break; }
+    for (p, r) in patterns {
+        if let Ok(re) = Regex::new(p) {
+            scrubbed = re.replace_all(&scrubbed, r).to_string();
         }
     }
 
-    // 2. HIGH-SPEED URL SCANNER (Masking passwords in URIs)
-    if let Some(at_pos) = sanitized.find('@') {
-        if let Some(proto_pos) = sanitized[..at_pos].find("://") {
-            let creds_start = proto_pos + 3;
-            if let Some(colon_pos) = sanitized[creds_start..at_pos].find(':') {
-                let actual_colon_pos = creds_start + colon_pos;
-                sanitized.replace_range(actual_colon_pos + 1..at_pos, "***");
-            }
-        }
-    }
-
-    sanitized.trim().to_string()
+    scrubbed
 }
 
 fn append_to_file_locked(path: &std::path::Path, content: &str) -> std::io::Result<()> {
     let f = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
         .create(true)
-        .append(true)
         .open(path)?;
     let mut lock = fd_lock::RwLock::new(f);
     let mut guard = lock.write()?;
+    use std::io::Seek;
+    guard.seek(std::io::SeekFrom::End(0))?;
     writeln!(guard, "{}", content)?;
     Ok(())
 }
