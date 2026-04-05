@@ -21,10 +21,12 @@ _TERMIM_CACHE=()
 _TERMIM_ORIGINAL_INPUT=""
 
 _TERMIM_PENDING_CMD=""
+_TERMIM_PREEXEC_DIR=""
 
 # Pre-execution hook: Mark command as pending
 _termim_preexec() {
     _TERMIM_PENDING_CMD="$1"
+    _TERMIM_PREEXEC_DIR="$PWD"
     _TERMIM_IDX=0 
     _TERMIM_CACHE=() 
 }
@@ -36,10 +38,11 @@ _termim_precmd() {
         # Penultimate command (the one before the command that just target finished)
         local prev_cmd="$history[$((HISTNO-2))]"
         
-        # Log to Termim with exit-code awareness
-        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" >/dev/null 2>&1 &!
+        # Log to Termim with explicit CWD and diagnostic logging
+        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$HOME/.termim/termim.log" &!
         
         _TERMIM_PENDING_CMD=""
+        _TERMIM_PREEXEC_DIR=""
     fi
 }
 

@@ -22,6 +22,12 @@ end
 set -g _TERMIM_IDX 0
 set -g _TERMIM_CACHE
 set -g _TERMIM_ORIGINAL_INPUT ""
+set -g _TERMIM_PREEXEC_DIR ""
+
+# Capture directory before command execution
+function _termim_preexec --on-event fish_preexec
+    set -g _TERMIM_PREEXEC_DIR $PWD
+end
 
 # Post-Execution logic in Fish: Capture exit status and log
 function termim_postexec --on-event fish_postexec
@@ -41,9 +47,11 @@ function termim_postexec --on-event fish_postexec
     # Behavioral Context: Get the penultimate command (since current is at head)
     set -l prev (history | head -n 2 | tail -n 1)
 
-    # Log to Termim with exit-awareness
-    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" >/dev/null 2>&1 &
+    # Log to Termim with explicit CWD and diagnostic logging
+    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$HOME/.termim/termim.log" &
     disown 2>/dev/null
+    
+    set -g _TERMIM_PREEXEC_DIR ""
     
     # Reset navigation state on new command
     set -g _TERMIM_IDX 0 

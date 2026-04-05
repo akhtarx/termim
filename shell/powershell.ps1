@@ -27,7 +27,7 @@ $Global:TermimLogger.Runspace = [runspacefactory]::CreateRunspace()
 $Global:TermimLogger.Runspace.Open()
 
 function Global:Invoke-TermimLogAsync {
-    param([string]$command, [int]$exitCode = 0)
+    param([string]$command, [int]$exitCode = 0, [string]$cwd = "")
     if (-not $Global:TermimBin) { return }
     
     # Run logging in a separate thread to avoid blocking
@@ -37,7 +37,7 @@ function Global:Invoke-TermimLogAsync {
         # The 'previous' command is the one before that.
         $prev = if ($history.Count -ge 2) { $history[-2].CommandLine } else { "" }
         
-        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode 2>&1 | Out-Null")
+        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' 2>&1 | Out-Null")
         $Global:TermimLogger.Commands.Clear()
         $Global:TermimLogger.AddScript($sb)
         $Global:TermimLogger.BeginInvoke() | Out-Null
@@ -56,6 +56,9 @@ if (Get-Module PSReadLine) {
     Set-PSReadLineKeyHandler -Key UpArrow -ScriptBlock {
         param($key, $arg)
         if (-not $Global:TermimBin) { [Microsoft.PowerShell.PSConsoleReadLine]::PreviousHistory($key, $arg); return }
+        
+        # Capture current directory for atomic context tagging
+        $Global:TermimPreExecDir = (Get-Location).Path
 
         $currentLine = ""
         try { $currentLine = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content }
@@ -116,6 +119,8 @@ if (Get-Module PSReadLine) {
 
         if ($line.Trim()) {
             $Global:TermimPendingCommand = $line
+            # [v1.0.4] Absolute Context Capture
+            $Global:TermimPreExecDir = (Get-Location).Path
         }
         [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
     }
@@ -155,9 +160,10 @@ function prompt {
     # 2. Perform background logging for any pending command
     if ($Global:TermimPendingCommand) {
         if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
-            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit
+            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir
         }
         $Global:TermimPendingCommand = $null
+        $Global:TermimPreExecDir = $null
     }
 
     # 3. Reset navigation state for the new prompt

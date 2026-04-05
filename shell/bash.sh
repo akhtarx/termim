@@ -41,8 +41,9 @@ _termim_log() {
     prev_cmd=$(fc -ln -2 -2 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
     
     if [[ -n "$last_cmd" ]]; then
-        # Run logging in background with exit status awareness
-        ("$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" &>/dev/null &) 
+        local current_dir="$PWD"
+        # Run logging in background with explicit CWD and diagnostic logging
+        ("$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$current_dir" 2>>"$HOME/.termim/termim.log" &) 
         disown 2>/dev/null
     fi
 }

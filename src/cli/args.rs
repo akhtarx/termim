@@ -20,6 +20,9 @@ pub enum Commands {
         /// The exit code of the log command (Intelligence only learns from 0)
         #[arg(short, long)]
         exit: Option<i32>,
+        /// Override the current working directory for accurate project detection
+        #[arg(long)]
+        cwd: Option<String>,
     },
     /// Query the ranked, project-specific history for the current context.
     /// Used by shell buffer-swapping for 0ms lag history.

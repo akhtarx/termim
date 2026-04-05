@@ -82,12 +82,21 @@ fn prune_log(path: &std::path::Path, max_lines: usize) -> std::io::Result<()> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
-    let current_dir = env::current_dir()?;
+    
+    // [v1.0.4] Priority CWD Overriding (Resolves Directory Race Condition)
+    let current_dir_raw = match &cli.command {
+        Some(Commands::Log { cwd, .. }) if cwd.is_some() => {
+            std::path::PathBuf::from(cwd.as_ref().unwrap())
+        }
+        _ => env::current_dir()?,
+    };
+    
+    let current_dir = std::fs::canonicalize(&current_dir_raw).unwrap_or(current_dir_raw);
     let root = detect_project_root(&current_dir);
     let hash = hash_project_path(&root);
 
     match cli.command {
-        Some(Commands::Log { command_str, prev, exit }) => {
+        Some(Commands::Log { command_str, prev, exit, cwd: _ }) => {
             let sanitized_cmd = sanitize_command(&command_str);
             if sanitized_cmd.is_empty() { return Ok(()); }
 
