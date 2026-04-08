@@ -2,8 +2,9 @@ name: Release
 
 on:
   push:
+    branches: [ main ]
     tags:
-      - 'v*' # Trigger build on version tags like v1.0.7
+      - 'v*'
 
 permissions:
   contents: write
@@ -57,13 +58,16 @@ jobs:
         shell: bash
         run: |
           BINARY_NAME="termim-${{ matrix.name_os }}-${{ matrix.name_arch }}${{ matrix.suffix }}"
-          cp target/${{ matrix.target }}/release/termim${{ matrix.suffix }} $BINARY_NAME
+          # Use a more flexible copy to find the binary regardless of host/target nesting
+          find target -name "termim${{ matrix.suffix }}" -path "*/release/*" -exec cp {} $BINARY_NAME \;
           echo "BINARY_PATH=$BINARY_NAME" >> $GITHUB_ENV
+          echo "Created artifact: $BINARY_NAME"
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           files: ${{ env.BINARY_PATH }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
