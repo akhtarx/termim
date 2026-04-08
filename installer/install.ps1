@@ -9,14 +9,41 @@ $binDir = Join-Path $termimDir "bin"
 Write-Host "=== Termim Windows Installer (Pure CLI) ===" -ForegroundColor Cyan
 Write-Host ""
 
-# 1. Build release binary
-Write-Host "[1/4] Building Termim (release)..." -ForegroundColor Yellow
-cargo build --release
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "`nERROR: Build failed. Please check the errors above." -ForegroundColor Red
-    exit 1
+# 1. Acquire Binary
+Write-Host "[1/4] Acquiring Termim binary..." -ForegroundColor Yellow
+$binaryPath = ""
+
+# Mode A: Pre-compiled binary exists in current folder (Release Zip)
+if (Test-Path "termim.exe") {
+    $binaryPath = "termim.exe"
+    Write-Host "  OK: Using local termim.exe" -ForegroundColor Green
 }
-Write-Host "  OK: Built" -ForegroundColor Green
+# Mode B: Build from source if Cargo is available
+elseif (Get-Command cargo -ErrorAction SilentlyContinue) {
+    Write-Host "  Cargo found. Building from source (release)..." -ForegroundColor Gray
+    cargo build --release
+    if ($LASTEXITCODE -eq 0) {
+        $binaryPath = "target\release\termim.exe"
+        Write-Host "  OK: Built successfully" -ForegroundColor Green
+    } else {
+        Write-Host "  WARNING: Build failed. Trying fallback..." -ForegroundColor Yellow
+    }
+}
+
+# Mode C: Fallback to GitHub Release download
+if (-not $binaryPath) {
+    Write-Host "  Safe Mode: Downloading latest pre-compiled binary from GitHub..." -ForegroundColor Gray
+    $downloadUrl = "https://github.com/akhtarx/termim/releases/latest/download/termim-windows-x86_64.exe"
+    $binaryPath = Join-Path $env:TEMP "termim-downloaded.exe"
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $binaryPath -ErrorAction Stop
+        Write-Host "  OK: Downloaded latest release" -ForegroundColor Green
+    } catch {
+        Write-Host "`nERROR: Could not build or download Termim. Please ensure you have an internet connection or Rust installed." -ForegroundColor Red
+        exit 1
+    }
+}
 
 # 2. Create directory structure
 Write-Host "[2/4] Creating $termimDir..." -ForegroundColor Yellow
@@ -52,7 +79,7 @@ if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
 
 # 3. Install binary
 Write-Host "[3/4] Installing binary..." -ForegroundColor Yellow
-Copy-Item "target\release\termim.exe" "$binDir\termim.exe" -Force
+Copy-Item $binaryPath "$binDir\termim.exe" -Force
 Write-Host "  OK: Installed to $binDir" -ForegroundColor Green
 
 # 4. Update PATH

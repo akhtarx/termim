@@ -12,10 +12,55 @@ SHELL_DIR="$TERMIM_DIR/shell"
 echo "=== Termim Universal Unix Installer ==="
 echo ""
 
-# 1. Build release binary
-echo "[1/4] Building Termim..."
-cargo build --release
-echo "  ✓ Built"
+# 1. Acquire Binary
+echo "[1/4] Acquiring Termim binary..."
+BINARY_PATH=""
+
+# Mode A: Pre-compiled binary exists in current folder
+if [ -f "./termim" ]; then
+    BINARY_PATH="./termim"
+    echo "  ✓ Using local termim binary"
+# Mode B: Build from source if Cargo is available
+elif command -v cargo &>/dev/null; then
+    echo "  Cargo found. Building from source (release)..."
+    if cargo build --release; then
+        BINARY_PATH="target/release/termim"
+        echo "  ✓ Built successfully"
+    else
+        echo "  ! WARNING: Build failed. Trying fallback..."
+    fi
+fi
+
+# Mode C: Fallback to GitHub Release download
+if [ -z "$BINARY_PATH" ]; then
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+    
+    case "$ARCH" in
+        x86_64) T_ARCH="x86_64" ;;
+        aarch64|arm64) T_ARCH="aarch64" ;;
+        *) T_ARCH="x86_64" ;;
+    esac
+
+    case "$OS" in
+        linux) T_OS="linux" ;;
+        darwin) T_OS="macos" ;;
+        *) echo "  ! Unsupported OS for automatic download. Please install Rust and build from source."; exit 1 ;;
+    esac
+
+    FILE_NAME="termim-$T_OS-$T_ARCH"
+    DOWNLOAD_URL="https://github.com/akhtarx/termim/releases/latest/download/$FILE_NAME"
+    
+    echo "  Safe Mode: Downloading pre-compiled binary ($FILE_NAME) from GitHub..."
+    if curl -fsSL "$DOWNLOAD_URL" -o "$BIN_DIR/termim"; then
+        BINARY_PATH="$BIN_DIR/termim"
+        chmod +x "$BINARY_PATH"
+        echo "  ✓ Downloaded latest release"
+    else
+        echo "  ! ERROR: Could not build or download Termim. Please ensure you have an internet connection or Rust installed."
+        exit 1
+    fi
+fi
 
 # 2. Create directory structure
 echo "[2/4] Creating $TERMIM_DIR..."
@@ -62,8 +107,10 @@ fi
 
 # 3. Install binary and shell scripts
 echo "[3/4] Installing binary and shell suite..."
-cp target/release/termim "$BIN_DIR/termim"
-chmod +x "$BIN_DIR/termim"
+if [ "$BINARY_PATH" != "$BIN_DIR/termim" ]; then
+    cp "$BINARY_PATH" "$BIN_DIR/termim"
+    chmod +x "$BIN_DIR/termim"
+fi
 cp shell/bash.sh "$SHELL_DIR/bash.sh"
 cp shell/zsh.sh "$SHELL_DIR/zsh.sh"
 cp shell/fish.fish "$SHELL_DIR/fish.fish"
