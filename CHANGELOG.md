@@ -4,6 +4,11 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.0.7] - 2026-04-08
+### ✨ Added
+- **Multi-Platform Releases**: Automated GitHub Actions to build for Windows, Linux, and macOS.
+- **Smart Universal Installers**: Automatic binary fallback for users without a Rust toolchain.
+
 ## [1.0.6] - 2026-04-08
 ### ✨ Added
 - **Manual Update Check**: Added `termim update` to safely check for latest releases on GitHub without background tracking.

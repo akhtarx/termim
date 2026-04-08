@@ -29,7 +29,7 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 - **Ctrl+R = A workaround, not a solution**
 
 ## ⚡ Technical Core
-**Termim v1.0.6** converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
+**Termim v1.0.7** converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
 
 - **🔄 Symmetrical Navigation**: A deterministic state machine providing 1:1 parity between PowerShell, Bash, Zsh, and Fish. Up-Arrow for history traversal; Down-Arrow for global-to-local hand-off.
 - **🚀 Fundamentals Engine**: A static, zero-latency dispatch registry providing O(1) follow-up suggestions (e.g., Git, Cargo, NPM) without disk I/O.
@@ -43,7 +43,7 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ## 📊 Strategic Positioning
 
-| Feature | **Termim v1.0.6** | Atuin | McFly | HSTR | Native |
+| Feature | **Termim v1.0.7** | Atuin | McFly | HSTR | Native |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Symmetric Symmetry**| ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Fundamentals Engine**| ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -91,7 +91,7 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ---
 
-## 🐚 Shell Authentication Matrix (v1.0.6)
+## 🐚 Shell Authentication Matrix (v1.0.7)
 
 | Feature | PowerShell | Zsh | Bash | Fish | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -105,7 +105,7 @@ Standard shell history is fundamentally broken. It is a single, massive, chronol
 
 ## 🧬 Architecture
 
-Termim v1.0.6 is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for sub-20ms execution and 100% data integrity.
+Termim v1.0.7 is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for sub-20ms execution and 100% data integrity.
 
 ### 1. Performance Moat (Zero-Library Tax)
 Termim eliminates the "Library Startup Tax" by using zero-dependency core logic for its most critical paths.

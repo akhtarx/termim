@@ -1,6 +1,6 @@
 [package]
 name = "termim"
-version = "1.0.6"
+version = "1.0.7"
 edition = "2021"
 description = "Project-aware terminal history and command intelligence"
 repository = "https://github.com/akhtarx/termim"
