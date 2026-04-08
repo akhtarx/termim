@@ -1,6 +1,6 @@
 [package]
 name = "termim"
-version = "1.0.5"
+version = "1.0.6"
 edition = "2021"
 description = "Project-aware terminal history and command intelligence"
 repository = "https://github.com/akhtarx/termim"
@@ -18,6 +18,7 @@ sha2 = "0.10"
 fd-lock = "4.0"
 tempfile = "3.8"
 regex = "1.10"
+ureq = "2.9"
 
 [[bin]]
 name = "termim"

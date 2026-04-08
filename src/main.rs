@@ -7,6 +7,7 @@ use termim::core::intelligence::analyze_project;
 use termim::core::project::{detect_project_root, hash_project_path};
 use termim::utils::constants::PROJECTS_DIR;
 use termim::core::fundamentals::FundamentalsRegistry;
+use termim::utils::update::check_for_updates;
 
 fn sanitize_command(command: &str) -> String {
     let mut scrubbed = command.trim().to_string();
@@ -315,7 +316,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== Termim Diagnostic Check (v1.0.5) ===\n");
+            println!("=== Termim Diagnostic Check (v1.0.6) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon)");
 
             let mut home = dirs::home_dir().unwrap_or_default();
@@ -375,6 +376,49 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
+        Some(Commands::Update) => {
+            check_for_updates();
+        }
+
+        Some(Commands::Clear { force }) => {
+            if !force {
+                print!("⚠️  This will delete all project history, registry, and statistics. Continue? (y/N): ");
+                let mut input = String::new();
+                std::io::stdout().flush()?;
+                std::io::stdin().read_line(&mut input)?;
+                if !input.trim().to_lowercase().starts_with('y') {
+                    println!("Aborted.");
+                    return Ok(());
+                }
+            }
+
+            println!("Clearing Termim data...");
+            let home = dirs::home_dir().unwrap_or_default().join(".termim");
+            
+            let targets = vec![
+                (home.join(PROJECTS_DIR), true), // true if directory
+                (home.join("registry.txt"), false),
+                (home.join("global_stats.txt"), false),
+                (home.join("termim.log"), false),
+            ];
+
+            for (path, is_dir) in targets {
+                if path.exists() {
+                    let result = if is_dir {
+                        std::fs::remove_dir_all(&path)
+                    } else {
+                        std::fs::remove_file(&path)
+                    };
+
+                    match result {
+                        Ok(_) => println!("  OK: Removed {}", path.display()),
+                        Err(e) => eprintln!("  Error: Failed to remove {}: {}", path.display(), e),
+                    }
+                }
+            }
+            println!("\n✅ Termim data cleared successfully.");
+        }
+
         None => {
             let profile = analyze_project(&root);
 
@@ -397,7 +441,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.0.5
+  Project-aware terminal history + intelligence v1.0.6
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
 
@@ -411,6 +455,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   • termim suggest : Show intelligent command suggestions
   • termim stats   : Global usage statistics
   • termim doctor  : Health check & diagnostics
+  • termim update  : Check for latest version
+  • termim clear   : Reset all data & history
 "#,
                 root.display(),
                 eco_str

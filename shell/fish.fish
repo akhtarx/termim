@@ -1,4 +1,4 @@
-# [v1.0.5] Universal Home Discovery: Find the physical .termim home on any platform
+# [v1.0.6] Universal Home Discovery: Find the physical .termim home on any platform
 set -g _TERMIM_HOME "$HOME/.termim"
 if not test -d "$_TERMIM_HOME"
     # Fallback for Windows MSYS2/Git Bash/Fish: Map virtual home to physical Windows home

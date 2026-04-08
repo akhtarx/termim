@@ -1,4 +1,4 @@
-# [v1.0.5] Universal Home Discovery: Find the physical .termim home on any platform
+# [v1.0.6] Universal Home Discovery: Find the physical .termim home on any platform
 _TERMIM_HOME="$HOME/.termim"
 if [[ ! -d "$_TERMIM_HOME" ]]; then
     # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
@@ -89,7 +89,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Project-aware terminal history and contextual intelligence v1.0.5
+        # Termim: Project-aware terminal history and contextual intelligence v1.0.6
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
         _TERMIM_IDX=1
     else

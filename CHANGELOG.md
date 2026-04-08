@@ -4,6 +4,11 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.0.6] - 2026-04-08
+### ✨ Added
+- **Manual Update Check**: Added `termim update` to safely check for latest releases on GitHub without background tracking.
+- **Data Clear Command**: Added `termim clear` to allow users to reset all project history, registry, and statistics with a safety confirmation.
+
 ## [1.0.5] - 2026-04-05
 ### ✨ Added
 - **O(1) Static Dispatch Engine (v1.6.3)**: A compiled-in suggestion registry for common developer context (Git, Cargo, NPM, etc.), achieving zero-latency suggestions via in-memory maps.

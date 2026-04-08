@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.0.5
+# Version 1.0.6
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.2.0] Universal Home Discovery: Find the physical .termim home on any platform

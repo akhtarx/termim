@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "termim", version = "1.0.5", about = "Project-aware terminal history and contextual intelligence")]
+#[command(name = "termim", version = "1.0.6", about = "Project-aware terminal history and contextual intelligence")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -57,4 +57,12 @@ pub enum Commands {
     Doctor,
     /// Manually register a directory as a Termim project (Zero-Pollution via Global Registry).
     Init,
+    /// Check for the latest version of Termim from GitHub.
+    Update,
+    /// Clear all Termim data (history, registry, and stats).
+    Clear {
+        /// Force deletion without confirmation prompt.
+        #[arg(short, long)]
+        force: bool,
+    },
 }
