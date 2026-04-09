@@ -68,7 +68,7 @@ mkdir -p "$BIN_DIR"
 mkdir -p "$SHELL_DIR"
 echo "  ✓ Created"
 
-# 2.5 Install fzf (Safe Bundle)
+# 2.5 Install fzf (Dynamic Latest)
 echo "[2.5/4] Bundling fzf for history palette..."
 if ! command -v fzf &>/dev/null && [ ! -f "$BIN_DIR/fzf" ]; then
     OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -81,9 +81,18 @@ if ! command -v fzf &>/dev/null && [ ! -f "$BIN_DIR/fzf" ]; then
         *) FZF_ARCH="amd64" ;;
     esac
 
-    FZF_VERSION="0.51.0"
-    FZF_URL=""
+    echo "  fzf not found. Fetching latest version from GitHub..."
+    # Attempt to get latest version via GitHub API
+    FZF_VERSION=$(curl -s https://api.github.com/repos/junegunn/fzf/releases/latest | grep "tag_name" | cut -d '"' -f 4 | tr -d 'v')
+    
+    if [ -z "$FZF_VERSION" ]; then
+        FZF_VERSION="0.56.0" # Hard fallback if API fails
+        echo "  ! WARNING: Could not fetch latest version, falling back to v$FZF_VERSION"
+    else
+        echo "  ✓ Latest version found: v$FZF_VERSION ($FZF_ARCH)"
+    fi
 
+    FZF_URL=""
     if [ "$OS" == "linux" ]; then
         FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VERSION/fzf-$FZF_VERSION-linux_$FZF_ARCH.tar.gz"
     elif [ "$OS" == "darwin" ]; then
@@ -91,7 +100,7 @@ if ! command -v fzf &>/dev/null && [ ! -f "$BIN_DIR/fzf" ]; then
     fi
 
     if [ -n "$FZF_URL" ]; then
-        echo "  fzf not found. Downloading v$FZF_VERSION for $OS/$FZF_ARCH..."
+        echo "  Downloading for $OS/$FZF_ARCH..."
         if curl -fsSL "$FZF_URL" -o "$BIN_DIR/fzf.tar.gz"; then
             tar -xzf "$BIN_DIR/fzf.tar.gz" -C "$BIN_DIR" fzf
             rm "$BIN_DIR/fzf.tar.gz"

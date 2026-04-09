@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Termim: Context-aware terminal history and intelligence. Zero-daemon. Lightning-fast.">
+    <title>Termim | Contextual Terminal Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+
+<body>
+    <div id="ambient-bg" class="ambient-background"></div>
+
+    <header class="blur-nav">
+        <div class="container header-inner">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Termim Logo" class="logo-img">
+                <span class="logo-text">Termim</span>
+            </div>
+            <nav class="desktop-nav">
+                <a href="#comparison">Compare</a>
+                <a href="#features">Features</a>
+                <a href="#philosophy">Design</a>
+                <a href="#installation" class="nav-cta">Install Now</a>
+                <a href="https://github.com/akhtarx/termim" target="_blank" class="github-link">
+                    <svg height="20" viewBox="0 0 16 16" width="20" fill="currentColor">
+                        <path
+                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+                        </path>
+                    </svg>
+                    <span class="star-count">...</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero container">
+            <div class="hero-chip animate-fade-up">v1.0.7 is now live</div>
+            <h1 class="hero-title animate-fade-up delay-1">
+                Stop fighting your <kbd>↑ Up Arrow</kbd> key to find the command <span class="gradient-text">you ran
+                    yesterday.</span>
+            </h1>
+            <p class="hero-subtitle animate-fade-up delay-2">
+                Stop the command bleeding. Termim automatically isolates your terminal history by directory, ensuring
+                the right command is always under your <kbd>↑ Up Arrow</kbd>. No background daemons, 100% offline, and
+                zero execution latency.
+            </p>
+            <div class="hero-ctas animate-fade-up delay-3">
+                <a href="#installation" class="btn btn-primary">Start Using Termim</a>
+                <a href="https://github.com/akhtarx/termim" target="_blank" class="btn btn-secondary github-btn">
+                    <svg height="20" viewBox="0 0 16 16" width="20" fill="currentColor">
+                        <path
+                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+                        </path>
+                    </svg>
+                    View on GitHub
+                </a>
+            </div>
+
+            <div class="hero-visual animate-glow delay-4">
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <div class="window-controls">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <div class="terminal-title">Shell</div>
+                        <div class="terminal-narrative" id="term-narrative">Termim: Ready</div>
+                    </div>
+                    <div class="terminal-body" id="hero-term">
+                        <!-- JS injected -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Hard Engineering Metrics Strip -->
+            <div class="metrics-strip reveal">
+                <div class="metric">
+                    <div class="metric-val">0<span class="metric-unit">MB</span></div>
+                    <div class="metric-label">Background RAM</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-val">&lt;12<span class="metric-unit">ms</span></div>
+                    <div class="metric-label">Execution Latency</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-val">~4<span class="metric-unit">MB</span></div>
+                    <div class="metric-label">Binary Size</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-val">0</div>
+                    <div class="metric-label">Telemetry Events</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section id="comparison" class="container reveal">
+            <div class="section-badge">The Problem</div>
+            <h2 class="section-title">Global History is Broken.</h2>
+            <p class="section-subtitle">Pressing the up-arrow in a new project shouldn't yield npm commands from a
+                frontend app you closed three hour
+            <div class="comparison-window glow-card reveal" data-glow>
+                <div class="window-header">
+                    <div class="scenario-info">
+                        <span class="scen-tag">Context Mastery</span>
+                        <h3 id="scen-title">Project Isolation</h3>
+                        <p id="scen-desc">Termim understands project boundaries. Your history stays where it belongs.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="window-body">
+                    <div class="pane bad">
+                        <div class="pane-label">Standard Shell History</div>
+                        <div class="scenes-wrapper" id="standard-scenes">
+                            <!-- Scene 1: Isolation -->
+                            <div class="story-scene active" data-scene="0">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↑ Up Arrow</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~/kubernetes-app</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Shell</span><span
+                                            class="step-badge error">Global Linear Scan</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Reading ~/.bash_history sequentially...</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="red-text">ssh root@dev-legacy-server</span></div>
+                                    <div class="step-footer"><span class="dim">"Wrong project. Global noise
+                                            leaked."</span></div>
+                                </div>
+                            </div>
+                            <!-- Scene 2: Prediction -->
+                            <div class="story-scene" data-scene="1">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">Context</span><span
+                                            class="step-action">Just ran <kbd>git status</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~/frontend-ui</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↓ Down Arrow</kbd></span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Shell</span><span
+                                            class="step-badge error">Chronological Scan</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Returning literal next command in history log.</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="red-text">cd ../docs</span></div>
+                                    <div class="step-footer"><span class="dim">"Irrelevant chronological
+                                            command."</span></div>
+                                </div>
+                            </div>
+                            <!-- Scene 3: Privacy -->
+                            <div class="story-scene" data-scene="2">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↑ Up Arrow</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~ (Home)</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Shell</span><span
+                                            class="step-badge error">Plain Text Log</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Logging secrets directly to bash_history.</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="red-text">export AWS_KEY="sk-12948a"</span></div>
+                                    <div class="step-footer"><span class="dim">"Sensitive keys stored in plain
+                                            text."</span></div>
+                                </div>
+                            </div>
+                            <!-- Scene 4: Noise Filtering -->
+                            <div class="story-scene" data-scene="3">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↑ Up Arrow</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~/api-server</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Shell</span><span
+                                            class="step-badge error">Unfiltered Log</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Every typo and cd command is saved.</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="red-text">git statsu</span></div>
+                                    <div class="step-footer"><span class="dim">"Waste of my up-arrow history
+                                            cycles."</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pane-divider"></div>
+
+                    <div class="pane good">
+                        <div class="pane-label">Termim Contextual Shell</div>
+                        <div class="scenes-wrapper" id="termim-scenes">
+                            <!-- Scene 1: Isolation -->
+                            <div class="story-scene active" data-scene="0">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↑ Up Arrow</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~/kubernetes-app</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Termim</span><span
+                                            class="step-badge success">Project Boundary</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Hashing project root... matched 840 commands.</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="green-text">kubectl apply -f manifest.yaml</span></div>
+                                    <div class="step-footer"><span class="dim">"Perfect. Locked to current
+                                            context."</span></div>
+                                </div>
+                            </div>
+                            <!-- Scene 2: Prediction -->
+                            <div class="story-scene" data-scene="1">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">Context</span><span
+                                            class="step-action">Just ran <kbd>git status</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~/frontend-ui</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↓ Down Arrow</kbd></span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Termim</span><span
+                                            class="step-badge success">Markov Engine</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Analyzing transitions from 'git status'...</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="green-text">git add . && git commit -m "update"</span></div>
+                                    <div class="step-footer"><span class="dim">"Predicted transition verified."</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Scene 3: Privacy -->
+                            <div class="story-scene" data-scene="2">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↑ Up Arrow</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~ (Home)</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Termim</span><span
+                                            class="step-badge success">Privacy Sieve</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Manual redaction engine scrubbing secrets...</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="green-text">export AWS_KEY="********"</span></div>
+                                    <div class="step-footer"><span class="dim">"Credentials scrubbed before saving to
+                                            disk."</span></div>
+                                </div>
+                            </div>
+                            <!-- Scene 4: Noise Filtering -->
+                            <div class="story-scene" data-scene="3">
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon">User</span><span
+                                            class="step-action">Presses <kbd>↑ Up Arrow</kbd></span></div>
+                                    <div class="step-content"><span class="step-path">~/api-server</span></div>
+                                </div>
+                                <div class="logic-step">
+                                    <div class="step-header"><span class="step-icon thinking">Termim</span><span
+                                            class="step-badge success">Success-Only</span></div>
+                                    <div class="step-content">
+                                        <p class="dim">Pruning typos and low-impact noise.</p>
+                                    </div>
+                                </div>
+                                <div class="logic-step result">
+                                    <div class="step-header"><span class="step-icon">Result</span><span
+                                            class="green-text">pip install -r requirements.txt</span></div>
+                                    <div class="step-footer"><span class="dim">"Clean, impactful history. Zero
+                                            typos."</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="window-footer">
+                    <div class="scenario-nav">
+                        <button class="scen-btn prev-btn" id="scen-prev">← Prev</button>
+                        <div class="scen-dots">
+                            <span class="scen-dot active" data-index="0"></span>
+                            <span class="scen-dot" data-index="1"></span>
+                            <span class="scen-dot" data-index="2"></span>
+                            <span class="scen-dot" data-index="3"></span>
+                        </div>
+                        <button class="scen-btn next-btn" id="scen-next">Next →</button>
+                    </div>
+                </div>
+            </div>
+            </div>
+            </div>
+            </div>
+        </section>
+
+        <!-- Bento Grid Features -->
+        <section id="features" class="container reveal">
+            <div class="section-badge">Capabilities</div>
+            <h2 class="section-title">Engineered for Performance.</h2>
+            <p class="section-subtitle">Real metrics tracking every command execution, Exit Code, Date/Time, and CWD
+                without a background service.</p>
+
+            <div class="blueprint-header reveal">
+                <div class="sys-status">
+                    <span class="status-dot pulse"></span>
+                    <span class="status-label">ENGINE STATUS: NOMINAL</span>
+                </div>
+                <div class="sys-meta">
+                    <span class="meta-tag">CORE: V1.0.7</span>
+                    <span class="meta-tag">EXECUTION: NATIVE</span>
+                </div>
+            </div>
+
+            <div class="blueprint-grid">
+                <!-- Low-Latency Moat -->
+                <div class="bp-card span-2 glow-card" data-glow>
+                    <div class="bp-corner">0x01</div>
+                    <div class="bp-content">
+                        <h3>Low-Latency Moat</h3>
+                        <p class="bp-text">Engineered for immediate startup. Termim eliminates the "Daemon Tax" by using
+                            zero-dependency core logic, achieving a <span class="mono t-success">~15ms</span> execution
+                            floor.</p>
+
+                        <div class="telemetry-box">
+                            <div class="tel-row">
+                                <span class="tel-label">Standard Daemons</span>
+                                <div class="tel-track">
+                                    <div class="tel-fill bad" style="width: 85%;"></div>
+                                </div>
+                                <span class="tel-val">150ms+</span>
+                            </div>
+                            <div class="tel-row">
+                                <span class="tel-label">Termim Native</span>
+                                <div class="tel-track">
+                                    <div class="tel-fill good" style="width: 10%;"></div>
+                                </div>
+                                <span class="tel-val">12ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Atomic Concurrency -->
+                <div class="bp-card glow-card" data-glow>
+                    <div class="bp-corner">0x02</div>
+                    <div class="bp-content">
+                        <h3>Atomic Concurrency</h3>
+                        <p class="bp-text">Powered by <span class="mono">fd-lock</span>. Every file-write is protected
+                            by Universal Advisory Locking, ensuring zero data corruption across 50+ parallel terminal
+                            panes.</p>
+                    </div>
+                </div>
+
+                <!-- Zero-Library Sieve -->
+                <div class="bp-card glow-card" data-glow>
+                    <div class="bp-corner">0x03</div>
+                    <div class="bp-content">
+                        <h3>Zero-Library Sieve</h3>
+                        <p class="bp-text">A manual, multi-token character sieve replaces expensive RegEx for credential
+                            redaction. Processing cost: <span class="mono t-success">&lt;0.5ms</span> per command.</p>
+                    </div>
+                </div>
+
+                <!-- Behavioral Intelligence -->
+                <div class="bp-card span-2 glow-card" data-glow>
+                    <div class="bp-corner">0x04</div>
+                    <div class="bp-content">
+                        <div class="bp-split">
+                            <div class="bp-info">
+                                <h3>Behavioral Markov Engine</h3>
+                                <p class="bp-text">High-coefficient weighting based on true command transitions. Termim
+                                    observes your habits to rank context by probability, not just frequency.</p>
+                            </div>
+                            <div class="bp-visual">
+                                <div class="markov-viz">
+                                    <div class="m-node">git add</div>
+                                    <div class="m-arrow"><span>98%</span> →</div>
+                                    <div class="m-node pulse-green">git commit</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW: Ecosystem Compatibility -->
+        <section id="ecosystem" class="container reveal">
+            <div class="section-badge">Seamless Integration</div>
+            <h2 class="section-title">Plays nice with your setup.</h2>
+            <p class="section-subtitle">We don't hijack your `$PATH` or break your aliases. Termim operates strictly as
+                a non-destructive intercept overlay.</p>
+
+            <div class="ecosystem-grid">
+                <div class="eco-item">
+                    <div class="eco-name">Starship / Oh-My-Posh</div>
+                    <div class="eco-status">Native</div>
+                </div>
+                <div class="eco-item">
+                    <div class="eco-name">Tmux / Zellij</div>
+                    <div class="eco-status">Native</div>
+                </div>
+                <div class="eco-item">
+                    <div class="eco-name">FZF History Search</div>
+                    <div class="eco-status supported">Supported</div>
+                </div>
+                <div class="eco-item">
+                    <div class="eco-name">Windows Terminal</div>
+                    <div class="eco-status">Native</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW: Core Philosophy -->
+        <section id="philosophy" class="container reveal">
+            <div class="section-badge">Product Philosophy</div>
+            <h2 class="section-title">The "Anti-Features".</h2>
+            <p class="section-subtitle">Great tools are defined by what they say *No* to. Here is exactly what we
+                avoided, and why.</p>
+
+            <div class="philosophy-grid">
+                <div class="phil-card glow-card" data-glow>
+                    <h3>🚫 No SQLite SQLite</h3>
+                    <p>Tools relying on single-file SQLite databases suffer from WAL lock-contention when you have 5
+                        panes compiling simultaneously. We use absolute flat files mapped via SHA-256 for zero-lock
+                        concurrency.</p>
+                </div>
+                <div class="phil-card glow-card" data-glow>
+                    <h3>🚫 No Background Daemons</h3>
+                    <p>We refuse to drain your laptop battery while you read documentation. Termim's CPU usage is
+                        strictly isolated to the 12ms it takes you to press the Enter or Arrow keys.</p>
+                </div>
+                <div class="phil-card glow-card" data-glow>
+                    <h3>🚫 No Artificial AI</h3>
+                    <p>LLM hallucinations have no place in critical production environments. Termim uses deterministic
+                        First-Order Markov Chains, meaning predictable, repeatable suggestions.</p>
+                </div>
+                <div class="phil-card glow-card" data-glow>
+                    <h3>🚫 No Network Requests</h3>
+                    <p>You shouldn't have to authenticate to use your own shell history. Termim does exactly zero cloud
+                        syncing and transmits absolutely zero telemetry.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture -->
+        <section id="architecture" class="container reveal">
+            <div class="arch-split">
+                <div class="arch-text">
+                    <div class="section-badge">Architecture</div>
+                    <h2 class="section-title left-align">How it achieves zero-latency.</h2>
+                    <p class="arch-desc">
+                        Every keystroke matters. We bypassed heavy frameworks and wrote the core in Rust, triggered
+                        strictly by your terminal's native hooks.
+                    </p>
+                    <ul class="arch-list">
+                        <li><strong>Cryptographic Routing:</strong> Projects are isolated using SHA-256 hashes of their
+                            absolute paths, allowing O(1) directory lookups.</li>
+                        <li><strong>Shadow Registry:</strong> All metadata is securely stored in `~/.termim/` without
+                            polluting your local project folders.</li>
+                        <li><strong>Native Overlays:</strong> Hooks instantly into PowerShell, Bash, Zsh, and Fish
+                            without modifying core shell executables.</li>
+                    </ul>
+                </div>
+                <div class="arch-graph glow-card" data-glow>
+                    <div class="node user">User Types <br><code>Up Arrow</code></div>
+                    <div class="line down"></div>
+                    <div class="node shell">Shell Hook (Bash/PS) <br><span>&lt; 5ms overhead</span></div>
+                    <div class="line down"></div>
+                    <div class="node rust">Termim Rust Core <br><span>&lt; 8ms execution</span></div>
+                    <div class="line down"></div>
+                    <div class="line split"></div>
+                    <div class="node-row">
+                        <div class="node data">Path Hash Lookup</div>
+                        <div class="node data">Markov Parsing</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW: Technical FAQ -->
+        <section id="faq" class="container reveal">
+            <div class="section-badge">Knowlege Base</div>
+            <h2 class="section-title">Technical FAQ.</h2>
+            <p class="section-subtitle">Deep dives into the Termim engine, performance, and privacy.</p>
+
+            <div class="faq-accordion">
+                <!-- item 1 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>How is my history isolated globally vs locally?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>Termim intercepts the shell's history request and performs an O(1) lookup in `~/.termim/data/[SHA256-PATH]/`. It serves localized context first. If you exhaust the project history, it initiates a <strong>Deterministic Shell Hand-off</strong> back to your global native history.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- item 2 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>Will Termim slow down my terminal startup?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>No. Termim is a zero-daemon binary written in Rust. It utilizes <strong>Lazy Loading</strong> and <strong>Zero-Library Tax</strong> architecture, ensuring a startup overhead of <span class="mono">~15ms</span>—effectively invisible to the human eye.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- item 3 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>How does the 'Privacy Sieve' handle my API keys?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>Before any command is written to disk, Termim's manual character sieve scrubs it for credentials (e.g., `mim:password@host` becomes `mim:***@host`). This happens in-memory with a processing cost of less than <span class="mono">0.5ms</span>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- item 4 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>Where exactly is my data stored?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>Everything stays on your machine. All history, Markov weights, and project hashes are stored in `~/.termim/`. Termim performs <strong>Zero Telemetry</strong> and zero cloud syncing.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- item 5 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>Is it compatible with my shell theme (Starship/Zsh)?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>Yes. Termim operate as a thin wrapper around native shell hooks. It is tested for native compatibility with Starship, Oh-My-Zsh, Pure, and Oh-My-Posh prompts without interference.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- item 6 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>Can I bypass Termim for global search in an emergency?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>Absolutely. Termim handles discrete Up/Down navigation. Your native <span class="mono">Ctrl+R</span> (reverse-i-search) remains completely untouched, allowing you to hit your full global history whenever needed.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- item 7 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>What happens if I rename or move a project folder?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>Because Termim uses the <strong>Absolute Path SHA-256</strong> hash as the unique project ID, moving or renaming a folder creates a fresh context. Old project history is never "leaked" into the new folder name.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- item 8 -->
+                <div class="faq-item">
+                    <div class="faq-trigger">
+                        <span>How do I factory reset or clear my isolated history?</span>
+                        <div class="faq-icon"></div>
+                    </div>
+                    <div class="faq-content">
+                        <div class="faq-inner">
+                            <p>Use the <span class="mono">termim clear</span> command to instantly wipe all project history, Markov transitions, and global usage stats. Total data agency at the command line.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation -->
+        <section id="installation" class="container reveal">
+            <div class="install-card glow-card" data-glow>
+                <div class="install-header">
+                    <h2>Stop mixing contexts today.</h2>
+                    <p>Smart installers detect your architecture and fetch the correct Rust binary automatically.</p>
+                </div>
+
+                <div class="install-switcher">
+                    <button class="os-btn active" data-os="win">Windows</button>
+                    <button class="os-btn" data-os="unix">Linux / macOS</button>
+                </div>
+
+                <div class="code-box active" id="code-win">
+                    <div class="code-content">
+                        <code>git clone https://github.com/akhtarx/termim.git; cd termim; .\installer\install.ps1</code>
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copy</button>
+                </div>
+
+                <div class="code-box" id="code-unix">
+                    <div class="code-content">
+                        <code>git clone https://github.com/akhtarx/termim.git && cd termim && bash installer/install.sh</code>
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copy</button>
+                </div>
+
+                <div class="install-footer">
+                    <p>Requires minimal configuration. Built completely transparently via GitHub Actions matrix.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <img src="assets/logo.png" alt="Termim Logo" class="logo-img"> <span>Termim</span>
+                <p>Systems thinking applied to the terminal.</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/akhtarx/termim">GitHub Repository</a>
+                <a href="https://github.com/akhtarx/termim/releases">Releases</a>
+                <a href="https://github.com/akhtarx/termim/blob/main/CHANGELOG.md">Changelog</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

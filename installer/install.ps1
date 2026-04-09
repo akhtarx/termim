@@ -3,6 +3,13 @@
 
 $ErrorActionPreference = "Stop"
 
+# Enforce TLS 1.2 for GitHub downloads
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+} catch {
+    # Fallback to current protocol if setting TLS 1.2 fails
+}
+
 $termimDir = Join-Path $HOME ".termim"
 $binDir = Join-Path $termimDir "bin"
 
@@ -37,7 +44,7 @@ if (-not $binaryPath) {
     $binaryPath = Join-Path $env:TEMP "termim-downloaded.exe"
     try {
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $binaryPath -ErrorAction Stop
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $binaryPath -ErrorAction Stop -UseBasicParsing
         Write-Host "  OK: Downloaded latest release" -ForegroundColor Green
     } catch {
         Write-Host "`nERROR: Could not build or download Termim. Please ensure you have an internet connection or Rust installed." -ForegroundColor Red
@@ -52,21 +59,44 @@ if (-not (Test-Path $binDir)) {
 }
 Write-Host "  OK: Created" -ForegroundColor Green
 
-# 2.5 Install fzf (Safe Bundle)
+# 2.5 Install fzf (Dynamic Latest)
 Write-Host "[2.5/4] Bundling fzf for history palette..." -ForegroundColor Yellow
 if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
     $fzfExe = Join-Path $binDir "fzf.exe"
     if (-not (Test-Path $fzfExe)) {
-        Write-Host "  fzf not found. Downloading v0.51.0..." -ForegroundColor Gray
-        $fzfUrl = "https://github.com/junegunn/fzf/releases/download/v0.51.0/fzf-0.51.0-windows_amd64.zip"
-        $fzfZip = Join-Path $env:TEMP "fzf.zip"
+        Write-Host "  fzf not found. Fetching latest version from GitHub..." -ForegroundColor Gray
         try {
+            # Use GitHub API to find latest release
+            $fzfLatest = Invoke-RestMethod -Uri "https://api.github.com/repos/junegunn/fzf/releases/latest" -UseBasicParsing
+            $fzfVersion = $fzfLatest.tag_name.TrimStart('v')
+            
+            # Detect architecture
+            $fzfOS = "windows"
+            $fzfArch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
+            
+            Write-Host "  Latest version found: v$fzfVersion ($fzfArch)" -ForegroundColor Gray
+            $fzfUrl = "https://github.com/junegunn/fzf/releases/download/v$fzfVersion/fzf-$fzfVersion-$fzfOS`_$fzfArch.zip"
+            $fzfZip = Join-Path $env:TEMP "fzf.zip"
+            $extractDir = Join-Path $env:TEMP "fzf_extract_$(Get-Random)"
+            
             $ProgressPreference = 'SilentlyContinue'
-            Invoke-WebRequest -Uri $fzfUrl -OutFile $fzfZip -ErrorAction Stop
-            Expand-Archive -Path $fzfZip -DestinationPath $env:TEMP -Force
-            Move-Item -Path (Join-Path $env:TEMP "fzf.exe") -Destination $fzfExe -Force
-            Remove-Item $fzfZip -Force
-            Write-Host "  OK: fzf installed to $binDir" -ForegroundColor Green
+            Invoke-WebRequest -Uri $fzfUrl -OutFile $fzfZip -ErrorAction Stop -UseBasicParsing
+            
+            if (-not (Test-Path $extractDir)) { New-Item -ItemType Directory -Path $extractDir -Force | Out-Null }
+            Expand-Archive -Path $fzfZip -DestinationPath $extractDir -Force
+            
+            # Find fzf.exe even if it's in a subfolder of the zip
+            $extractedExe = Get-ChildItem -Path $extractDir -Filter "fzf.exe" -Recurse | Select-Object -First 1
+            if ($extractedExe) {
+                Move-Item -Path $extractedExe.FullName -Destination $fzfExe -Force
+                Write-Host "  OK: fzf installed to $binDir" -ForegroundColor Green
+            } else {
+                Write-Host "  WARNING: fzf.exe not found in extracted archive." -ForegroundColor Yellow
+            }
+            
+            # Cleanup
+            Remove-Item $fzfZip -Force -ErrorAction SilentlyContinue
+            Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
         } catch {
             Write-Host "  WARNING: Failed to download fzf ($($_.Exception.Message)). You may need to install it manually." -ForegroundColor Yellow
         }
