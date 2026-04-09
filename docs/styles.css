@@ -1148,7 +1148,26 @@ footer {
     .faq-trigger { padding: 1.4rem; font-size: 0.9rem; }
     .faq-inner { padding: 0 1.4rem 1.4rem 1.4rem; }
     
-    .arch-graph { transform: scale(0.7); margin-left: -15%; width: 130%; }
+    .arch-graph { 
+        padding: 1.5rem; 
+        width: 100%; 
+        transform: none; 
+        margin: 0; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center;
+    }
+    
+    .node { 
+        width: 180px; 
+        padding: 1rem; 
+        font-size: 0.8rem; 
+        min-height: auto;
+    }
+    
+    .line.split { width: 150px; }
+    .node-row { gap: 10px; width: 100%; justify-content: center; }
+    .node.data { width: 130px; font-size: 0.75rem; }
     
     .install-card { padding: 2rem 1.2rem; }
     .install-switcher { scale: 0.85; }
