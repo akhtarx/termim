@@ -835,17 +835,19 @@ dependencies = [
 
 [[package]]
 name = "termim"
-version = "1.0.7"
+version = "1.0.8"
 dependencies = [
  "clap",
  "dirs",
  "fd-lock",
+ "once_cell",
  "regex",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
  "ureq",
+ "winreg",
 ]
 
 [[package]]
@@ -1186,6 +1188,16 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
+
+[[package]]
+name = "winreg"
+version = "0.51.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "937f3df7948156640f46aacef17a70db0de5917bda9c92b0f751f3a955b588fc"
+dependencies = [
+ "cfg-if",
+ "windows-sys 0.48.0",
+]
 
 [[package]]
 name = "wit-bindgen"

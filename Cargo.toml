@@ -1,6 +1,6 @@
 [package]
 name = "termim"
-version = "1.0.7"
+version = "1.0.8"
 edition = "2021"
 description = "Project-aware terminal history and command intelligence"
 repository = "https://github.com/akhtarx/termim"
@@ -19,6 +19,10 @@ fd-lock = "4.0"
 tempfile = "3.8"
 regex = "1.10"
 ureq = "2.9"
+once_cell = "1.18"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.51"
 
 [[bin]]
 name = "termim"

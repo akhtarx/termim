@@ -2,7 +2,7 @@
 # Termim Zsh Integration
 # Compatible with MSYS/Git Bash and macOS
 
-# [v1.0.7] Universal Home Discovery: Find the physical .termim home on any platform
+# [v1.0.8] Universal Home Discovery
 _TERMIM_HOME="$HOME/.termim"
 if [[ ! -d "$_TERMIM_HOME" ]]; then
     # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
@@ -82,7 +82,7 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Project-aware terminal history and contextual intelligence v1.0.7
+        # Termim: Project-aware terminal history and contextual intelligence v1.0.8
 # ---------------------------------------------------------------------
         # Fetch strictly history-only results (Recency)
         _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")

@@ -9,21 +9,23 @@ use termim::utils::constants::PROJECTS_DIR;
 use termim::core::fundamentals::FundamentalsRegistry;
 use termim::utils::update::check_for_updates;
 
+use once_cell::sync::Lazy;
+
+static PATTERNS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
+    vec![
+        (Regex::new(r"(?i)(-p|--password|--api-key|--token|--pwd)[ =]?[^ ]+").unwrap(), "$1=[REDACTED]"),
+        (Regex::new(r"(?i)(password|token|api_key|secret)=[^ ]+").unwrap(), "$1=[REDACTED]"),
+        (Regex::new(r"(?i)(bearer|auth)[ =][^ ]+").unwrap(), "$1=[REDACTED]"),
+        (Regex::new(r"(?i)(://[^:]+:)[^@]+(@)").unwrap(), "${1}[REDACTED]${2}"),
+    ]
+});
+
 fn sanitize_command(command: &str) -> String {
     let mut scrubbed = command.trim().to_string();
     if scrubbed.is_empty() { return scrubbed; }
 
-    let patterns = [
-        (r"(?i)(-p|--password|--api-key|--token|--pwd)[ =]?[^ ]+", "$1=[REDACTED]"),
-        (r"(?i)(password|token|api_key|secret)=[^ ]+", "$1=[REDACTED]"),
-        (r"(?i)(bearer|auth)[ =][^ ]+", "$1=[REDACTED]"),
-        (r"(?i)(://[^:]+:)[^@]+(@)", "${1}[REDACTED]${2}"),
-    ];
-
-    for (p, r) in patterns {
-        if let Ok(re) = Regex::new(p) {
-            scrubbed = re.replace_all(&scrubbed, r).to_string();
-        }
+    for (re, replacement) in PATTERNS.iter() {
+        scrubbed = re.replace_all(&scrubbed, *replacement).to_string();
     }
 
     scrubbed
@@ -31,11 +33,18 @@ fn sanitize_command(command: &str) -> String {
 
 pub fn normalize_path_str(path_str: &str) -> String {
     let mut s = path_str.to_string();
-    // [v1.1.8] Absolute Identity Symmetry: Lowercase + Forward Slash + Strip UNC Prefix
+    // Absolute Identity Symmetry:
+    // Strip UNC prefixes, normalize separators, and handle platform casing
     if s.starts_with(r"\\?\") {
         s = s[4..].to_string();
     }
-    s.replace('\\', "/").to_lowercase()
+    s = s.replace('\\', "/");
+
+    if cfg!(any(target_os = "windows", target_os = "macos")) {
+        s.to_lowercase()
+    } else {
+        s
+    }
 }
 
 fn append_to_file_locked(path: &std::path::Path, content: &str) -> std::io::Result<()> {
@@ -98,7 +107,7 @@ fn prune_log(path: &std::path::Path, max_lines: usize) -> std::io::Result<()> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     
-    // [v1.1.5] Uniform CWD Context Awareness 
+    // Uniform CWD Context Awareness 
     let current_dir_raw = match &cli.command {
         Some(Commands::Log { cwd, .. }) if cwd.is_some() => {
             std::path::PathBuf::from(cwd.as_ref().unwrap())
@@ -306,8 +315,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 for (cmd, count) in ranked.iter().take(10) {
                     let pct = (*count as f64 / (total * 1000) as f64) * 100.0;
                     let bar_len = (pct / 5.0) as usize;
-                    let bar = "█".repeat(bar_len);
-                    println!("{:>5.1}% | {:<12} | {}", pct, bar, cmd);
+                    let bar = "■".repeat(bar_len);
+                    println!("{:>5.1}% | {:<10} | {}", pct, bar, cmd);
                 }
                 println!("\n-----------------------------------------------");
             } else {
@@ -316,7 +325,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== Termim Diagnostic Check (v1.0.7) ===\n");
+            println!("=== Termim Diagnostic Check (v1.0.8) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon)");
 
             let mut home = dirs::home_dir().unwrap_or_default();
@@ -326,22 +335,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 "Projects: {} {}",
                 projects.display(),
-                if projects.exists() { "✓" } else { "✗" }
+                if projects.exists() { "[OK]" } else { "[FAIL]" }
             );
 
             let registry = home.join("registry.txt");
             println!(
                 "Registry: {} {}",
                 registry.display(),
-                if registry.exists() { "✓" } else { "✗" }
+                if registry.exists() { "[OK]" } else { "[FAIL]" }
             );
 
             println!("\nShell plugins:");
             for shell in &["bash.sh", "zsh.sh", "fish.fish", "powershell.ps1"] {
                 let exists = if home.join("shell").join(shell).exists() {
-                    "✓"
+                    "[OK]"
                 } else {
-                    "✗"
+                    "[FAIL]"
                 };
                 println!("  ~/.termim/shell/{} {}", shell, exists);
             }
@@ -382,7 +391,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Some(Commands::Clear { force }) => {
             if !force {
-                print!("⚠️  This will delete all project history, registry, and statistics. Continue? (y/N): ");
+                print!("(!) This will delete all project history, registry, and statistics. Continue? (y/N): ");
                 let mut input = String::new();
                 std::io::stdout().flush()?;
                 std::io::stdin().read_line(&mut input)?;
@@ -416,7 +425,73 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            println!("\n✅ Termim data cleared successfully.");
+            println!("\n[DONE] Termim data cleared successfully.");
+        }
+
+        Some(Commands::Uninstall { force }) => {
+            if !force {
+                print!("(!) WARNING: This will PERMANENTLY delete all history and remove Termim from your system. Continue? (y/N): ");
+                let mut input = String::new();
+                std::io::stdout().flush()?;
+                std::io::stdin().read_line(&mut input)?;
+                if !input.trim().to_lowercase().starts_with('y') {
+                    println!("Aborted.");
+                    return Ok(());
+                }
+            }
+
+            println!("Uninstalling Termim...");
+            let home = dirs::home_dir().unwrap_or_default().join(".termim");
+
+            // 1. Delete data and scripts
+            if home.exists() {
+                println!("  OK: Removing data directory at {}", home.display());
+                let _ = std::fs::remove_dir_all(&home);
+            }
+
+            // 2. Remove from PATH (Windows Specific)
+            #[cfg(windows)]
+            {
+                use winreg::enums::*;
+                use winreg::RegKey;
+                let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+                if let Ok(env) = hkcu.open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE) {
+                    if let Ok(current_path) = env.get_value::<String, _>("Path") {
+                        let bin_str = home.join("bin").to_string_lossy().to_string();
+                        let filtered_paths: Vec<_> = current_path
+                            .split(';')
+                            .filter(|p| !p.contains(&bin_str))
+                            .collect();
+                        let _ = env.set_value("Path", &filtered_paths.join(";"));
+                        println!("  OK: Removed from User PATH");
+                    }
+                }
+            }
+
+            // 3. Self-Deletion logic
+            let exe_path = std::env::current_exe()?;
+            
+            println!("\n[CLEANUP] Please manually remove the Termim integration line from your shell profile:");
+            println!("  - PowerShell : rm $PROFILE (search for '.powershell.ps1')");
+            println!("  - Bash/Zsh/Fish : edit ~/.bashrc, ~/.zshrc, or ~/.config/fish/config.fish\n");
+
+            println!("Termim has been uninstalled. Goodbye!");
+
+            #[cfg(windows)]
+            {
+                // On Windows, the binary is locked. We use a separate process to delete it after we exit.
+                let cmd = format!("timeout /t 1 /nobreak > NUL & del /f \"{}\"", exe_path.display());
+                std::process::Command::new("cmd")
+                    .args(["/C", &cmd])
+                    .spawn()?;
+            }
+
+            #[cfg(not(windows))]
+            {
+                let _ = std::fs::remove_file(exe_path);
+            }
+            
+            std::process::exit(0);
         }
 
         None => {
@@ -435,13 +510,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             println!(
                 r#"
-  _____                   _
-  |_   _|__ _ __ _ __ ___ (_)_ __ ___
+  _______                  _
+ |__   __|                (_)
+    | | ___ _ __ _ __ ___  _ _ __ ___
     | |/ _ \ '__| '_ ` _ \| | '_ ` _ \
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.0.7
+  Project-aware terminal history + intelligence v1.0.8
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
 
@@ -455,8 +531,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   • termim suggest : Show intelligent command suggestions
   • termim stats   : Global usage statistics
   • termim doctor  : Health check & diagnostics
-  • termim update  : Check for latest version
   • termim clear   : Reset all data & history
+  • termim update  : Check for latest version
+  • termim uninstall : COMPLETELY remove Termim from your system
 "#,
                 root.display(),
                 eco_str

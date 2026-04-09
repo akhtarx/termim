@@ -4,6 +4,16 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.0.8] - 2026-04-09
+### Added
+- OS-Aware Path Normalization: Fixed critical project collision flaw on Linux (case-sensitive systems).
+- High-Fidelity Uninstall: Integrated Windows Registry PATH cleanup and self-deletion logic.
+- GitHub Funding: Added FUNDING.yml for community support.
+
+### Changed
+- Hot-Path Optimization: Implemented lazy-initialized regexes for sub-millisecond logging performance.
+- Visual Alignment: Mathematically aligned ASCII banner for distortion-free rendering.
+
 ## [1.0.7] - 2026-04-08
 ### ✨ Added
 - **Multi-Platform Releases**: Automated GitHub Actions to build for Windows, Linux, and macOS.
