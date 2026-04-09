@@ -11,8 +11,6 @@ Stop fighting with your Up-Arrow key. Termim makes your shell **project-aware**,
 <p align="center">
   <a href="https://github.com/akhtarx/termim/releases"><img src="https://img.shields.io/github/v/release/akhtarx/termim?style=for-the-badge&color=7C3AED" alt="Release"></a>
   <a href="https://github.com/akhtarx/termim/stargazers"><img src="https://img.shields.io/github/stars/akhtarx/termim?style=for-the-badge&color=FBBF24" alt="Stars"></a>
-  <a href="https://github.com/akhtarx/termim/network/members"><img src="https://img.shields.io/github/forks/akhtarx/termim?style=for-the-badge&color=60A5FA" alt="Forks"></a>
-  <a href="https://github.com/akhtarx/termim/releases"><img src="https://img.shields.io/github/downloads/akhtarx/termim/total?style=for-the-badge&color=D946EF" alt="Downloads"></a>
   <a href="https://github.com/akhtarx/termim/issues"><img src="https://img.shields.io/github/issues/akhtarx/termim?style=for-the-badge&color=EF4444" alt="Issues"></a>
   <a href="https://github.com/akhtarx/termim/commits/main"><img src="https://img.shields.io/github/last-commit/akhtarx/termim?style=for-the-badge&color=10B981" alt="Last Commit"></a>
   <a href="https://github.com/akhtarx/termim"><img src="https://img.shields.io/github/repo-size/akhtarx/termim?style=for-the-badge&color=3B82F6" alt="Repo Size"></a>
