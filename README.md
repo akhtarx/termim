@@ -73,7 +73,7 @@ Termim doesn't just rank by frequency; it ranks by **probability.** By observing
 ---
 
 ## ⚡ Technical Core
-**Termim v1.0.9** converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
+**Termim** converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
 
 - **🧠 Multi-Dimensional Context**: Distinguishes between Git branches and prioritizes recovery commands after failures.
 - **🔄 Symmetrical Navigation**: A deterministic state machine providing 1:1 parity between PowerShell, Bash, Zsh, and Fish.
@@ -136,7 +136,7 @@ Termim doesn't just rank by frequency; it ranks by **probability.** By observing
 
 ---
 
-## 🐚 Shell Authentication Matrix (v1.0.9)
+## 🐚 Shell Authentication Matrix
 
 | Feature | PowerShell | Zsh | Bash | Fish | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -150,7 +150,7 @@ Termim doesn't just rank by frequency; it ranks by **probability.** By observing
 
 ## 🧬 Architecture
 
-Termim v1.0.8 is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for sub-20ms execution and 100% data integrity.
+Termim is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for sub-20ms execution and 100% data integrity.
 
 ### 1. Performance Moat (Zero-Library Tax)
 Termim eliminates the "Library Startup Tax" by using zero-dependency core logic for its most critical paths.
