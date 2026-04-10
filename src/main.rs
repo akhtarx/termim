@@ -130,7 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hash = hash_project_path(&root);
 
     match cli.command {
-        Some(Commands::Log { command_str, prev, exit, cwd: _ }) => {
+        Some(Commands::Log { command_str, prev, exit, cwd: _, branch }) => {
             let sanitized_cmd = sanitize_command(&command_str);
             if sanitized_cmd.is_empty() { return Ok(()); }
 
@@ -151,29 +151,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let _ = append_to_file_locked(&global_path, &sanitized_cmd);
             let _ = prune_log(&global_path, 5000);
 
-            // Behavioral Intelligence: Record Markov Transition (Success-Only Learning)
-            if let Some(0) = exit {
-                if let Some(prev_cmd) = prev {
-                    let sanitized_prev = sanitize_command(&prev_cmd);
-                    if !sanitized_prev.is_empty() && sanitized_prev != sanitized_cmd {
-                        let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
-                        let record = format!("{} ::: {}", sanitized_prev, sanitized_cmd);
-                        let _ = append_to_file_locked(&trans_file, &record);
-                        
-                        // Silent Pruning (No-Flood Guarantee)
-                        let _ = prune_log(&trans_file, 1000);
-                    }
+            // Behavioral Intelligence: Record Markov Transition (State-Aware Learning)
+            if let Some(prev_cmd) = prev {
+                let sanitized_prev = sanitize_command(&prev_cmd);
+                if !sanitized_prev.is_empty() && sanitized_prev != sanitized_cmd {
+                    let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
+                    let exit_code = exit.unwrap_or(0);
+                    let branch_str = branch.unwrap_or_else(|| "none".to_string());
+                    // Format: prev ::: next ::: exit ::: branch
+                    let record = format!("{} ::: {} ::: {} ::: {}", sanitized_prev, sanitized_cmd, exit_code, branch_str);
+                    let _ = append_to_file_locked(&trans_file, &record);
+                    
+                    // Silent Pruning (No-Flood Guarantee)
+                    let _ = prune_log(&trans_file, 1000);
                 }
             }
         }
 
-        Some(Commands::Query { prev, cwd: _, history_only, suggest_only }) => {
+        Some(Commands::Query { prev, cwd: _, history_only, suggest_only, branch }) => {
             let projects_dir = dirs::home_dir()
                 .unwrap_or_default()
                 .join(".termim")
                 .join(PROJECTS_DIR);
             let hist_file = projects_dir.join(format!("{}.txt", hash));
             let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+            // v1.0.9: Context-Aware Retrieval (Failure & Branch awareness)
+            let prev_exit = std::env::var("TERMIM_LAST_EXIT").ok().and_then(|s| s.parse::<i32>().ok()).unwrap_or(0);
 
             // 1. Behavioral Prediction: Freq-Ranked Transitions (v1.4.0: Optional)
             if !history_only {
@@ -182,10 +186,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
                     if let Ok(content) = read_file_locked(&trans_file) {
                         let mut transitions = std::collections::HashMap::with_capacity(100);
+                        let target_branch = branch.unwrap_or_else(|| "none".to_string());
+                        
                         for line in content.lines() {
                             let parts: Vec<_> = line.split(" ::: ").collect();
-                            if parts.len() == 2 && parts[0] == sanitized_p {
-                                *transitions.entry(parts[1].to_string()).or_insert(0) += 1;
+                            if parts.len() >= 2 && parts[0] == sanitized_p {
+                                let mut weight = 1;
+                                
+                                // v1.0.9: Context-Aware Weighting
+                                if parts.len() == 4 {
+                                    // 1. Branch Precision (+500 score)
+                                    if parts[3] == target_branch {
+                                        weight += 500;
+                                    }
+
+                                    // 2. Failure Recovery Support (+1000 score)
+                                    // If the last command failed, prioritize recovery commands
+                                    let captured_exit = parts[2].parse::<i32>().unwrap_or(0);
+                                    if prev_exit != 0 && captured_exit != 0 {
+                                        weight += 1000;
+                                    }
+                                }
+                                
+                                *transitions.entry(parts[1].to_string()).or_insert(0) += weight;
                             }
                         }
                         let mut ranked: Vec<_> = transitions.into_iter().collect();
@@ -224,7 +247,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        Some(Commands::Suggest { prefix, prev, cwd: _ }) => {
+        Some(Commands::Suggest { prefix, prev, cwd: _, branch }) => {
             // 1. Analyze Project Context
             let root = detect_project_root(&env::current_dir()?);
             let profile = analyze_project(&root);
@@ -239,11 +262,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(p) = prev {
                 let sanitized_p = sanitize_command(&p);
                 let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
+                let prev_exit = std::env::var("TERMIM_LAST_EXIT").ok().and_then(|s| s.parse::<i32>().ok()).unwrap_or(0);
+                let target_branch = branch.unwrap_or_else(|| "none".to_string());
+
                 if let Ok(content) = read_file_locked(&trans_file) {
                     for line in content.lines() {
                         let parts: Vec<_> = line.split(" ::: ").collect();
-                        if parts.len() == 2 && parts[0] == sanitized_p {
-                            *counts.entry(parts[1].to_string()).or_insert(0) += 1000;
+                        if parts.len() >= 2 && parts[0] == sanitized_p {
+                            let mut weight = 1000;
+                            if parts.len() == 4 {
+                                if parts[3] == target_branch { weight += 500; }
+                                let captured_exit = parts[2].parse::<i32>().unwrap_or(0);
+                                if prev_exit != 0 && captured_exit != 0 { weight += 1000; }
+                            }
+                            *counts.entry(parts[1].to_string()).or_insert(0) += weight;
                         }
                     }
                 }
@@ -325,7 +357,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== Termim Diagnostic Check (v1.0.8) ===\n");
+            println!("=== Termim Diagnostic Check (v1.0.9) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon)");
 
             let mut home = dirs::home_dir().unwrap_or_default();
@@ -517,7 +549,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.0.8
+  Project-aware terminal history + intelligence v1.0.9
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
 

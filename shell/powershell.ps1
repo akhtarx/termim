@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.0.8
+# Version 1.0.9
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.2.0] Universal Home Discovery: Find the physical .termim home on any platform
@@ -45,7 +45,7 @@ $null = ($Global:TermimLogger.Runspace = [runspacefactory]::CreateRunspace())
 $null = $Global:TermimLogger.Runspace.Open()
 
 function Global:Invoke-TermimLogAsync {
-    param([string]$command, [int]$exitCode = 0, [string]$cwd = "")
+    param([string]$command, [int]$exitCode = 0, [string]$cwd = "", [string]$branch = "none")
     if (-not $Global:TermimBin) { return }
     
     # Run logging in a separate thread to avoid blocking
@@ -55,7 +55,7 @@ function Global:Invoke-TermimLogAsync {
         # The 'previous' command is the one before that.
         $prev = if ($history.Count -ge 2) { $history[-2].CommandLine } else { "" }
         
-        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' 2>>`"$Global:TermimHome\termim.log`"")
+        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' --branch '$($branch.Replace("'", "''"))' 2>>`"$Global:TermimHome\termim.log`"")
         $Global:TermimLogger.Commands.Clear() | Out-Null
         $Global:TermimLogger.AddScript($sb) | Out-Null
         $Global:TermimLogger.BeginInvoke() | Out-Null
@@ -87,7 +87,9 @@ if (Get-Module PSReadLine) {
             $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
             
             # Fetch strictly history-only results (Recency)
-            $Global:TermimCache = @(& $Global:TermimBin query --history-only --prev "$prev" --cwd "$Global:TermimPreExecDir" 2>$null | Select-Object -Unique)
+            $branch = (git branch --show-current 2>$null)
+            if (-not $branch) { $branch = "none" }
+            $Global:TermimCache = @(& $Global:TermimBin query --history-only --prev "$prev" --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Select-Object -Unique)
             $Global:TermimIdx = 1
         } else {
             $Global:TermimIdx++
@@ -129,7 +131,9 @@ if (Get-Module PSReadLine) {
             $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
             
             # Fetch strictly predictions-only
-            $Global:TermimCache = @(& $Global:TermimBin query --suggest-only --prev "$prev" --cwd "$Global:TermimPreExecDir" 2>$null | Where-Object { $_.Trim() -ne "" } | Select-Object -Unique)
+            $branch = (git branch --show-current 2>$null)
+            if (-not $branch) { $branch = "none" }
+            $Global:TermimCache = @(& $Global:TermimBin query --suggest-only --prev "$prev" --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Where-Object { $_.Trim() -ne "" } | Select-Object -Unique)
             
             if ($Global:TermimCache.Count -gt 0) {
                 $Global:TermimIdx = -1
@@ -172,7 +176,9 @@ if (Get-Module PSReadLine) {
         if ($Global:TermimBin) {
             # Capture current directory context
             $Global:TermimPreExecDir = (Get-Location).Path
-            $history = & $Global:TermimBin query --cwd "$Global:TermimPreExecDir" 2>$null | Select-Object -Unique
+            $branch = (git branch --show-current 2>$null)
+            if (-not $branch) { $branch = "none" }
+            $history = & $Global:TermimBin query --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Select-Object -Unique
             if ($history.Length -gt 0) {
                 $reversed = [array]$history
                 [Array]::Reverse($reversed)
@@ -199,11 +205,16 @@ function prompt {
     # 2. Perform background logging for any pending command
     if ($Global:TermimPendingCommand) {
         if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
-            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir
+            $branch = (git branch --show-current 2>$null)
+            if (-not $branch) { $branch = "none" }
+            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir -branch $branch
         }
         $Global:TermimPendingCommand = $null
         $Global:TermimPreExecDir = $null
     }
+    
+    # 5. v1.0.9: Export last status for query-time context weighting
+    $env:TERMIM_LAST_EXIT = $lastExit
 
     # 3. Reset navigation state for the new prompt
     $Global:TermimIdx = 0

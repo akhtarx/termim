@@ -1,4 +1,4 @@
-# [v1.0.8] Universal Home Discovery
+# [v1.0.9] Universal Home Discovery
 set -g _TERMIM_HOME "$HOME/.termim"
 if not test -d "$_TERMIM_HOME"
     # Fallback for Windows MSYS2/Git Bash/Fish: Map virtual home to physical Windows home
@@ -69,11 +69,15 @@ function termim_postexec --on-event fish_postexec
     # Behavioral Context: Get the penultimate command (since current is at head)
     set -l prev (history | head -n 2 | tail -n 1)
 
-    # Log to Termim with explicit CWD and diagnostic logging
-    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$_TERMIM_LOG" &
+    # Log to Termim with explicit CWD, branch detection and diagnostic logging
+    set -l branch (git branch --show-current 2>/dev/null; or echo "none")
+    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" 2>>"$_TERMIM_LOG" &
     disown 2>/dev/null
     
     set -g _TERMIM_PREEXEC_DIR ""
+    
+    # v1.0.9: Set last status for query-time context weighting
+    set -gx TERMIM_LAST_EXIT "$exit_status"
     
     # Reset navigation state on new command
     set -g _TERMIM_IDX 0 
@@ -95,7 +99,8 @@ function termim_up
         
         # Capture context for ranking
         set -l prev_cmd (history | head -n 1)
-        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd (pwd) 2>/dev/null)
+        set -l branch (git branch --show-current 2>/dev/null; or echo "none")
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd (pwd) --branch "$branch" 2>/dev/null)
         set -g _TERMIM_IDX 1
     else
         set -g _TERMIM_IDX (math $_TERMIM_IDX + 1)
@@ -137,7 +142,8 @@ function termim_down
         set -l prev_cmd (history | head -n 1)
         
         # Fetch strictly predictions-only
-        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd (pwd) 2>/dev/null)
+        set -l branch (git branch --show-current 2>/dev/null; or echo "none")
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd (pwd) --branch "$branch" 2>/dev/null)
         
         if test (count $_TERMIM_CACHE) -gt 0
             set -g _TERMIM_IDX -1
@@ -203,7 +209,8 @@ function termim_palette
 
     # Use temp file to avoid TTY issues
     set -l tmp_hist (mktemp)
-    "$_TERMIM_BIN" query --cwd (pwd) 2>/dev/null > "$tmp_hist"
+    set -l branch (git branch --show-current 2>/dev/null; or echo "none")
+    "$_TERMIM_BIN" query --cwd (pwd) --branch "$branch" 2>/dev/null > "$tmp_hist"
 
     set -l selected (cat "$tmp_hist" | $fzf_cmd \
         --height=40% \

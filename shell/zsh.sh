@@ -2,7 +2,7 @@
 # Termim Zsh Integration
 # Compatible with MSYS/Git Bash and macOS
 
-# [v1.0.8] Universal Home Discovery
+# [v1.0.9] Universal Home Discovery
 _TERMIM_HOME="$HOME/.termim"
 if [[ ! -d "$_TERMIM_HOME" ]]; then
     # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
@@ -58,15 +58,19 @@ _termim_preexec() {
 _termim_precmd() {
     local exit_status=$?
     if [[ -n "$_TERMIM_PENDING_CMD" ]]; then
-        # Penultimate command (the one before the command that just target finished)
+        # Penultimate command (the one before the command that just finished)
         local prev_cmd="$history[$((HISTNO-2))]"
         
-        # Log to Termim with explicit CWD and diagnostic logging
-        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$_TERMIM_LOG" &!
+        # Log to Termim with explicit CWD, branch detection and diagnostic logging
+        local branch=$(git branch --show-current 2>/dev/null || echo "none")
+        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" 2>>"$_TERMIM_LOG" &!
         
         _TERMIM_PENDING_CMD=""
         _TERMIM_PREEXEC_DIR=""
     fi
+    
+    # v1.0.9: Export last status for query-time context weighting
+    export TERMIM_LAST_EXIT="$exit_status"
 }
 
 autoload -Uz add-zsh-hook
@@ -82,10 +86,11 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Project-aware terminal history and contextual intelligence v1.0.8
+        # Termim: Project-aware terminal history and contextual intelligence v1.0.9
 # ---------------------------------------------------------------------
         # Fetch strictly history-only results (Recency)
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")
+        local branch=$(git branch --show-current 2>/dev/null || echo "none")
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)}")
         _TERMIM_IDX=1
     else
         _TERMIM_IDX=$((_TERMIM_IDX + 1))
@@ -127,7 +132,8 @@ _termim_down() {
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
         # Fetch strictly predictions-only
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")
+        local branch=$(git branch --show-current 2>/dev/null || echo "none")
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --suggest-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)}")
         
         if [[ ${#_TERMIM_CACHE} -gt 0 ]]; then
             _TERMIM_IDX=-1
@@ -207,7 +213,8 @@ if [[ -o interactive ]]; then
             fzf_cmd="winpty $_FZF_BIN"
         fi
         local tmp_hist=$(mktemp)
-        "$_TERMIM_BIN" query --cwd "$PWD" 2>/dev/null > "$tmp_hist"
+        local branch=$(git branch --show-current 2>/dev/null || echo "none")
+        "$_TERMIM_BIN" query --cwd "$PWD" --branch "$branch" 2>/dev/null > "$tmp_hist"
         local selected=$($fzf_cmd \
             --height=40% --reverse --border=rounded \
             --prompt="  termim > " --header="Project History" --no-sort \

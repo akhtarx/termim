@@ -4,6 +4,12 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.0.9] - 2026-04-10
+### Added
+- **Multi-Dimensional Context Engine**: Universal failure-state awareness and Git branch isolation.
+- **Smart Weighting**: Prioritizes recovery commands after a failure and identifies branch-specific behavioral patterns.
+- **Enhanced Shell Integration**: Automatic metadata passing (Branch & Exit Code) for Bash, Zsh, Fish, and PowerShell.
+
 ## [1.0.8] - 2026-04-09
 ### Added
 - OS-Aware Path Normalization: Fixed critical project collision flaw on Linux (case-sensitive systems).

@@ -33,8 +33,8 @@ You press it 20 times just to find that one `docker` or `cargo` command you ran 
 Termim isolates your history **per project**. It creates a "boundary" for your terminal so "Environment Bleeding" becomes impossible.
 
 - **Up Arrow** → Instantly shows only commands you ran in the *current* project.
-- **Down Arrow** → Escapes to global history when you actually need it.
-- **Smart Predictions** → Guesses what you’ll do next based on your actual habits.
+- **Down Arrow** → Trigger **Smart Predictions** (from a blank prompt) or return to project context.
+- **Escape Path** → Standard history is always 1 key-press away when project context is exhausted.
 
 ## 💥 What it feels like
 
@@ -73,14 +73,15 @@ Termim doesn't just rank by frequency; it ranks by **probability.** By observing
 ---
 
 ## ⚡ Technical Core
-**Termim v1.0.8** converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
+**Termim v1.0.9** converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
 
+- **🧠 Multi-Dimensional Context**: Distinguishes between Git branches and prioritizes recovery commands after failures.
 - **🔄 Symmetrical Navigation**: A deterministic state machine providing 1:1 parity between PowerShell, Bash, Zsh, and Fish.
 - **🚀 Fundamentals Engine**: A static, zero-latency dispatch registry providing O(1) follow-up suggestions without disk I/O.
 - **1000x Adaptive Behavioral Logic**: High-coefficient Markov Chain transitions prioritize your unique behavioral patterns.
 - **Deterministic Context Isolation**: Normalization-based project detection across Rust, Node, and POSIX environments.
 - **Atomic Concurrency**: Powered by **Universal Advisory Locking (`fd-lock`)**. Ensures data integrity across parallel terminal instances.
-- **Minimalist Latency**: Dependency-free core logic achieves an average latency of **~15ms**.
+- **Minimalist Latency**: Dependency-free core logic achieves an average latency of **~12ms**.
 - **Privacy Sieve**: A character-based redaction engine masks credentials and secrets in-memory.
 
 ---
@@ -97,8 +98,8 @@ Termim doesn't just rank by frequency; it ranks by **probability.** By observing
 | **Zero-Database** | ✅ | ❌ | ❌ | ✅ | ✅ |
 | **Native Windows** | ✅ | ⚠️ | ❌ | ❌ | ✅ |
 | **Privacy Sieve** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Success-Only Learning** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Latency Moat** | **~15ms** | > 50ms | > 20ms | < 10ms | < 1ms |
+| **Failure-Aware Logic** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Latency Moat** | **~12ms** | > 50ms | > 20ms | < 10ms | < 1ms |
 
 ---
 
@@ -135,14 +136,14 @@ Termim doesn't just rank by frequency; it ranks by **probability.** By observing
 
 ---
 
-## 🐚 Shell Authentication Matrix (v1.0.8)
+## 🐚 Shell Authentication Matrix (v1.0.9)
 
 | Feature | PowerShell | Zsh | Bash | Fish | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Exit Status Capture** | ✅ (`prompt`) | ✅ (`precmd`) | ✅ (`PROMPT_CMD`) | ✅ (`postexec`) | **Authentic** |
+| **Exit Status Capture** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
+| **Git Branch Detection**| ✅ | ✅ | ✅ | ✅ | **Authentic** |
 | **Markov Context (`--prev`)**| ✅ | ✅ | ✅ | ✅ | **Authentic** |
-| **Success-Only Logging** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
-| **Predictive Navigation** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
+| **State-Aware Logic** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
 | **Performance Moat** | ✅ | ✅ | ✅ | ✅ | **Authentic** |
 
 ---

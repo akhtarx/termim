@@ -1,4 +1,4 @@
-# [v1.0.8] Universal Home Discovery
+# [v1.0.9] Universal Home Discovery
 _TERMIM_HOME="$HOME/.termim"
 if [[ ! -d "$_TERMIM_HOME" ]]; then
     # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
@@ -59,10 +59,16 @@ _termim_log() {
     prev_cmd=$(fc -ln -2 -2 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
     
     if [[ -n "$last_cmd" ]]; then
-        # Run logging in background with explicit CWD and diagnostic logging
-        ("$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" 2>>"$_TERMIM_LOG" &) 
+        # Run logging in background with explicit CWD and branch detection
+        (
+            local branch=$(git branch --show-current 2>/dev/null || echo "none")
+            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" 2>>"$_TERMIM_LOG"
+        & ) 
         disown 2>/dev/null
     fi
+    
+    # v1.0.9: Export last status for query-time context weighting
+    export TERMIM_LAST_EXIT="$last_status"
 }
 
 # Ensure log path exists or fallback to null (Hardened v1.2.6)
@@ -89,8 +95,9 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Project-aware terminal history and contextual intelligence v1.0.8
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
+        # Termim: Project-aware terminal history and contextual intelligence v1.0.9
+        local branch=$(git branch --show-current 2>/dev/null || echo "none")
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
         _TERMIM_IDX=1
     else
         _TERMIM_IDX=$((_TERMIM_IDX + 1))
@@ -151,7 +158,8 @@ _termim_down() {
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
         
         # Fetch strictly predictions-only
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
+        local branch=$(git branch --show-current 2>/dev/null || echo "none")
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
         
         if [[ ${#_TERMIM_CACHE[@]} -gt 0 ]]; then
             _TERMIM_IDX=-1
@@ -219,7 +227,8 @@ if [[ $- == *i* ]]; then
         # Use temp file to avoid TTY issues with bind -x
         local tmp_hist
         tmp_hist=$(mktemp)
-        "$_TERMIM_BIN" query --cwd "$PWD" 2>/dev/null > "$tmp_hist"
+        local branch=$(git branch --show-current 2>/dev/null || echo "none")
+        "$_TERMIM_BIN" query --cwd "$PWD" --branch "$branch" 2>/dev/null > "$tmp_hist"
 
         local selected
         selected=$($fzf_cmd \
