@@ -9,7 +9,6 @@
 Stop fighting with your Up-Arrow key. Termim makes your shell **project-aware**, so you only see the commands that actually matter *right now*.
 
 <p align="center">
-  <a href="https://github.com/akhtarx/termim/releases"><img src="https://img.shields.io/github/v/release/akhtarx/termim?style=for-the-badge&color=7C3AED" alt="Release"></a>
   <a href="https://github.com/akhtarx/termim/stargazers"><img src="https://img.shields.io/github/stars/akhtarx/termim?style=for-the-badge&color=FBBF24" alt="Stars"></a>
   <a href="https://github.com/akhtarx/termim/issues"><img src="https://img.shields.io/github/issues/akhtarx/termim?style=for-the-badge&color=EF4444" alt="Issues"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/akhtarx/termim?style=for-the-badge&color=475569" alt="License"></a>
@@ -33,8 +32,8 @@ You press it 20 times just to find that one `docker` or `cargo` command you ran 
 Termim isolates your history **per project**. It creates a "boundary" for your terminal so "Environment Bleeding" becomes impossible.
 
 - **Up Arrow** → Instantly shows only commands you ran in the *current* project.
-- **Down Arrow** → Trigger **Smart Predictions** (from a blank prompt) or return to project context.
-- **Escape Path** → Standard history is always 1 key-press away when project context is exhausted.
+- **Escape Path** → Termim tracks your session index. Once you've cycled through all project-specific commands (the "project boundary"), hitting **Up Arrow again** triggers a boundary escape. It seamlessly swaps the buffer to your standard global history. You never lose access to your old commands; they just wait behind the project context.
+- **Down Arrow** → Trigger **Smart Predictions** (from a blank prompt) or navigate back from global history into your project context (if you exceed project history to global history by pressing arrow up).
 
 ## 💥 What it feels like
 
