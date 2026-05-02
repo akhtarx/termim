@@ -2,7 +2,7 @@
 # Termim Zsh Integration
 # Compatible with MSYS/Git Bash and macOS
 
-# [v1.0.9] Universal Home Discovery
+# [v1.1.0] Universal Home Discovery
 _TERMIM_HOME="$HOME/.termim"
 if [[ ! -d "$_TERMIM_HOME" ]]; then
     # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
@@ -45,6 +45,7 @@ _TERMIM_ORIGINAL_INPUT=""
 
 _TERMIM_PENDING_CMD=""
 _TERMIM_PREEXEC_DIR=""
+_TERMIM_BRANCH="none"
 
 # Pre-execution hook: Mark command as pending
 _termim_preexec() {
@@ -57,19 +58,20 @@ _termim_preexec() {
 # Post-execution hook: Capture exit code and log to termim
 _termim_precmd() {
     local exit_status=$?
+    _TERMIM_BRANCH=$(git branch --show-current 2>/dev/null || echo "none")
+
     if [[ -n "$_TERMIM_PENDING_CMD" ]]; then
         # Penultimate command (the one before the command that just finished)
-        local prev_cmd="$history[$((HISTNO-2))]"
+        local prev_cmd="$(fc -ln -2 -1 2>/dev/null | sed 's/^[[:space:]]*//' | head -n 1)"
         
         # Log to Termim with explicit CWD, branch detection and diagnostic logging
-        local branch=$(git branch --show-current 2>/dev/null || echo "none")
-        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" 2>>"$_TERMIM_LOG" &!
+        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$_TERMIM_BRANCH" 2>>"$_TERMIM_LOG" &!
         
         _TERMIM_PENDING_CMD=""
         _TERMIM_PREEXEC_DIR=""
     fi
     
-    # v1.0.9: Export last status for query-time context weighting
+    # v1.1.0: Export last status for query-time context weighting
     export TERMIM_LAST_EXIT="$exit_status"
 }
 
@@ -86,11 +88,10 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Project-aware terminal history and contextual intelligence v1.0.9
+        # Termim: Project-aware terminal history and contextual intelligence v1.1.0
 # ---------------------------------------------------------------------
         # Fetch strictly history-only results (Recency)
-        local branch=$(git branch --show-current 2>/dev/null || echo "none")
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)}")
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")
         _TERMIM_IDX=1
     else
         _TERMIM_IDX=$((_TERMIM_IDX + 1))
@@ -132,8 +133,7 @@ _termim_down() {
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
         # Fetch strictly predictions-only
-        local branch=$(git branch --show-current 2>/dev/null || echo "none")
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --suggest-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)}")
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --suggest-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")
         
         if [[ ${#_TERMIM_CACHE} -gt 0 ]]; then
             _TERMIM_IDX=-1
@@ -213,8 +213,7 @@ if [[ -o interactive ]]; then
             fzf_cmd="winpty $_FZF_BIN"
         fi
         local tmp_hist=$(mktemp)
-        local branch=$(git branch --show-current 2>/dev/null || echo "none")
-        "$_TERMIM_BIN" query --cwd "$PWD" --branch "$branch" 2>/dev/null > "$tmp_hist"
+        "$_TERMIM_BIN" query --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null > "$tmp_hist"
         local selected=$($fzf_cmd \
             --height=40% --reverse --border=rounded \
             --prompt="  termim > " --header="Project History" --no-sort \

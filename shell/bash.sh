@@ -1,4 +1,4 @@
-# [v1.0.9] Universal Home Discovery
+# [v1.1.0] Universal Home Discovery
 _TERMIM_HOME="$HOME/.termim"
 if [[ ! -d "$_TERMIM_HOME" ]]; then
     # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
@@ -67,7 +67,7 @@ _termim_log() {
         disown 2>/dev/null
     fi
     
-    # v1.0.9: Export last status for query-time context weighting
+    # v1.1.0: Export last status for query-time context weighting
     export TERMIM_LAST_EXIT="$last_status"
 }
 
@@ -95,7 +95,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Project-aware terminal history and contextual intelligence v1.0.9
+        # Termim: Project-aware terminal history and contextual intelligence v1.1.0
         local branch=$(git branch --show-current 2>/dev/null || echo "none")
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
         _TERMIM_IDX=1

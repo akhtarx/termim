@@ -4,7 +4,7 @@ use std::env;
 use std::io::{BufRead, BufReader, Write};
 use termim::cli::args::{Cli, Commands};
 use termim::core::intelligence::analyze_project;
-use termim::core::project::{detect_project_root, hash_project_path};
+use termim::core::project::{detect_project_root, hash_project_path, normalize_path_str};
 use termim::utils::constants::PROJECTS_DIR;
 use termim::core::fundamentals::FundamentalsRegistry;
 use termim::utils::update::check_for_updates;
@@ -31,21 +31,7 @@ fn sanitize_command(command: &str) -> String {
     scrubbed
 }
 
-pub fn normalize_path_str(path_str: &str) -> String {
-    let mut s = path_str.to_string();
-    // Absolute Identity Symmetry:
-    // Strip UNC prefixes, normalize separators, and handle platform casing
-    if s.starts_with(r"\\?\") {
-        s = s[4..].to_string();
-    }
-    s = s.replace('\\', "/");
 
-    if cfg!(any(target_os = "windows", target_os = "macos")) {
-        s.to_lowercase()
-    } else {
-        s
-    }
-}
 
 fn append_to_file_locked(path: &std::path::Path, content: &str) -> std::io::Result<()> {
     let f = std::fs::OpenOptions::new()
@@ -74,18 +60,19 @@ fn read_file_locked(path: &std::path::Path) -> std::io::Result<String> {
 }
 
 fn prune_log(path: &std::path::Path, max_lines: usize) -> std::io::Result<()> {
-    // 1. FAST-FILTER: Check metadata size before attempting expensive lock-and-read.
-    if let Ok(meta) = std::fs::metadata(path) {
-        if meta.len() < 50_000 { return Ok(()); } 
-    }
-
-    // 2. Persistent lock-and-rotate sequence
+    // Persistent lock-and-rotate sequence
     let f = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
         .open(path)?;
     let mut lock = fd_lock::RwLock::new(f);
     let mut guard = lock.write()?; 
+
+    // Race-Free File Size Check
+    if let Ok(meta) = guard.metadata() {
+        if meta.len() < 50_000 { return Ok(()); } 
+    }
+
 
     let reader = BufReader::new(&*guard);
     let lines: Vec<String> = reader.lines().filter_map(Result::ok).collect();
@@ -176,7 +163,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let hist_file = projects_dir.join(format!("{}.txt", hash));
             let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-            // v1.0.9: Context-Aware Retrieval (Failure & Branch awareness)
+            // v1.1.0: Context-Aware Retrieval (Failure & Branch awareness)
             let prev_exit = std::env::var("TERMIM_LAST_EXIT").ok().and_then(|s| s.parse::<i32>().ok()).unwrap_or(0);
 
             // 1. Behavioral Prediction: Freq-Ranked Transitions (v1.4.0: Optional)
@@ -193,7 +180,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             if parts.len() >= 2 && parts[0] == sanitized_p {
                                 let mut weight = 1;
                                 
-                                // v1.0.9: Context-Aware Weighting
+                                // v1.1.0: Context-Aware Weighting
                                 if parts.len() == 4 {
                                     // 1. Branch Precision (+500 score)
                                     if parts[3] == target_branch {
@@ -331,7 +318,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut total = 0;
                 for line in content.lines() {
                     if !line.is_empty() {
-                        *counts.entry(line.to_string()).or_insert(0) += 1000;
+                        *counts.entry(line.to_string()).or_insert(0) += 1;
                         total += 1;
                     }
                 }
@@ -345,7 +332,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Top 10 Most Used Commands:");
 
                 for (cmd, count) in ranked.iter().take(10) {
-                    let pct = (*count as f64 / (total * 1000) as f64) * 100.0;
+                    let pct = (*count as f64 / total as f64) * 100.0;
                     let bar_len = (pct / 5.0) as usize;
                     let bar = "■".repeat(bar_len);
                     println!("{:>5.1}% | {:<10} | {}", pct, bar, cmd);
@@ -357,7 +344,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== Termim Diagnostic Check (v1.0.9) ===\n");
+            println!("=== Termim Diagnostic Check (v1.1.0) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon)");
 
             let mut home = dirs::home_dir().unwrap_or_default();
@@ -549,7 +536,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.0.9
+  Project-aware terminal history + intelligence v1.1.0
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
 

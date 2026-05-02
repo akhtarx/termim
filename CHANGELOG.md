@@ -4,6 +4,13 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.1.0] - 2026-05-02
+### Added
+- **PowerShell Memory Leak Fixes**: Auto-disposal of .NET runspaces upon shell exit to prevent long-term memory leaks.
+- **Race-Free Advisory Locking**: Secured the file metadata checks inside the write lock to completely prevent concurrency race conditions.
+- **Deduplicated Modules**: Extracted duplicate functions into a canonical, unified helper module.
+- **Optimized Shell Navigation**: Eliminates git subprocess forking on arrow presses via prompt-level branch caching.
+
 ## [1.0.9] - 2026-04-10
 ### Added
 - **Multi-Dimensional Context Engine**: Universal failure-state awareness and Git branch isolation.

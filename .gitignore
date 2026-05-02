@@ -23,3 +23,9 @@ build_errors_cli.txt
 *.log
 .DS_Store
 Thumbs.db
+
+# Scratch and unrelated noise
+/tmp/
+/package-lock.json
+/ps_methods.txt
+

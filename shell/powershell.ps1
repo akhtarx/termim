@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.0.9
+# Version 1.1.0
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.2.0] Universal Home Discovery: Find the physical .termim home on any platform
@@ -44,6 +44,18 @@ $null = ($Global:TermimLogger = [powershell]::Create())
 $null = ($Global:TermimLogger.Runspace = [runspacefactory]::CreateRunspace())
 $null = $Global:TermimLogger.Runspace.Open()
 
+# Cleanup on session exit to prevent runspace memory leaks
+$null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
+    if ($Global:TermimLogger) {
+        try {
+            $Global:TermimLogger.Runspace.Close()
+            $Global:TermimLogger.Runspace.Dispose()
+            $Global:TermimLogger.Dispose()
+        } catch {}
+    }
+} -ErrorAction SilentlyContinue
+
+
 function Global:Invoke-TermimLogAsync {
     param([string]$command, [int]$exitCode = 0, [string]$cwd = "", [string]$branch = "none")
     if (-not $Global:TermimBin) { return }
@@ -69,6 +81,7 @@ if (Get-Module PSReadLine) {
     $Global:TermimIdx = 0
     $Global:TermimOriginalInput = ""
     $Global:TermimCache = @()
+    $Global:TermimBranch = "none"
 
     # Up Arrow: Project-Aware History (Past)
     Set-PSReadLineKeyHandler -Key UpArrow -ScriptBlock {
@@ -87,8 +100,7 @@ if (Get-Module PSReadLine) {
             $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
             
             # Fetch strictly history-only results (Recency)
-            $branch = (git branch --show-current 2>$null)
-            if (-not $branch) { $branch = "none" }
+            $branch = if ($Global:TermimBranch) { $Global:TermimBranch } else { "none" }
             $Global:TermimCache = @(& $Global:TermimBin query --history-only --prev "$prev" --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Select-Object -Unique)
             $Global:TermimIdx = 1
         } else {
@@ -131,8 +143,7 @@ if (Get-Module PSReadLine) {
             $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
             
             # Fetch strictly predictions-only
-            $branch = (git branch --show-current 2>$null)
-            if (-not $branch) { $branch = "none" }
+            $branch = if ($Global:TermimBranch) { $Global:TermimBranch } else { "none" }
             $Global:TermimCache = @(& $Global:TermimBin query --suggest-only --prev "$prev" --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Where-Object { $_.Trim() -ne "" } | Select-Object -Unique)
             
             if ($Global:TermimCache.Count -gt 0) {
@@ -154,9 +165,9 @@ if (Get-Module PSReadLine) {
 
     # Log command on Enter (Mark as pending for post-exec logging)
     Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
-        $line = ""
-        try { $line = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content }
-        catch { $l = ""; $c = 0; [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$l, [ref]$c); $line = $l }
+        $l = ""; $c = 0
+        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$l, [ref]$c)
+        $line = $l
 
         if ($line.Trim()) {
             $Global:TermimPendingCommand = $line
@@ -186,8 +197,9 @@ if (Get-Module PSReadLine) {
                 if ($selected) {
                     [Microsoft.PowerShell.PSConsoleReadLine]::AddToHistory($selected)
                     $curr = ""
-                    try { $curr = [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState().Content }
-                    catch { $l = ""; $c = 0; [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$l, [ref]$c); $curr = $l }
+                    $l = ""; $c = 0
+                    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$l, [ref]$c)
+                    $curr = $l
                     [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $curr.Length, $selected)
                     $Global:TermimIdx = 0 
                 }
@@ -202,18 +214,21 @@ function prompt {
     $lastExit = $LASTEXITCODE
     if ($null -eq $lastExit) { $lastExit = if ($?) { 0 } else { 1 } }
 
+    # Fetch git branch once per prompt
+    $branch = (git branch --show-current 2>$null)
+    if (-not $branch) { $branch = "none" }
+    $Global:TermimBranch = $branch
+
     # 2. Perform background logging for any pending command
     if ($Global:TermimPendingCommand) {
         if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
-            $branch = (git branch --show-current 2>$null)
-            if (-not $branch) { $branch = "none" }
             Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir -branch $branch
         }
         $Global:TermimPendingCommand = $null
         $Global:TermimPreExecDir = $null
     }
     
-    # 5. v1.0.9: Export last status for query-time context weighting
+    # 5. v1.1.0: Export last status for query-time context weighting
     $env:TERMIM_LAST_EXIT = $lastExit
 
     # 3. Reset navigation state for the new prompt

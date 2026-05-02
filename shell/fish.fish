@@ -1,4 +1,4 @@
-# [v1.0.9] Universal Home Discovery
+# [v1.1.0] Universal Home Discovery
 set -g _TERMIM_HOME "$HOME/.termim"
 if not test -d "$_TERMIM_HOME"
     # Fallback for Windows MSYS2/Git Bash/Fish: Map virtual home to physical Windows home
@@ -76,7 +76,7 @@ function termim_postexec --on-event fish_postexec
     
     set -g _TERMIM_PREEXEC_DIR ""
     
-    # v1.0.9: Set last status for query-time context weighting
+    # v1.1.0: Set last status for query-time context weighting
     set -gx TERMIM_LAST_EXIT "$exit_status"
     
     # Reset navigation state on new command

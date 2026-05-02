@@ -1,17 +1,13 @@
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
 
-pub fn normalize_path_internal(path: &Path) -> String {
-    let mut s = path.to_string_lossy().to_string();
-    // Raw String Scrubbing
+pub fn normalize_path_str(path_str: &str) -> String {
+    let mut s = path_str.to_string();
     if s.starts_with(r"\\?\") {
         s = s[4..].to_string();
     }
     s = s.replace('\\', "/");
 
-    // Platform-Safe Symmetry:
-    // Windows/macOS: Map C:\Code and c:\code to the same identity.
-    // Linux: Keep 'Project' and 'project' isolated (Case-Sensitive).
     if cfg!(any(target_os = "windows", target_os = "macos")) {
         s.to_lowercase()
     } else {
@@ -19,11 +15,19 @@ pub fn normalize_path_internal(path: &Path) -> String {
     }
 }
 
+pub fn normalize_path_internal(path: &Path) -> String {
+    normalize_path_str(&path.to_string_lossy())
+}
+
+
 pub fn detect_project_root(current_dir: &Path) -> PathBuf {
     // 1. Check Global Registry (~/.termim/registry.txt) for explicit grouping
     if let Some(mut registry_path) = dirs::home_dir() {
         registry_path.push(".termim/registry.txt");
         if let Ok(content) = std::fs::read_to_string(&registry_path) {
+            if content.trim().is_empty() {
+                return current_dir.to_path_buf();
+            }
             let current_norm = normalize_path_internal(current_dir);
             for line in content.lines() {
                 if !line.trim().is_empty() {

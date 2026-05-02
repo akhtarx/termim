@@ -151,10 +151,10 @@ Termim doesn't just rank by frequency; it ranks by **probability.** By observing
 
 Termim is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for sub-20ms execution and 100% data integrity.
 
-### 1. Performance Moat (Zero-Library Tax)
-Termim eliminates the "Library Startup Tax" by using zero-dependency core logic for its most critical paths.
-- **No Heavy RegEx**: A manual, multi-token character sieve replaces expensive regex for credential redaction (Logic cost: <0.5ms).
-- **No Lazy State**: Eliminating `once_cell` and other lazy-init patterns to ensure immediate binary execution.
+### 1. Robustness Moat (Safe Local Operations)
+Termim protects your data and ensures it remains private and secure locally.
+- **Optimized RegEx**: Precise regular expressions for robust credential redaction before saving to disk.
+- **Standardized State Initialization**: Uses fast and reliable lazy initialization patterns via `once_cell` to ensure efficient, safe startup and single-time compilation.
 
 ### 2. Concurrency (Universal Locking)
 Every file-write operation is protected by **Universal Advisory Locking (`fd-lock`)**.
@@ -175,10 +175,10 @@ All four shell hooks share a synchronized state machine logic. By tracking the `
 ## 🛡️ Security & Privacy
 Termim is designed with a **Privacy-First** architecture. 
 
-### Manual Redaction Sieve
-Before any command is saved to disk, Termim's **Zero-Library Sieve** scrubs it for sensitive data:
-- **Credentials**: `mim:password@host` becomes `mim:***@host`.
-- **Multi-Token Secrets**: Catching `KEY=secret`, `TOKEN:secret`, and `PASSWORD secret` in a single line.
+### Smart Redaction
+Before any command is saved to disk, Termim's scrubbing engine removes sensitive patterns from the data:
+- **Credentials & Tokens**: Strips out passwords, keys, and authorization headers.
+- **Multi-Token Secrets**: Recognizes various common secret and token patterns in-memory.
 - **Local Isolation**: All data stays on your machine at `~/.termim/`. No telemetry. No cloud.
 
 ---
