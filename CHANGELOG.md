@@ -4,6 +4,25 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.1.1] - 2026-05-10
+### 🔒 Security
+- **Expanded Redaction Engine**: Added patterns for `export VAR=VALUE` / `set VAR=VALUE` shell assignments, `Bearer`/`Basic`/`Authorization` header values, well-known secret prefixes (`ghp_`, `gho_`, `github_pat_`, `sk-`, `AKIA…`, `xox…`, JWT `eyJ…`), and long base64 blobs (≥20 chars after `=`).
+
+### ⚡ Performance & Reliability
+- **Atomic Writes Everywhere**: Replaced in-place seek/truncate in `append_to_file_locked` and `prune_log` with `tempfile` + atomic rename. Eliminates partial-write data loss under concurrent terminal sessions.
+- **Memory-Efficient History Reads**: Replaced full-file `read_to_string` with a circular-buffer tail reader (`QUERY_TAIL_LINES = 500`). History queries and suggestions now use O(N) bounded RAM instead of loading entire files.
+- **TOCTOU-Safe Prune**: File size and line-count checks are now performed inside the write lock, closing the time-of-check / time-of-use race window.
+- **Hard File-Size Cap**: Added a 512 KB ceiling (`MAX_FILE_SIZE_BYTES`) enforced during every prune cycle. Prevents unbounded growth and potential DoS from noisy histories.
+- **Per-Project Prune on Log**: History files are now pruned after every write (not just global stats), keeping each project file bounded to `MAX_HISTORY_LINES = 1000`.
+- **Surfaced Write Errors**: `append_to_file_locked` failures now emit a `[termim] warn:` message instead of silently discarding the error.
+
+### 🩺 Doctor Command (v1.1.1)
+- Added **permissions check** (verifies write access to `~/.termim/projects/`).
+- Added **file health report**: shows line count + size of `global_stats.txt` with a size-cap warning.
+- Added **plugin content sanity check**: flags empty shell plugin files.
+- Added **self-latency benchmark**: measures SHA-256 hash cost against the `<5ms` target.
+- Added **pass/fail summary** line at the end of the diagnostic output.
+
 ## [1.1.0] - 2026-05-02
 ### Added
 - **PowerShell Memory Leak Fixes**: Auto-disposal of .NET runspaces upon shell exit to prevent long-term memory leaks.

@@ -1,8 +1,8 @@
 # Termim PowerShell Integration
-# Version 1.1.0
+# Version 1.1.1
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
-# [v1.2.0] Universal Home Discovery: Find the physical .termim home on any platform
+# [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
 $Global:TermimHome = "$HOME\.termim"
 if (-not (Test-Path $Global:TermimHome)) {
     # Fallback for Windows MSYS2/PowerShell identity drift: Map to physical profile

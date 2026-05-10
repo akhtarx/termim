@@ -10,7 +10,8 @@ Currently, security updates are provided for the following versions:
 
 | Version | Supported          |
 | :--- | :--- |
-| **v1.0.x** | :white_check_mark: |
+| **v1.1.x** | :white_check_mark: |
+| **v1.0.x** | :x: |
 | **< v1.0**  | :x: |
 
 ---
