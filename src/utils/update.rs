@@ -33,11 +33,11 @@ pub fn check_for_updates() {
                         println!("\n🚀 A new version of Termim is available!");
                         println!("Current version: v{}", current_version);
                         println!("Latest version:  v{}", latest_version);
-                        println!("\nTo update, run:");
+                        println!("\nTo update to the latest version, run:");
                         if cfg!(windows) {
-                            println!("  git pull; .\\installer\\install.ps1");
+                            println!("  iex (iwr -useb https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.ps1)");
                         } else {
-                            println!("  git pull && bash installer/install.sh");
+                            println!("  curl -fsSL https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.sh | bash");
                         }
                     } else if latest_version != current_version {
                         println!("✅ Termim v{} is up to date (Latest on GitHub: v{}).", current_version, latest_version);

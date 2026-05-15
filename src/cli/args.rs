@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "termim", version = "1.1.1", about = "Project-aware terminal history and contextual intelligence")]
+#[command(name = "termim", version = "1.1.1", about = "Directory & Context-aware terminal history and command intelligence")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,

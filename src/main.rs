@@ -380,7 +380,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Suggest { prefix, prev, cwd: _, branch }) => {
-            // 1. Analyze Project Context
+            // 1. Analyze Directory Context
             let root = detect_project_root(&env::current_dir()?);
             let profile = analyze_project(&root);
             let mut counts = std::collections::HashMap::with_capacity(200);
@@ -390,7 +390,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .join(PROJECTS_DIR);
             let hash = hash_project_path(&root);
 
-            // 1. Behavioral Habits (1000x Absolute Weight)
+            // 1. Behavioral Habits (Absolute Weight)
             if let Some(p) = prev {
                 let sanitized_p = sanitize_command(&p);
                 let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
@@ -413,7 +413,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            // 2. Project History (1x Weight) — tail read
+            // 2. Directory History (1x Weight) — tail read
             let hist_file = projects_dir.join(format!("{}.txt", hash));
             if let Ok(lines) = read_file_tail(&hist_file) {
                 for line in lines {
@@ -442,7 +442,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("No suggestions found for this context.");
             } else {
                 if prefix_str.is_empty() {
-                    println!("Proactive Advice for {} project:", if profile.ecosystems.is_empty() { "this" } else { "this stack" });
+                    println!("Proactive Advice for {} directory:", if profile.ecosystems.is_empty() { "this" } else { "this stack" });
                 }
                 for cmd in filtered {
                     println!(" {}", cmd);
@@ -498,7 +498,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("\n[Directories]");
             let projects = home.join(PROJECTS_DIR);
             let dir_ok = projects.exists();
-            println!("  Projects dir  : {} {}",
+            println!("  History dir   : {} {}",
                 projects.display(),
                 if dir_ok { "[OK]" } else { "[MISSING]" }
             );
@@ -549,14 +549,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("  ~/.termim/shell/{:<20} {}", shell, status);
             }
 
-            // ── Latency benchmark ────────────────────────────────────────
-            println!("\n[Self-Latency Benchmark]");
+            // ── Latency check ────────────────────────────────────────────
+            println!("\n[Self-Latency Check]");
             let t_start = std::time::Instant::now();
             // Simulate a query call cost: hash + file probe (no I/O in bench)
             let bench_root = env::current_dir().unwrap_or_default();
             let _bench_hash = termim::core::project::hash_project_path(&bench_root);
             let elapsed = t_start.elapsed();
-            println!("  Core hash cost: {:?} (target: <5ms)",
+            println!("  Core hash cost: {:?}",
                 elapsed
             );
 
@@ -576,7 +576,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Ok(content) = read_file_locked(&registry) {
                 let current_dir_norm = normalize_path_str(&current_dir.to_string_lossy());
                 if content.lines().any(|l| normalize_path_str(l) == current_dir_norm) {
-                    println!("Project already registered locally.");
+                    println!("Directory already registered locally.");
                     return Ok(());
                 }
             }
@@ -590,7 +590,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Ok(mut f) => {
                     let _ = writeln!(f, "{}", current_dir.to_string_lossy());
                     println!(
-                        "Initialized Termim project (Global Registry) in {}",
+                        "Initialized Termim directory boundary in {}",
                         current_dir.display()
                     );
                 }
@@ -604,7 +604,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Some(Commands::Clear { force }) => {
             if !force {
-                print!("(!) This will delete all project history, registry, and statistics. Continue? (y/N): ");
+                print!("(!) This will delete all history, registry, and statistics. Continue? (y/N): ");
                 let mut input = String::new();
                 std::io::stdout().flush()?;
                 std::io::stdin().read_line(&mut input)?;
@@ -757,7 +757,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let profile = analyze_project(&root);
 
             let eco_str = if profile.ecosystems.is_empty() {
-                "Generic Project".to_string()
+                "Generic Directory".to_string()
             } else {
                 profile
                     .ecosystems
@@ -782,18 +782,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.1.1
+  Directory & Context-aware terminal history + intelligence v1.1.1
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}
 
   Current Context:
-  • Project: {}
+  • Directory: {}
   • Ecosystems: {}
 
   Quick Commands:
-  • termim init    : Register a project for zero-pollution history
-  • termim query   : Show ranked history for this project
+  • termim init    : Register a directory for zero-pollution history
+  • termim query   : Show ranked history for this directory
   • termim suggest : Show intelligent command suggestions
   • termim stats   : Global usage statistics
   • termim doctor  : Health check & diagnostics

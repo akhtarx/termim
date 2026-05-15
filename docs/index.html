@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Termim: Isolated, project-aware terminal history for engineers. Zero-daemon. Lightning-fast Rust core. Stop the command bleeding.">
+        content="Termim: Isolated, directory-aware terminal history for engineers. Zero-daemon. Fast Rust core. Stop the command bleeding.">
     <meta name="keywords" content="terminal, shell, history, rust, productivity, developer tools, bash, zsh, fish, powershell">
     <meta name="author" content="Md Mim Akhtar">
     <meta name="robots" content="index, follow">
@@ -13,21 +13,21 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://akhtarx.github.io/termim/">
-    <meta property="og:title" content="Termim | Contextual Terminal Intelligence">
+    <meta property="og:title" content="Termim | Directory & Context-Aware Terminal History">
     <meta property="og:description"
-        content="Isolate your shell history by project. Stop digging through irrelevant commands. Built in Rust for zero latency.">
+        content="Isolate your shell history by working directory. Stop digging through irrelevant commands. Built in Rust for performance.">
     <meta property="og:image" content="https://akhtarx.github.io/termim/assets/termim-og.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://akhtarx.github.io/termim/">
-    <meta property="twitter:title" content="Termim | Contextual Terminal Intelligence">
+    <meta property="twitter:title" content="Termim | Directory & Context-Aware Terminal History">
     <meta property="twitter:description"
-        content="Isolate your shell history by project. Stop digging through irrelevant commands. Built in Rust for zero latency.">
+        content="Isolate your shell history by working directory. Stop digging through irrelevant commands. Built in Rust for performance.">
     <meta property="twitter:image" content="https://akhtarx.github.io/termim/assets/termim-og.png">
 
     <link rel="canonical" href="https://akhtarx.github.io/termim/">
-    <title>Termim | Contextual Terminal Intelligence</title>
+    <title>Termim | Directory & Context-Aware Terminal History</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -72,9 +72,9 @@
                     yesterday.</span>
             </h1>
             <p class="hero-subtitle animate-fade-up delay-2">
-                Stop the command bleeding. Termim automatically isolates your terminal history by directory, ensuring
+                Stop the command bleeding. Termim automatically isolates your terminal history by working directory, ensuring
                 the right command is always under your <kbd>↑ Up Arrow</kbd>. No background daemons, 100% offline, and
-                zero execution latency.
+                optimized for responsiveness.
             </p>
             <div class="hero-ctas animate-fade-up delay-3">
                 <a href="#installation" class="btn btn-primary">Start Using Termim</a>
@@ -112,8 +112,8 @@
                     <div class="metric-label">Background RAM</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-val">&lt;12<span class="metric-unit">ms</span></div>
-                    <div class="metric-label">Execution Latency</div>
+                    <div class="metric-val">Fast</div>
+                    <div class="metric-label">Execution Performance</div>
                 </div>
                 <div class="metric">
                     <div class="metric-val">~4<span class="metric-unit">MB</span></div>
@@ -136,8 +136,8 @@
                 <div class="window-header">
                     <div class="scenario-info">
                         <span class="scen-tag">Context Mastery</span>
-                        <h3 id="scen-title">Project Isolation</h3>
-                        <p id="scen-desc">Termim understands project boundaries. Your history stays where it belongs.
+                        <h3 id="scen-title">Directory Context</h3>
+                        <p id="scen-desc">Termim understands directory context. Your history stays where it belongs.
                         </p>
                     </div>
                 </div>
@@ -251,9 +251,9 @@
                                 </div>
                                 <div class="logic-step">
                                     <div class="step-header"><span class="step-icon thinking">Termim</span><span
-                                            class="step-badge success">Project Boundary</span></div>
+                                            class="step-badge success">Directory Context</span></div>
                                     <div class="step-content">
-                                        <p class="dim">Hashing project root... matched 840 commands.</p>
+                                        <p class="dim">Hashing directory path...</p>
                                     </div>
                                 </div>
                                 <div class="logic-step result">
@@ -375,10 +375,9 @@
                 <div class="bp-card span-2 glow-card" data-glow>
                     <div class="bp-corner">0x01</div>
                     <div class="bp-content">
-                        <h3>Low-Latency Moat</h3>
+                        <h3>Optimized Performance</h3>
                         <p class="bp-text">Engineered for immediate startup. Termim eliminates the "Daemon Tax" by using
-                            zero-dependency core logic, achieving a <span class="mono t-success">~15ms</span> execution
-                            floor.</p>
+                            lightweight core logic, achieving a highly responsive execution floor.</p>
 
                         <div class="telemetry-box">
                             <div class="tel-row">
@@ -393,7 +392,7 @@
                                 <div class="tel-track">
                                     <div class="tel-fill good" style="width: 10%;"></div>
                                 </div>
-                                <span class="tel-val">12ms</span>
+                                <span class="tel-val">Fast</span>
                             </div>
                         </div>
                     </div>
@@ -487,7 +486,7 @@
                 <div class="phil-card glow-card" data-glow>
                     <h3>🚫 No Background Daemons</h3>
                     <p>We refuse to drain your laptop battery while you read documentation. Termim's CPU usage is
-                        strictly isolated to the 12ms it takes you to press the Enter or Arrow keys.</p>
+                        strictly isolated to the time it takes you to press the Enter or Arrow keys.</p>
                 </div>
                 <div class="phil-card glow-card" data-glow>
                     <h3>🚫 No Artificial AI</h3>
@@ -507,16 +506,16 @@
             <div class="arch-split">
                 <div class="arch-text">
                     <div class="section-badge">Architecture</div>
-                    <h2 class="section-title left-align">How it achieves zero-latency.</h2>
+                    <h2 class="section-title left-align">How it achieves high performance.</h2>
                     <p class="arch-desc">
                         Every keystroke matters. We bypassed heavy frameworks and wrote the core in Rust, triggered
                         strictly by your terminal's native hooks.
                     </p>
                     <ul class="arch-list">
-                        <li><strong>Cryptographic Routing:</strong> Projects are isolated using SHA-256 hashes of their
-                            absolute paths, allowing O(1) directory lookups.</li>
+                        <li><strong>Cryptographic Routing:</strong> Directories are isolated using SHA-256 hashes of their
+                            absolute paths, allowing efficient lookups.</li>
                         <li><strong>Shadow Registry:</strong> All metadata is securely stored in `~/.termim/` without
-                            polluting your local project folders.</li>
+                            polluting your local folders.</li>
                         <li><strong>Native Overlays:</strong> Hooks instantly into PowerShell, Bash, Zsh, and Fish
                             without modifying core shell executables.</li>
                     </ul>
@@ -526,7 +525,7 @@
                     <div class="line down"></div>
                     <div class="node shell">Shell Hook (Bash/PS) <br><span>&lt; 5ms overhead</span></div>
                     <div class="line down"></div>
-                    <div class="node rust">Termim Rust Core <br><span>&lt; 8ms execution</span></div>
+                    <div class="node rust">Termim Rust Core <br><span>Low execution overhead</span></div>
                     <div class="line down"></div>
                     <div class="line split"></div>
                     <div class="node-row">
@@ -552,7 +551,7 @@
                     </div>
                     <div class="faq-content">
                         <div class="faq-inner">
-                            <p>Termim intercepts the shell's history request and performs an O(1) lookup in `~/.termim/data/[SHA256-PATH]/`. It serves localized context first. If you exhaust the project history, it initiates a <strong>Deterministic Shell Hand-off</strong> back to your global native history.</p>
+                            <p>Termim intercepts the shell's history request and performs a lookup in `~/.termim/data/[SHA256-PATH]/`. It serves localized context first. If you exhaust the directory history, it initiates a <strong>Deterministic Shell Hand-off</strong> back to your global native history.</p>
                         </div>
                     </div>
                 </div>
@@ -565,7 +564,7 @@
                     </div>
                     <div class="faq-content">
                         <div class="faq-inner">
-                            <p>No. Termim is a zero-daemon binary written in Rust. It utilizes <strong>Lazy Loading</strong> and <strong>Zero-Library Tax</strong> architecture, ensuring a startup overhead of <span class="mono">~15ms</span>—effectively invisible to the human eye.</p>
+                            <p>No. Termim is a zero-daemon binary written in Rust. It utilizes <strong>Lazy Loading</strong> and <strong>Zero-Library Tax</strong> architecture, ensuring a startup overhead that is effectively invisible to the human eye.</p>
                         </div>
                     </div>
                 </div>
@@ -578,7 +577,7 @@
                     </div>
                     <div class="faq-content">
                         <div class="faq-inner">
-                            <p>Before any command is written to disk, Termim's manual character sieve scrubs it for credentials (e.g., `mim:password@host` becomes `mim:***@host`). This happens in-memory with a processing cost of less than <span class="mono">0.5ms</span>.</p>
+                            <p>Before any command is written to disk, Termim's character scrubbing engine removes credentials (e.g., `user:password@host` becomes `user:***@host`). This happens in-memory with negligible processing cost.</p>
                         </div>
                     </div>
                 </div>
@@ -591,7 +590,7 @@
                     </div>
                     <div class="faq-content">
                         <div class="faq-inner">
-                            <p>Everything stays on your machine. All history, Markov weights, and project hashes are stored in `~/.termim/`. Termim performs <strong>Zero Telemetry</strong> and zero cloud syncing.</p>
+                            <p>Everything stays on your machine. All history, Markov weights, and directory hashes are stored in `~/.termim/`. Termim performs <strong>Zero Telemetry</strong> and zero cloud syncing.</p>
                         </div>
                     </div>
                 </div>
@@ -630,7 +629,7 @@
                     </div>
                     <div class="faq-content">
                         <div class="faq-inner">
-                            <p>Because Termim uses the <strong>Absolute Path SHA-256</strong> hash as the unique project ID, moving or renaming a folder creates a fresh context. Old project history is never "leaked" into the new folder name.</p>
+                            <p>Because Termim uses the <strong>Absolute Path SHA-256</strong> hash as the unique directory ID, moving or renaming a folder creates a fresh context. Old directory history is never "leaked" into the new folder name.</p>
                         </div>
                     </div>
                 </div>

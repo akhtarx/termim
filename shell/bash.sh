@@ -95,7 +95,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Project-aware terminal history and contextual intelligence v1.1.1
+        # Termim: Directory-aware terminal history and command intelligence v1.1.1
         local branch=$(git branch --show-current 2>/dev/null || echo "none")
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
         _TERMIM_IDX=1
@@ -135,13 +135,13 @@ _termim_down() {
                 READLINE_POINT=${#global_cmd}
             fi
         else
-             # Back to Project History frontier
+             # Back to Directory History frontier
              local cmd="${_TERMIM_CACHE[${#_TERMIM_CACHE[@]}-1]}"
              READLINE_LINE="$cmd"
              READLINE_POINT=${#cmd}
         fi
     elif [[ $_TERMIM_IDX -gt 0 ]]; then
-        # ZONE: PROJECT HISTORY
+        # ZONE: DIRECTORY HISTORY
         _TERMIM_IDX=$((_TERMIM_IDX - 1))
         if [[ $_TERMIM_IDX -eq 0 ]]; then
             # Neutral zone (Present)
@@ -236,7 +236,7 @@ if [[ $- == *i* ]]; then
             --reverse \
             --border=rounded \
             --prompt="  termim > " \
-            --header="Project History" \
+            --header="Directory History" \
             --no-sort \
             < "$tmp_hist")
         

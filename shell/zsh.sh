@@ -79,7 +79,7 @@ autoload -Uz add-zsh-hook
 add-zsh-hook preexec _termim_preexec
 add-zsh-hook precmd _termim_precmd
 
-# Up arrow: cycle project history (Past)
+# Up arrow: cycle directory history (Past)
 _termim_up() {
     # First press: Capture input and fetch HISTORY ONLY
     if [[ $_TERMIM_IDX -le 0 ]]; then
@@ -88,7 +88,7 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Project-aware terminal history and contextual intelligence v1.1.1
+        # Termim: Directory-aware terminal history and command intelligence v1.1.1
 # ---------------------------------------------------------------------
         # Fetch strictly history-only results (Recency)
         _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")
@@ -117,7 +117,7 @@ _termim_down() {
         _TERMIM_IDX=$((_TERMIM_IDX - 1))
         zle .down-line-or-history
     elif [[ $_TERMIM_IDX -gt 0 ]]; then
-        # ZONE: PROJECT HISTORY
+        # ZONE: DIRECTORY HISTORY
         _TERMIM_IDX=$((_TERMIM_IDX - 1))
         if [[ $_TERMIM_IDX -eq 0 ]]; then
             # Neutral zone (Present)
@@ -216,7 +216,7 @@ if [[ -o interactive ]]; then
         "$_TERMIM_BIN" query --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null > "$tmp_hist"
         local selected=$($fzf_cmd \
             --height=40% --reverse --border=rounded \
-            --prompt="  termim > " --header="Project History" --no-sort \
+            --prompt="  termim > " --header="Directory History" --no-sort \
             < "$tmp_hist")
         rm -f "$tmp_hist"
         if [[ -n "$selected" ]]; then

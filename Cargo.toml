@@ -2,7 +2,7 @@
 name = "termim"
 version = "1.1.1"
 edition = "2021"
-description = "Project-aware terminal history and command intelligence"
+description = "Directory & Context-aware terminal history and command intelligence"
 repository = "https://github.com/akhtarx/termim"
 license = "MIT"
 keywords = ["terminal", "history", "productivity", "shell", "intelligence"]

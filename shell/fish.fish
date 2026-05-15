@@ -84,14 +84,14 @@ function termim_postexec --on-event fish_postexec
     set -e _TERMIM_CACHE 
 end
 
-# Optional: Seed session history with project history
+# Optional: Seed session history with directory history
 if status is-interactive
     "$_TERMIM_BIN" query 2>/dev/null | while read -l cmd
         # history add "$cmd" --no-save
     end
 end
 
-# Use up arrow to navigate project history (Past)
+# Use up arrow to navigate directory history (Past)
 function termim_up
     # First press: Capture input and fetch HISTORY ONLY
     if test $_TERMIM_IDX -le 0
@@ -126,7 +126,7 @@ function termim_down
         set -g _TERMIM_IDX (math $_TERMIM_IDX - 1)
         commandline -f down-line
     else if test $_TERMIM_IDX -gt 0
-        # ZONE: PROJECT HISTORY
+        # ZONE: DIRECTORY HISTORY
         set -g _TERMIM_IDX (math $_TERMIM_IDX - 1)
         if test $_TERMIM_IDX -eq 0
             # Neutral zone (Present)
@@ -217,7 +217,7 @@ function termim_palette
         --reverse \
         --border=rounded \
         --prompt="  termim > " \
-        --header="Project History" \
+        --header="Directory History" \
         --no-sort)
         
     rm -f "$tmp_hist"

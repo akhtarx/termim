@@ -83,7 +83,7 @@ if (Get-Module PSReadLine) {
     $Global:TermimCache = @()
     $Global:TermimBranch = "none"
 
-    # Up Arrow: Project-Aware History (Past)
+    # Up Arrow: Directory/Context-Aware History (Past)
     Set-PSReadLineKeyHandler -Key UpArrow -ScriptBlock {
         $line = ""
         $cursor = 0
@@ -116,7 +116,7 @@ if (Get-Module PSReadLine) {
         }
     }
 
-    # Down Arrow: Project-Aware Restore OR Intelligent Prediction (Future)
+    # Down Arrow: Directory-Aware Restore OR Intelligent Prediction (Future)
     Set-PSReadLineKeyHandler -Key DownArrow -ScriptBlock {
         $line = ""
         $cursor = 0
@@ -127,7 +127,7 @@ if (Get-Module PSReadLine) {
             $Global:TermimIdx--
             [Microsoft.PowerShell.PSConsoleReadLine]::NextHistory($null, $null)
         } elseif ($Global:TermimIdx -gt 0) {
-            # ZONE: PROJECT HISTORY
+            # ZONE: DIRECTORY HISTORY
             $Global:TermimIdx--
             if ($Global:TermimIdx -eq 0) {
                 # Back to Neutral (Present)
@@ -177,7 +177,7 @@ if (Get-Module PSReadLine) {
         [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
     }
 
-    # Search project history with fzf
+    # Search directory history with fzf
     Set-PSReadLineKeyHandler -Key "Ctrl+p" -ScriptBlock {
         if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
             Write-Host "`n[termim] install 'fzf' for the palette." -ForegroundColor Yellow
@@ -193,7 +193,7 @@ if (Get-Module PSReadLine) {
             if ($history.Length -gt 0) {
                 $reversed = [array]$history
                 [Array]::Reverse($reversed)
-                $selected = $reversed | fzf --height 40% --reverse --border rounded --prompt "  termim > " --header "Project History" --no-sort
+                $selected = $reversed | fzf --height 40% --reverse --border rounded --prompt "  termim > " --header "Directory History" --no-sort
                 if ($selected) {
                     [Microsoft.PowerShell.PSConsoleReadLine]::AddToHistory($selected)
                     $curr = ""

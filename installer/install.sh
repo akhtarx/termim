@@ -1,163 +1,193 @@
 #!/usr/bin/env bash
-# Termim Universal Installer (Zsh + Bash + Fish)
-# Usage: curl https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.sh | bash
-# Or locally: bash installer/install.sh
+# Termim Universal Installer (Unix/macOS)
+# Usage: curl -fsSL https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.sh | bash
+#
+# Principles:
+# 1. Prefer prebuilt binaries for zero-dependency install.
+# 2. Build from source only if --build is passed.
+# 3. Idempotent shell configuration.
+# 4. Minimal interference with existing tools (fzf).
 
 set -e
 
-TERMIM_DIR="$HOME/.termim"
+# --- Configuration ---
+TERMIM_DIR="${TERMIM_DIR:-$HOME/.termim}"
 BIN_DIR="$TERMIM_DIR/bin"
 SHELL_DIR="$TERMIM_DIR/shell"
+REPO="akhtarx/termim"
+VERSION="latest"
 
-echo "=== Termim Universal Unix Installer ==="
-echo ""
+# --- Colors ---
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# 1. Acquire Binary
-echo "[1/4] Acquiring Termim binary..."
-BINARY_PATH=""
+info() { echo -e "${BLUE}[info]${NC} $1"; }
+success() { echo -e "${GREEN}[success]${NC} $1"; }
+warn() { echo -e "${YELLOW}[warn]${NC} $1"; }
+error() { echo -e "${RED}[error]${NC} $1"; exit 1; }
 
-# Mode A: Pre-compiled binary exists in current folder
-if [ -f "./termim" ]; then
-    BINARY_PATH="./termim"
-    echo "  ✓ Using local termim binary"
-# Mode B: Build from source if Cargo is available
-elif command -v cargo &>/dev/null; then
-    echo "  Cargo found. Building from source (release)..."
-    if cargo build --release; then
-        BINARY_PATH="target/release/termim"
-        echo "  ✓ Built successfully"
-    else
-        echo "  ! WARNING: Build failed. Trying fallback..."
+# --- Arguments ---
+DO_BUILD=false
+for arg in "$@"; do
+    case $arg in
+        --build) DO_BUILD=true ;;
+        --version=*) VERSION="${arg#*=}" ;;
+    esac
+done
+
+echo -e "${BLUE}=== Termim: Directory & Context-Aware History Installer ===${NC}\n"
+
+# 1. Prerequisites
+info "Verifying environment..."
+mkdir -p "$BIN_DIR" "$SHELL_DIR"
+
+# 2. Acquire Binary
+if [ "$DO_BUILD" = true ]; then
+    info "Building from source as requested..."
+    if ! command -v cargo &>/dev/null; then
+        error "Cargo/Rust not found. Install Rust or run without --build to use prebuilt binaries."
     fi
-fi
-
-# Mode C: Fallback to GitHub Release download
-if [ -z "$BINARY_PATH" ]; then
+    if cargo build --release; then
+        cp target/release/termim "$BIN_DIR/termim"
+        success "Built and installed to $BIN_DIR/termim"
+    else
+        error "Build failed."
+    fi
+else
+    # Automatic download logic
     OS=$(uname -s | tr '[:upper:]' '[:lower:]')
     ARCH=$(uname -m)
     
     case "$ARCH" in
         x86_64) T_ARCH="x86_64" ;;
         aarch64|arm64) T_ARCH="aarch64" ;;
-        *) T_ARCH="x86_64" ;;
+        *) error "Unsupported architecture: $ARCH. Please use --build." ;;
     esac
 
     case "$OS" in
         linux) T_OS="linux" ;;
         darwin) T_OS="macos" ;;
-        *) echo "  ! Unsupported OS for automatic download. Please install Rust and build from source."; exit 1 ;;
+        *) error "Unsupported OS: $OS. Please use --build." ;;
     esac
 
     FILE_NAME="termim-$T_OS-$T_ARCH"
-    DOWNLOAD_URL="https://github.com/akhtarx/termim/releases/latest/download/$FILE_NAME"
-    
-    echo "  Safe Mode: Downloading pre-compiled binary ($FILE_NAME) from GitHub..."
-    if curl -fsSL "$DOWNLOAD_URL" -o "$BIN_DIR/termim"; then
-        BINARY_PATH="$BIN_DIR/termim"
-        chmod +x "$BINARY_PATH"
-        echo "  ✓ Downloaded latest release"
+    if [ "$VERSION" = "latest" ]; then
+        DOWNLOAD_URL="https://github.com/$REPO/releases/latest/download/$FILE_NAME"
     else
-        echo "  ! ERROR: Could not build or download Termim. Please ensure you have an internet connection or Rust installed."
-        exit 1
+        DOWNLOAD_URL="https://github.com/$REPO/releases/download/v$VERSION/$FILE_NAME"
+    fi
+
+    info "Downloading $VERSION prebuilt binary ($T_OS/$T_ARCH)..."
+    if curl -fsSL "$DOWNLOAD_URL" -o "$BIN_DIR/termim"; then
+        chmod +x "$BIN_DIR/termim"
+        success "Termim binary installed to $BIN_DIR/termim"
+    else
+        warn "Download failed. Attempting build from source..."
+        if command -v cargo &>/dev/null; then
+             cargo build --release && cp target/release/termim "$BIN_DIR/termim" && success "Built from source."
+        else
+             error "Prebuilt binary download failed and Cargo is not installed."
+        fi
     fi
 fi
 
-# 2. Create directory structure
-echo "[2/4] Creating $TERMIM_DIR..."
-mkdir -p "$BIN_DIR"
-mkdir -p "$SHELL_DIR"
-echo "  ✓ Created"
-
-# 2.5 Install fzf (Dynamic Latest)
-echo "[2.5/4] Bundling fzf for history palette..."
-if ! command -v fzf &>/dev/null && [ ! -f "$BIN_DIR/fzf" ]; then
-    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    ARCH=$(uname -m)
-    
-    # Map architecture names
-    case "$ARCH" in
-        x86_64) FZF_ARCH="amd64" ;;
-        aarch64|arm64) FZF_ARCH="arm64" ;;
-        *) FZF_ARCH="amd64" ;;
-    esac
-
-    echo "  fzf not found. Fetching latest version from GitHub..."
-    # Attempt to get latest version via GitHub API
-    FZF_VERSION=$(curl -s https://api.github.com/repos/junegunn/fzf/releases/latest | grep "tag_name" | cut -d '"' -f 4 | tr -d 'v')
-    
-    if [ -z "$FZF_VERSION" ]; then
-        FZF_VERSION="0.56.0" # Hard fallback if API fails
-        echo "  ! WARNING: Could not fetch latest version, falling back to v$FZF_VERSION"
-    else
-        echo "  ✓ Latest version found: v$FZF_VERSION ($FZF_ARCH)"
-    fi
-
-    FZF_URL=""
-    if [ "$OS" == "linux" ]; then
-        FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VERSION/fzf-$FZF_VERSION-linux_$FZF_ARCH.tar.gz"
-    elif [ "$OS" == "darwin" ]; then
-        FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VERSION/fzf-$FZF_VERSION-darwin_$FZF_ARCH.tar.gz"
-    fi
-
-    if [ -n "$FZF_URL" ]; then
-        echo "  Downloading for $OS/$FZF_ARCH..."
+# 3. fzf Check
+info "Checking for fzf (required for palette)..."
+if command -v fzf &>/dev/null; then
+    success "fzf found in PATH."
+elif [ -f "$BIN_DIR/fzf" ]; then
+    success "fzf found in Termim bin directory."
+else
+    warn "fzf not found. Termim requires fzf for the interactive palette (Ctrl+P)."
+    read -p "  Would you like to install a local copy of fzf into $BIN_DIR? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        info "Installing local fzf..."
+        F_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        F_ARCH=$(uname -m)
+        case "$F_ARCH" in
+            x86_64) F_ARCH_MAPPED="amd64" ;;
+            aarch64|arm64) F_ARCH_MAPPED="arm64" ;;
+            *) F_ARCH_MAPPED="amd64" ;;
+        esac
+        
+        # We'll use a fixed version for stability in the installer
+        FZF_VER="0.56.0"
+        FZF_FILE="fzf-$FZF_VER-${F_OS}_$F_ARCH_MAPPED.tar.gz"
+        FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VER/$FZF_FILE"
+        
         if curl -fsSL "$FZF_URL" -o "$BIN_DIR/fzf.tar.gz"; then
             tar -xzf "$BIN_DIR/fzf.tar.gz" -C "$BIN_DIR" fzf
             rm "$BIN_DIR/fzf.tar.gz"
             chmod +x "$BIN_DIR/fzf"
-            echo "  ✓ fzf installed to $BIN_DIR"
+            success "Local fzf installed."
         else
-            echo "  ! WARNING: Failed to download fzf. You may need to install it manually."
+            warn "fzf download failed. Please install it manually: https://github.com/junegunn/fzf"
         fi
     fi
+fi
+
+# 4. Install Shell Suites
+info "Installing shell integration scripts..."
+# If running via curl, we might not have the shell folder locally. 
+# We should try to download them if they aren't here.
+if [ -d "./shell" ]; then
+    cp shell/*.sh "$SHELL_DIR/" 2>/dev/null || true
+    cp shell/*.fish "$SHELL_DIR/" 2>/dev/null || true
 else
-    echo "  ✓ fzf already available"
+    info "Downloading integration scripts from main branch..."
+    for s in bash.sh zsh.sh fish.fish; do
+        curl -fsSL "https://raw.githubusercontent.com/$REPO/main/shell/$s" -o "$SHELL_DIR/$s"
+    done
 fi
+success "Scripts installed to $SHELL_DIR"
 
-# 3. Install binary and shell scripts
-echo "[3/4] Installing binary and shell suite..."
-if [ "$BINARY_PATH" != "$BIN_DIR/termim" ]; then
-    cp "$BINARY_PATH" "$BIN_DIR/termim"
-    chmod +x "$BIN_DIR/termim"
+# 5. Idempotent Shell Config
+configure_shell() {
+    local rc_file="$1"
+    local shell_type="$2"
+    local init_block
+    
+    if [ ! -f "$rc_file" ]; then return; fi
+    
+    info "Configuring $rc_file..."
+    
+    if [ "$shell_type" = "fish" ]; then
+        init_block="# >>> termim initialize >>>
+if test -f $SHELL_DIR/fish.fish
+    set -gx PATH \"$BIN_DIR\" \$PATH
+    source $SHELL_DIR/fish.fish
+end
+# <<< termim initialize <<<"
+    else
+        init_block="# >>> termim initialize >>>
+if [ -f \"$SHELL_DIR/$shell_type.sh\" ]; then
+    export PATH=\"$BIN_DIR:\$PATH\"
+    source \"$SHELL_DIR/$shell_type.sh\"
 fi
-cp shell/bash.sh "$SHELL_DIR/bash.sh"
-cp shell/zsh.sh "$SHELL_DIR/zsh.sh"
-cp shell/fish.fish "$SHELL_DIR/fish.fish"
-echo "  ✓ Installed to $TERMIM_DIR"
-
-# 4. Configure shell profiles
-echo "[4/4] Configuring shell profiles..."
-export_path="export PATH=\"\$HOME/.termim/bin:\$PATH\""
-
-# Bash & Zsh
-for profile in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
-    if [ -f "$profile" ]; then
-        shell_name=$(basename "$profile" | sed 's/^\.//;s/rc$//')
-        source_line="source ~/.termim/shell/$shell_name.sh"
-        
-        # Ensure PATH
-        grep -qxF "$export_path" "$profile" || echo "$export_path" >> "$profile"
-        # Ensure Source
-        grep -q "termim/shell" "$profile" || echo "$source_line" >> "$profile"
-        echo "  ✓ Updated $profile"
+# <<< termim initialize <<<"
     fi
-done
 
-# Fish
-if [ -d "$HOME/.config/fish" ]; then
-    fish_config="$HOME/.config/fish/config.fish"
-    mkdir -p "$(dirname "$fish_config")"
-    touch "$fish_config"
+    # Remove existing block if present
+    sed -i.bak '/# >>> termim initialize >>>/,/# <<< termim initialize <<</d' "$rc_file" && rm -f "${rc_file}.bak"
     
-    fish_path="set -gx PATH \"\$HOME/.termim/bin\" \$PATH"
-    fish_source="source ~/.termim/shell/fish.fish"
-    
-    grep -q "termim/bin" "$fish_config" || echo "$fish_path" >> "$fish_config"
-    grep -q "termim/shell" "$fish_config" || echo "$fish_source" >> "$fish_config"
-    echo "  ✓ Updated $fish_config"
+    # Append new block
+    echo -e "\n$init_block" >> "$rc_file"
+    success "Updated $rc_file"
+}
+
+if [ -f "$HOME/.bashrc" ]; then configure_shell "$HOME/.bashrc" "bash"; fi
+if [ -f "$HOME/.zshrc" ]; then configure_shell "$HOME/.zshrc" "zsh"; fi
+if [ -d "$HOME/.config/fish" ]; then 
+    mkdir -p "$HOME/.config/fish"
+    touch "$HOME/.config/fish/config.fish"
+    configure_shell "$HOME/.config/fish/config.fish" "fish"
 fi
 
-echo ""
-echo "=== Termim Universal Installation Complete! ==="
-echo ""
-echo "Note: Restart your shell or run 'source ~/.your_shell_rc' to activate."
+echo -e "\n${GREEN}=== Installation Complete! ===${NC}"
+echo -e "1. Restart your terminal or run: ${YELLOW}source ~/.$(basename $SHELL)rc${NC}"
+echo -e "2. Try ${BLUE}Up Arrow${NC} to see directory-aware history."
+echo -e "3. Use ${BLUE}termim --help${NC} for more commands.\n"
