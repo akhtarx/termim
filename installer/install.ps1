@@ -148,7 +148,7 @@ if (Test-Path '$psScript') {
 # <<< termim initialize <<<
 "@
 
-Write-Host "[info] Configuring PowerShell profile..."
+Write-Host "[DEBUG] Configuring PowerShell profile..."
 $profilePath = $PROFILE
 if (-not (Test-Path $profilePath)) { New-Item -Path $profilePath -ItemType File -Force | Out-Null }
 
