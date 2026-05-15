@@ -14,6 +14,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/akhtarx/termim?style=for-the-badge&color=475569" alt="License"></a>
 </p>
 
+<p align="center">
+  <a href="https://akhtarx.github.io/termim/"><strong>🌐 View Live Simulation & Documentation →</strong></a>
+</p>
+
 ---
 
 ## 🚀 Quick Install
@@ -39,7 +43,7 @@ Your shell history is a giant, noisy list that doesn't know where you are. You p
 ## 🛠️ The Solution: Context-Aware History
 Termim isolates your history **per working directory**, giving your terminal a "memory" of where you are.
 
-- **Up Arrow** → Instantly shows only commands ran in the *current directory*.
+- **Up Arrow** → Priority access to commands ran in the *current directory*.
 - **The Escape Path** → Need a global command? Just keep pressing **Up**. Once you've cycled through your directory context, Termim seamlessly switches to your global history.
 - **Predictive Intent** → Press **Down Arrow** on a blank prompt to get "Smart Predictions" based on your project stack (e.g., `git status` after `git init`).
 
@@ -103,7 +107,7 @@ Termim automatically prunes the "junk" so your history stays pristine.
 | **Setup Complexity** | **Zero-Daemon** | Server/Sync | SQLite | None |
 | **Windows Support** | **First-Class** | Partial | No | Yes |
 | **Privacy Redaction** | **In-Memory** | No | No | No |
-| **Startup Latency** | **< 5ms** | ~50ms | ~20ms | < 1ms |
+| **Core Latency** | **Low-Latency** | ~50ms | ~20ms | < 1ms |
 
 ---
 
@@ -117,11 +121,78 @@ Termim is **Privacy-First**. Before any command is saved to disk, our engine mas
 
 ## 📖 Feature Overview
 
+Termim is more than just a history filter; it's a context engine.
+- **Atomic Continuity**: Every write is protected by `fd-lock`, ensuring zero data corruption across parallel terminal sessions.
+- **State-Aware Predictions**: Uses Markov Chain transitions to predict whether you need `git push` or `npm start` based on your previous action.
+- **Privacy Sieve**: Character-based redaction engine ensures secrets never hit your history files.
+- **Branch-Aware Context**: (Optional) Tracks git branches to keep branch-specific commands at the top of your stack.
+- **Smart Pruning**: Automatically removes typos and failed commands to keep your history "high-signal."
+
+### Keyboard Controls
 | Key | Action |
 | :--- | :--- |
 | **Up Arrow** | Directory History → Global History. |
 | **Down Arrow** | Predictions → Local History. |
 | **Ctrl + P** | Fuzzy History Palette (requires `fzf`). |
+
+---
+
+## 🛠️ CLI Command Reference
+
+While Termim handles history automatically, the CLI provides powerful tools for manual management and diagnostics.
+
+### `termim init`
+Explicitly mark a directory as a "Boundary".
+```bash
+# Register current folder as a project context
+termim init
+```
+
+### `termim suggest`
+Generate intelligent predictions for your next command.
+```bash
+# Get the top 3 behavioral suggestions
+termim suggest --limit 3
+```
+
+### `termim stats`
+Analyze your terminal habits and global command frequency.
+```bash
+# View usage trends across all projects
+termim stats
+```
+
+### `termim doctor`
+Run a health check on your environment and shell integrations.
+```bash
+# Verify PATH, binary integrity, and shell hooks
+termim doctor
+```
+
+### `termim update`
+Securely download the latest release from GitHub.
+```bash
+# Checks for updates and provides a one-liner to upgrade
+termim update
+```
+
+---
+
+## 📖 Feature Deep Dive
+
+### 🧠 Behavioral Transitions (Markov Model)
+Termim doesn't just rank by frequency; it ranks by **probability.** If you always run `npm test` after `npm build`, Termim learns this transition and moves `npm test` to the top of your history when you finish a build.
+
+### 🔒 Privacy Sieve (In-Memory Redaction)
+Our character-based scrubbing engine ensures that sensitive strings (passwords, AWS keys, JWTs) never hit your history files. This happens entirely in-memory with negligible overhead.
+
+### 🛡️ Atomic Continuity
+Built with `fd-lock`, Termim ensures that multiple parallel terminal tabs can write to the same history context without race conditions or data corruption.
+
+### 🔄 Symmetrical Shell Parity
+Whether you are on Windows PowerShell or macOS Zsh, the logic is identical. Termim provides a 1:1 consistent experience across all supported shells.
+
+---
 
 ### Shell Support
 - **PowerShell** (Windows) - Stable
