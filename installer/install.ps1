@@ -149,15 +149,22 @@ if (Test-Path '$psScript') {
 "@
 
 Write-Host "[info] Configuring PowerShell profile..."
-if (-not (Test-Path $PROFILE)) { New-Item -Path $PROFILE -ItemType File -Force | Out-Null }
-$profileContent = Get-Content $PROFILE -Raw
-if ($null -eq $profileContent) { $profileContent = "" }
-# Remove existing block
+$profilePath = $PROFILE
+if (-not (Test-Path $profilePath)) { New-Item -Path $profilePath -ItemType File -Force | Out-Null }
+
+# Use .NET to ensure we get exactly one string regardless of PS version
+$profileContent = [System.IO.File]::ReadAllText($profilePath)
+if ([string]::IsNullOrEmpty($profileContent)) { $profileContent = "" }
+
+# Remove existing block using a regex that handles arrays just in case
 $cleanContent = $profileContent -replace '(?s)# >>> termim initialize >>>.*?# <<< termim initialize <<<', ''
-# Append new block
-$finalContent = ([string]$cleanContent).TrimEnd() + "`n" + $initBlock
-Set-Content -Path $PROFILE -Value $finalContent.Trim()
-Write-Host "[success] Updated $PROFILE" -ForegroundColor Green
+
+# Final assembly with explicit string handling
+$finalContent = ([string]$cleanContent).Trim()
+$finalContent = $finalContent + "`n" + $initBlock
+
+[System.IO.File]::WriteAllText($profilePath, $finalContent.Trim())
+Write-Host "[success] Updated $profilePath" -ForegroundColor Green
 
 # Instant Activation
 Write-Host "[info] Activating for current session..." -ForegroundColor Gray
