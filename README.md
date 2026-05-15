@@ -46,13 +46,40 @@ Termim isolates your history **per working directory**, giving your terminal a "
 ---
 
 ## 📺 How it works
+
+### 1. Strict Project Isolation
+Stop digging through global noise. Termim recognizes your current project context automatically.
 ```text
-~/projects/api-server $ [Up Arrow]
-> npm run dev          # Directory history
-> git commit -m "fix"  # Directory history
+~/projects/react-webapp $ [Up Arrow]
+> npm run dev          # (Context: React)
+
+~/projects/django-api $ [Up Arrow]
+> python manage.py runserver  # (Context: Django)
+# Result: Commands from 'react-webapp' are invisible here.
+```
+
+### 2. The Escape Path (Global Fallback)
+Need a global command? Just keep pressing Up. Termim swaps the buffer once local history is exhausted.
+```text
+~/projects/django-api $ [Up Arrow]
+> python manage.py runserver
 > [Up Arrow Again]     --- Switching to Global ---
-> ssh prod-server      # Global history
-> brew update          # Global history
+> ssh admin@prod-db    # (Global history fallback)
+```
+
+### 3. Smart Predictions
+Hit **Down Arrow** on a blank prompt to get "Next-Move" suggestions based on your behavioral patterns.
+```text
+~/projects/django-api $ git status
+~/projects/django-api $ [Down Arrow]
+> git add . && git commit -m "update"  # (Predicted via Markov-chain)
+```
+
+### 4. Privacy & Noise Filtering
+Termim automatically prunes the "junk" so your history stays pristine.
+```text
+~/projects/api $ git statsu      # (Pruned: Typo)
+~/projects/api $ export KEY=...  # (Redacted: [REDACTED_SECRET])
 ```
 
 ---
