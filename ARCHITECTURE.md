@@ -1,69 +1,47 @@
-# Termim: Technical Architecture
+# Termim Architecture
 
-This document provides a deep-dive into the design decisions, data structures, and shell-integration strategies that power Termim's context-aware history.
+Termim is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for low-latency execution and 100% data integrity.
 
----
+## 1. Technical Core
 
-## 🏗️ Design Philosophy: "Zero-Everything"
-Termim is built on the principle of **Passive Integration**. Most developer tools fail by adding too much overhead; Termim aims for the opposite.
+Termim converts standard, chronological shell history into a **behavioral contextual memory layer**. It is designed for engineers seeking project-local isolation with negligible overhead.
 
-- **Zero-Daemon**: No background processes to manage, monitor, or restart.
-- **Zero-Database**: No SQLite/Postgres overhead or corruption risks.
-- **Zero-Latency**: Rust-compiled binaries execute in sub-millisecond timeframes, ensuring zero impact on the shell event loop.
+### Multi-Dimensional Context
+Termim distinguishes between Git branches and prioritizes recovery commands after failures. It uses directory normalization to ensure that `/Users/path` and `~/path` are recognized as the same context.
 
----
+### Symmetrical Navigation
+A deterministic state machine providing 1:1 parity between PowerShell, Bash, Zsh, and Fish. All four shell hooks share a synchronized logic for managing history indices.
 
-## 📁 Data Storage & Isolation
+### Static Dispatch
+A zero-latency dispatch registry providing follow-up suggestions without unnecessary disk I/O. It uses a predefined map of "stack-defining" commands (e.g., `npm install` -> `npm run dev`).
 
-### The Shadow Registry
-Termim avoids "Project Pollution" (littering `.history` or `.termim` files inside your source code directories). Instead, it maintains a **Centralized Shadow Registry** at `~/.termim/`.
+## 2. Robust Operations
 
-- **Project Identification**: Termim uses a recursive marker scan to identify project boundaries (searching for `.git`, `package.json`, `Cargo.toml`, etc.).
-- **Path Hashing**: Project roots are normalized (lowercased on Windows to prevent casing duplication) and hashed using **SHA-256**.
-- **Filesystem Isolation**: History for each project is stored in a unique, plain-text file: `~/.termim/projects/{hash}.txt`. This architecture prevents history "bleeding" and allows for easy manual inspection.
+### Optimized RegEx
+Termim uses precise regular expressions for robust credential redaction. Patterns are compiled once via `once_cell` and applied to every command before it touches the disk.
 
----
+### State Initialization
+Uses fast and reliable lazy initialization patterns to ensure efficient, safe startup. This minimizes the binary's impact on shell startup time.
 
-## 🧠 Behavioral Intelligence: Markov 1000x
+## 3. Concurrency & Integrity
 
-Termim v1.0.3 introduces a **Unified Weighted Ranking Engine.** Instead of simple frequency, it uses a first-order Markov Chain to predict your next command.
+### Universal Advisory Locking (`fd-lock`)
+Every file-write operation is protected by cross-platform advisory locks. This prevents race conditions between multiple parallel terminal sessions.
 
-- **Command Transitions**: Every successful command execution (`exit code 0`) is logged as a transition in `~/.termim/projects/{hash}_transitions.txt`.
-- **Weight Hierarchy**:
-    - **Habits (1000x)**: If you just ran `git add`, Termim looks at your transition history. Commands that frequently follow `git add` are given a massive 1000x boost.
-    - **Ecosystem (50x)**: Commands matching the detected stack (e.g., `npm`, `cargo`) are given a secondary 50x boost.
-    - **Frequency (1x)**: Local project-specific frequency is the baseline.
+### Atomic Write-Rename
+When pruning or updating history files, Termim writes to a temporary sibling file and then performs an atomic rename. This ensures that history files are never corrupted, even if the process is interrupted.
 
----
+## 4. Adaptive Intelligence (Markov Weighting)
 
-## 🐚 Shell Hook Mechanics (Hardened)
+Termim uses a **Unified Weighted Ranking Engine** to prioritize history and predictions:
 
-Termim intercepts shell events using the most "native" hooks available to ensure long-term stability.
+- **Behavioral Transitions**: High-coefficient weighting for literal next-step habits based on Markov Chain analysis.
+- **Ecosystem Defaults**: Static dispatch for stack-defining commands.
+- **Directory Context**: Frequency-based ranking within the local directory boundary.
 
-### 1. PowerShell (Windows)
-- **Success-Only learning**: Captures `$lastExitCode` in the `prompt` function to ensure Termim only learns your successful habits.
-- **Asynchronous Execution**: Offloads logging to background threads to prevent UI lag.
+## 5. Privacy Sieve
 
-### 2. Unix Shells (Zsh, Bash, Fish)
-- **Exit Status Filtering**: Uses `precmd`/`PROMPT_COMMAND` or `fish_postexec` to capture `$?` for success-filtering.
-
----
-
-## 🛡️ Security: High-Performance Sieve
-
-In v1.0.3, Termim eliminated the "Library Startup Tax" by removing heavy regex engines. 
-
-- **Manual Character Sieve**: Uses a zero-dependency string iterator to identify and mask sensitive tokens in **<0.5ms**.
-- **Multi-Token Masking**: Identifies `KEY=secret`, `TOKEN:secret`, and `https://user:***@host` patterns by scanning for separator delimiters (`=`, `:`, `@`).
-
----
-
-## 🔄 Concurrency & Indestructible Locking
-
-Termim v1.0.3 transitioned to an **Industrial-Grade Locking Standard** to handle extreme concurrency across multiple terminal parallel sessions:
-
-1. **Universal Advisory Locking**: Uses **`fd-lock`** on all history write operations. This ensures that even if two terminal instances attempt to prune or log at the exact same microsecond, they synchronize safely without data corruption.
-2. **Atomic Swap Logic**: When pruning the history log, Termim writes to a `.tmp` file and performs an **Atomic Rename** to the original target. This ensures the history file is either 100% complete or remains at its previous state—never partially written.
-
----
-**Termim: Systems thinking applied to the terminal.**
+A character-based redaction engine masks:
+- Credentials & Tokens (Passwords, API keys)
+- Multi-Token Secrets (Bearer tokens, Authorization headers)
+- URL Credentials (https://user:pass@host)
