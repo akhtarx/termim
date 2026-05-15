@@ -56,6 +56,27 @@ if ($Build) {
     try {
         $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -Uri $downloadUrl -OutFile $targetExe -UseBasicParsing
+        
+        # Checksum Verification
+        Write-Host "[info] Verifying checksum..." -ForegroundColor Gray
+        try {
+            $shaUrl = "$downloadUrl.sha256"
+            $shaFile = Join-Path $env:TEMP "termim.sha256"
+            Invoke-WebRequest -Uri $shaUrl -OutFile $shaFile -UseBasicParsing
+            $expected = (Get-Content $shaFile).Split(' ')[0].Trim().ToLower()
+            $actual = (Get-FileHash -Path $targetExe -Algorithm SHA256).Hash.ToLower()
+            
+            if ($expected -eq $actual) {
+                Write-Host "[success] Checksum verified." -ForegroundColor Green
+            } else {
+                Write-Host "[error] Checksum mismatch! Expected: $expected, Actual: $actual" -ForegroundColor Red
+                exit 1
+            }
+            Remove-Item $shaFile -Force
+        } catch {
+            Write-Host "[warn] No checksum found on server. Skipping verification." -ForegroundColor Yellow
+        }
+
         Write-Host "[success] Termim binary installed to $targetExe" -ForegroundColor Green
     } catch {
         Write-Host "[warn] Download failed. Attempting build from source..." -ForegroundColor Yellow
@@ -124,7 +145,12 @@ $cleanContent = $profileContent -replace '(?s)# >>> termim initialize >>>.*?# <<
 Set-Content -Path $PROFILE -Value ($cleanContent.TrimEnd() + "`n" + $initBlock)
 Write-Host "[success] Updated $PROFILE" -ForegroundColor Green
 
+# Instant Activation
+Write-Host "[info] Activating for current session..." -ForegroundColor Gray
+$env:PATH = "$binDir;" + $env:PATH
+if (Test-Path $psScript) { . $psScript }
+Write-Host "[success] Session PATH updated and integration sourced." -ForegroundColor Green
+
 Write-Host "`n=== Installation Complete! ===" -ForegroundColor Cyan
-Write-Host "1. Restart your terminal or run: . `$PROFILE"
-Write-Host "2. Try 'Up Arrow' to see directory & context-aware history."
+Write-Host "Termim is ready! Try 'Up Arrow' or 'Ctrl+P' immediately."
 Write-Host ""

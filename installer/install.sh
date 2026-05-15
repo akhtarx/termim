@@ -83,6 +83,23 @@ else
     info "Downloading $VERSION prebuilt binary ($T_OS/$T_ARCH)..."
     if curl -fsSL "$DOWNLOAD_URL" -o "$BIN_DIR/termim"; then
         chmod +x "$BIN_DIR/termim"
+        
+        # Checksum Verification
+        info "Verifying checksum..."
+        if curl -fsSL "${DOWNLOAD_URL}.sha256" -o "$BIN_DIR/termim.sha256"; then
+            if command -v sha256sum &>/dev/null; then
+                (cd "$BIN_DIR" && sha256sum -c termim.sha256) || error "Checksum mismatch!"
+            elif command -v shasum &>/dev/null; then
+                (cd "$BIN_DIR" && shasum -a 256 -c termim.sha256) || error "Checksum mismatch!"
+            else
+                warn "shasum/sha256sum not found. Skipping verification."
+            fi
+            rm "$BIN_DIR/termim.sha256"
+            success "Checksum verified."
+        else
+            warn "No checksum file found on server. Skipping verification."
+        fi
+        
         success "Termim binary installed to $BIN_DIR/termim"
     else
         warn "Download failed. Attempting build from source..."
@@ -188,6 +205,12 @@ if [ -d "$HOME/.config/fish" ]; then
 fi
 
 echo -e "\n${GREEN}=== Installation Complete! ===${NC}"
-echo -e "1. Restart your terminal or run: ${YELLOW}source ~/.$(basename $SHELL)rc${NC}"
-echo -e "2. Try ${BLUE}Up Arrow${NC} to see directory-aware history."
-echo -e "3. Use ${BLUE}termim --help${NC} for more commands.\n"
+echo -e "${YELLOW}Important:${NC} To start using Termim in this window, run:"
+if [ -n "$BASH_VERSION" ]; then
+    echo -e "  ${BLUE}source ~/.bashrc${NC}"
+elif [ -n "$ZSH_VERSION" ]; then
+    echo -e "  ${BLUE}source ~/.zshrc${NC}"
+else
+    echo -e "  ${BLUE}source ~/.$(basename $SHELL)rc${NC}"
+fi
+echo -e "\nOr just open a new terminal tab. Enjoy!"

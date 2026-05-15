@@ -60,14 +60,18 @@ jobs:
           BINARY_NAME="termim-${{ matrix.name_os }}-${{ matrix.name_arch }}${{ matrix.suffix }}"
           # Use a more flexible copy to find the binary regardless of host/target nesting
           find target -name "termim${{ matrix.suffix }}" -path "*/release/*" -exec cp {} $BINARY_NAME \;
+          sha256sum $BINARY_NAME > $BINARY_NAME.sha256
           echo "BINARY_PATH=$BINARY_NAME" >> $GITHUB_ENV
+          echo "CHECKSUM_PATH=$BINARY_NAME.sha256" >> $GITHUB_ENV
           echo "Created artifact: $BINARY_NAME"
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
-          files: ${{ env.BINARY_PATH }}
+          files: |
+            ${{ env.BINARY_PATH }}
+            ${{ env.CHECKSUM_PATH }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -14,6 +14,18 @@ Stop fighting with your Up-Arrow key. Termim makes your shell **directory & cont
   <a href="LICENSE"><img src="https://img.shields.io/github/license/akhtarx/termim?style=for-the-badge&color=475569" alt="License"></a>
 </p>
 
+## 🚀 Quick Install
+
+**Unix/macOS (Bash, Zsh, Fish):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+iex (iwr -useb https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.ps1)
+```
+
 ---
 
 ## 🧠 The Problem
