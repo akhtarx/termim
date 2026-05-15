@@ -151,10 +151,12 @@ if (Test-Path '$psScript') {
 Write-Host "[info] Configuring PowerShell profile..."
 if (-not (Test-Path $PROFILE)) { New-Item -Path $PROFILE -ItemType File -Force | Out-Null }
 $profileContent = Get-Content $PROFILE -Raw
+if ($null -eq $profileContent) { $profileContent = "" }
 # Remove existing block
 $cleanContent = $profileContent -replace '(?s)# >>> termim initialize >>>.*?# <<< termim initialize <<<', ''
 # Append new block
-Set-Content -Path $PROFILE -Value ($cleanContent.TrimEnd() + "`n" + $initBlock)
+$finalContent = ([string]$cleanContent).TrimEnd() + "`n" + $initBlock
+Set-Content -Path $PROFILE -Value $finalContent.Trim()
 Write-Host "[success] Updated $PROFILE" -ForegroundColor Green
 
 # Instant Activation
