@@ -8,8 +8,13 @@
 
 param(
     [switch]$Build,
-    [string]$Version = "latest"
+    [string]$Version = "latest",
+    [switch]$Quiet,
+    [switch]$Force,
+    [switch]$NoFzf
 )
+
+if ($Quiet) { $ProgressPreference = 'SilentlyContinue' }
 
 $ErrorActionPreference = "Stop"
 
@@ -79,37 +84,44 @@ if ($Build) {
 
         Write-Host "[success] Termim binary installed to $targetExe" -ForegroundColor Green
     } catch {
-        Write-Host "[warn] Download failed. Attempting build from source..." -ForegroundColor Yellow
-        if (Get-Command cargo -ErrorAction SilentlyContinue) {
-            cargo build --release
-            Copy-Item "target\release\termim.exe" $targetExe -Force
-            Write-Host "[success] Built from source." -ForegroundColor Green
-        } else {
-            Write-Host "[error] Prebuilt binary download failed and Cargo is not installed." -ForegroundColor Red
-            exit 1
-        }
+        Write-Host "[error] Download failed. Please check your internet connection or GitHub status. To build from source, clone the repository and run with -Build." -ForegroundColor Red
+        exit 1
     }
 }
 
 # 3. fzf Check
-Write-Host "[info] Checking for fzf..."
-if (Get-Command fzf -ErrorAction SilentlyContinue) {
+if ($NoFzf) {
+    Write-Host "[info] Skipping fzf check as requested."
+} elseif (Get-Command fzf -ErrorAction SilentlyContinue) {
     Write-Host "[success] fzf found in PATH." -ForegroundColor Green
 } elseif (Test-Path (Join-Path $binDir "fzf.exe")) {
     Write-Host "[success] fzf found in Termim bin directory." -ForegroundColor Green
 } else {
     Write-Host "[warn] fzf not found. Required for the interactive palette (Ctrl+P)." -ForegroundColor Yellow
-    $choice = Read-Host "  Would you like to install a local copy of fzf into $binDir? (y/n)"
-    if ($choice -eq 'y') {
+    $installFzf = $false
+    if ($Force) {
+        $installFzf = $true
+    } else {
+        $choice = Read-Host "  Would you like to install a local copy of fzf into $binDir? (y/n)"
+        if ($choice -eq 'y') { $installFzf = $true }
+    }
+
+    if ($installFzf) {
         Write-Host "[info] Installing local fzf..."
         $fzfVer = "0.56.0"
+        try {
+            # Try to get latest version via API
+            $fzfLatest = Invoke-RestMethod -Uri "https://api.github.com/repos/junegunn/fzf/releases/latest" -UseBasicParsing
+            $fzfVer = $fzfLatest.tag_name.TrimStart('v')
+        } catch { }
+        
         $fzfUrl = "https://github.com/junegunn/fzf/releases/download/v$fzfVer/fzf-$fzfVer-windows_amd64.zip"
         $fzfZip = Join-Path $env:TEMP "fzf.zip"
         
         Invoke-WebRequest -Uri $fzfUrl -OutFile $fzfZip -UseBasicParsing
         Expand-Archive -Path $fzfZip -DestinationPath $env:TEMP -Force
         Move-Item -Path (Join-Path $env:TEMP "fzf.exe") -Destination (Join-Path $binDir "fzf.exe") -Force
-        Write-Host "[success] Local fzf installed." -ForegroundColor Green
+        Write-Host "[success] Local fzf v$fzfVer installed." -ForegroundColor Green
     }
 }
 

@@ -31,12 +31,23 @@ error() { echo -e "${RED}[error]${NC} $1"; exit 1; }
 
 # --- Arguments ---
 DO_BUILD=false
+QUIET=false
+FORCE=false
+SKIP_FZF=false
+
 for arg in "$@"; do
     case $arg in
         --build) DO_BUILD=true ;;
+        --quiet|-q) QUIET=true ;;
+        --force|-f) FORCE=true ;;
+        --no-fzf) SKIP_FZF=true ;;
         --version=*) VERSION="${arg#*=}" ;;
     esac
 done
+
+if [ "$QUIET" = true ]; then
+    exec > /dev/null
+fi
 
 echo -e "${BLUE}=== Termim: Directory & Context-Aware History Installer ===${NC}\n"
 
@@ -102,26 +113,31 @@ else
         
         success "Termim binary installed to $BIN_DIR/termim"
     else
-        warn "Download failed. Attempting build from source..."
-        if command -v cargo &>/dev/null; then
-             cargo build --release && cp target/release/termim "$BIN_DIR/termim" && success "Built from source."
-        else
-             error "Prebuilt binary download failed and Cargo is not installed."
-        fi
+        error "Download failed. Please check your internet connection or GitHub status. To build from source, clone the repository and run with --build."
     fi
 fi
 
 # 3. fzf Check
-info "Checking for fzf (required for palette)..."
-if command -v fzf &>/dev/null; then
+if [ "$SKIP_FZF" = true ]; then
+    info "Skipping fzf check as requested."
+elif command -v fzf &>/dev/null; then
     success "fzf found in PATH."
 elif [ -f "$BIN_DIR/fzf" ]; then
     success "fzf found in Termim bin directory."
 else
     warn "fzf not found. Termim requires fzf for the interactive palette (Ctrl+P)."
-    read -p "  Would you like to install a local copy of fzf into $BIN_DIR? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
+    INSTALL_FZF=false
+    if [ "$FORCE" = true ]; then
+        INSTALL_FZF=true
+    else
+        read -p "  Would you like to install a local copy of fzf into $BIN_DIR? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            INSTALL_FZF=true
+        fi
+    fi
+
+    if [ "$INSTALL_FZF" = true ]; then
         info "Installing local fzf..."
         F_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
         F_ARCH=$(uname -m)
@@ -131,8 +147,10 @@ else
             *) F_ARCH_MAPPED="amd64" ;;
         esac
         
-        # We'll use a fixed version for stability in the installer
-        FZF_VER="0.56.0"
+        # Fetch latest version from GitHub API
+        FZF_VER=$(curl -fsSL https://api.github.com/repos/junegunn/fzf/releases/latest | grep "tag_name" | cut -d '"' -f 4 | tr -d 'v')
+        [ -z "$FZF_VER" ] && FZF_VER="0.56.0"
+        
         FZF_FILE="fzf-$FZF_VER-${F_OS}_$F_ARCH_MAPPED.tar.gz"
         FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VER/$FZF_FILE"
         
