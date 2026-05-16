@@ -775,6 +775,22 @@ footer {
 @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
+.docs-btn-secondary {
+    display: inline-block;
+    margin-top: 16px;
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.docs-btn-secondary:hover {
+    color: #818cf8;
+    transform: translateX(4px);
+}
+
+
 /* Metrics Strip */
 .metrics-strip { display: flex; justify-content: center; gap: 4rem; margin-top: 4rem; flex-wrap: wrap; }
 .metric { text-align: center; }
