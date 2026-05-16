@@ -92,25 +92,26 @@ else
     fi
 
     info "Downloading $VERSION prebuilt binary ($T_OS/$T_ARCH)..."
-    if curl -fsSL "$DOWNLOAD_URL" -o "$BIN_DIR/termim"; then
-        chmod +x "$BIN_DIR/termim"
+    if curl -fsSL "$DOWNLOAD_URL" -o "$BIN_DIR/$FILE_NAME"; then
+        chmod +x "$BIN_DIR/$FILE_NAME"
         
         # Checksum Verification
         info "Verifying checksum..."
-        if curl -fsSL "${DOWNLOAD_URL}.sha256" -o "$BIN_DIR/termim.sha256"; then
+        if curl -fsSL "${DOWNLOAD_URL}.sha256" -o "$BIN_DIR/$FILE_NAME.sha256"; then
             if command -v sha256sum &>/dev/null; then
-                (cd "$BIN_DIR" && sha256sum -c termim.sha256) || error "Checksum mismatch!"
+                (cd "$BIN_DIR" && sha256sum -c "$FILE_NAME.sha256") || error "Checksum mismatch!"
             elif command -v shasum &>/dev/null; then
-                (cd "$BIN_DIR" && shasum -a 256 -c termim.sha256) || error "Checksum mismatch!"
+                (cd "$BIN_DIR" && shasum -a 256 -c "$FILE_NAME.sha256") || error "Checksum mismatch!"
             else
                 warn "shasum/sha256sum not found. Skipping verification."
             fi
-            rm "$BIN_DIR/termim.sha256"
+            rm "$BIN_DIR/$FILE_NAME.sha256"
             success "Checksum verified."
         else
             warn "No checksum file found on server. Skipping verification."
         fi
         
+        mv "$BIN_DIR/$FILE_NAME" "$BIN_DIR/termim"
         success "Termim binary installed to $BIN_DIR/termim"
     else
         error "Download failed. Please check your internet connection or GitHub status. To build from source, clone the repository and run with --build."
@@ -130,7 +131,7 @@ else
     if [ "$FORCE" = true ]; then
         INSTALL_FZF=true
     else
-        read -p "  Would you like to install a local copy of fzf into $BIN_DIR? [y/N] " -n 1 -r
+        read -p "  Would you like to install a local copy of fzf into $BIN_DIR? [y/N] " -n 1 -r < /dev/tty
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             INSTALL_FZF=true
