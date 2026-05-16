@@ -194,11 +194,16 @@ Whether you are on Windows PowerShell or macOS Zsh, the logic is identical. Term
 
 ---
 
-### Shell Support
-- **PowerShell** (Windows) - Stable
-- **Bash** (Linux/WSL) - Stable
-- **Zsh** (macOS) - Stable (Palette in Beta)
-- **Fish** (Unix) - Stable (Palette in Beta)
+### 🖥️ Shell Support Matrix
+
+Termim provides a 1:1 symmetrical experience across all major shells. All integrations are now **Stable**.
+
+| Shell | Platform | Context Isolation | Fuzzy Palette (`Ctrl+P`) | Smart Predictions | Status |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **PowerShell** | Windows | ✅ | ✅ | ✅ | **Stable** |
+| **Bash** | Linux / macOS / WSL | ✅ | ✅ | ✅ | **Stable** |
+| **Zsh** | macOS / Linux | ✅ | ✅ | ✅ | **Stable** |
+| **Fish** | Linux / macOS | ✅ | ✅ | ✅ | **Stable** |
 
 ---
 
