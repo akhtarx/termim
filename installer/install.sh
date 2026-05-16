@@ -224,11 +224,25 @@ fi
 
 echo -e "\n${GREEN}=== Installation Complete! ===${NC}"
 echo -e "${YELLOW}Important:${NC} To start using Termim in this window, run:"
-if [ -n "$BASH_VERSION" ]; then
-    echo -e "  ${BLUE}source ~/.bashrc${NC}"
-elif [ -n "$ZSH_VERSION" ]; then
-    echo -e "  ${BLUE}source ~/.zshrc${NC}"
-else
-    echo -e "  ${BLUE}source ~/.$(basename $SHELL)rc${NC}"
-fi
+
+# Detect active shell from $SHELL env var (more reliable when running via pipe)
+case "$SHELL" in
+    */zsh)
+        echo -e "  ${BLUE}source ~/.zshrc${NC}"
+        ;;
+    */bash)
+        echo -e "  ${BLUE}source ~/.bashrc${NC}"
+        ;;
+    */fish)
+        echo -e "  ${BLUE}source ~/.config/fish/config.fish${NC}"
+        ;;
+    *)
+        # Fallback to shell-specific detection if SHELL is unset
+        if [ -n "$ZSH_VERSION" ]; then
+            echo -e "  ${BLUE}source ~/.zshrc${NC}"
+        else
+            echo -e "  ${BLUE}source ~/.bashrc${NC}"
+        fi
+        ;;
+esac
 echo -e "\nOr just open a new terminal tab. Enjoy!"
