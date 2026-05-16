@@ -88,7 +88,7 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Directory-aware terminal history and command intelligence v1.1.1
+        # Termim: Directory-aware terminal history and command intelligence v1.1.2
 # ---------------------------------------------------------------------
         # Fetch strictly history-only results (Recency)
         _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")

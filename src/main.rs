@@ -487,7 +487,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== Termim Diagnostic Check (v1.1.1) ===\n");
+            println!("=== Termim Diagnostic Check (v1.1.2) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -782,7 +782,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Directory & Context-aware terminal history + intelligence v1.1.1
+  Directory & Context-aware terminal history + intelligence v1.1.2
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}
