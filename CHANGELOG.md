@@ -4,6 +4,21 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.1.3] - 2026-05-16
+### ✨ Added
+- **Global History Search Palette**: The `Ctrl+P` search palette is now **Layered (Local > Global)**. It prioritizes the current project but falls back to global history, solving the "intent mismatch" when you need commands from other projects.
+- **Improved Escape Path**: Added a clean, redacted Global History fallback to the `query` command, providing a smoother transition before the shell hits native history.
+- **Industrial Support Matrix**: Updated `README.md` with a professional shell support matrix and industrial-grade project badges.
+
+### 🛠️ Hardening
+- **Smart Deduplication**: Improved the query engine to ensure zero duplicates when merging local and global history contexts.
+
+## [1.1.2] - 2026-05-16
+### 🐛 Bug Fixes
+- **Intelligent Shell Detection**: The installer now uses the `$SHELL` environment variable for more accurate sourcing instructions (fixing the Mac/Zsh `~/.bashrc` mismatch).
+- **Installer Checksum Fix**: Updated the installation logic to verify binaries using their original release names before renaming, ensuring robust `sha256sum -c` verification.
+- **fzf Prompt Recovery**: Added TTY redirection (`< /dev/tty`) to the `read` command in the installer, preventing the `fzf` prompt from being skipped when piped from `curl`.
+
 ## [1.1.1] - 2026-05-10
 ### 🔒 Security
 - **Expanded Redaction Engine**: Added patterns for `export VAR=VALUE` / `set VAR=VALUE` shell assignments, `Bearer`/`Basic`/`Authorization` header values, well-known secret prefixes (`ghp_`, `gho_`, `github_pat_`, `sk-`, `AKIA…`, `xox…`, JWT `eyJ…`), and long base64 blobs (≥20 chars after `=`).

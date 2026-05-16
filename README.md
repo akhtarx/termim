@@ -9,7 +9,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/akhtarx/termim/releases/latest"><img src="https://img.shields.io/github/v/release/akhtarx/termim?style=for-the-badge&color=6366f1" alt="Release"></a>
   <a href="https://github.com/akhtarx/termim/stargazers"><img src="https://img.shields.io/github/stars/akhtarx/termim?style=for-the-badge&color=FBBF24" alt="Stars"></a>
+  <a href="https://github.com/akhtarx/termim/network/members"><img src="https://img.shields.io/github/forks/akhtarx/termim?style=for-the-badge&color=38bdf8" alt="Forks"></a>
+  <a href="https://github.com/akhtarx/termim/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/akhtarx/termim/ci.yml?style=for-the-badge&label=Build" alt="Build Status"></a>
   <a href="https://github.com/akhtarx/termim/issues"><img src="https://img.shields.io/github/issues/akhtarx/termim?style=for-the-badge&color=EF4444" alt="Issues"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/akhtarx/termim?style=for-the-badge&color=475569" alt="License"></a>
 </p>

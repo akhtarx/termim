@@ -66,7 +66,7 @@
     <main>
         <!-- Hero Section -->
         <section class="hero container">
-            <div class="hero-chip animate-fade-up">v1.1.1 is now live</div>
+            <div class="hero-chip animate-fade-up">v1.1.3 is now live</div>
             <h1 class="hero-title animate-fade-up delay-1">
                 Stop fighting your <kbd>↑ Up Arrow</kbd> key to find the command <span class="gradient-text">you ran
                     yesterday.</span>
@@ -365,7 +365,7 @@
                     <span class="status-label">ENGINE STATUS: NOMINAL</span>
                 </div>
                 <div class="sys-meta">
-                    <span class="meta-tag">CORE: V1.1.1</span>
+                    <span class="meta-tag">CORE: V1.1.3</span>
                     <span class="meta-tag">EXECUTION: NATIVE</span>
                 </div>
             </div>
@@ -551,7 +551,7 @@
                     </div>
                     <div class="faq-content">
                         <div class="faq-inner">
-                            <p>Termim intercepts the shell's history request and performs a lookup in `~/.termim/data/[SHA256-PATH]/`. It serves localized context first. If you exhaust the directory history, it initiates a <strong>Deterministic Shell Hand-off</strong> back to your global native history.</p>
+                            <p>Termim uses a <strong>Layered Context Engine</strong>. For discrete Up/Down navigation, it serves localized history first, then seamlessly "escapes" to your global history. For the <code>Ctrl+P</code> search palette, it merges both contexts—keeping local results at the top while allowing you to search and recover commands from any project globally.</p>
                         </div>
                     </div>
                 </div>
