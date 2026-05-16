@@ -237,22 +237,26 @@ echo -e "${YELLOW}Important:${NC} To start using Termim in this window, run:"
 
 # Detect active shell from $SHELL env var (more reliable when running via pipe)
 case "$SHELL" in
-    */zsh)
-        echo -e "  ${BLUE}source ~/.zshrc${NC}"
-        ;;
-    */bash)
-        echo -e "  ${BLUE}source ~/.bashrc${NC}"
-        ;;
-    */fish)
-        echo -e "  ${BLUE}source ~/.config/fish/config.fish${NC}"
-        ;;
-    *)
-        # Fallback to shell-specific detection if SHELL is unset
-        if [ -n "$ZSH_VERSION" ]; then
-            echo -e "  ${BLUE}source ~/.zshrc${NC}"
-        else
-            echo -e "  ${BLUE}source ~/.bashrc${NC}"
-        fi
-        ;;
-esac
-echo -e "\nOr just open a new terminal tab. Enjoy!"
+# 6. Verification & Health Check
+echo -e "\n[info] Running final diagnostics..."
+if [ -f "$BIN_DIR/termim" ]; then
+    # Add to current path for test
+    export PATH="$BIN_DIR:$PATH"
+    
+    if VER=$("$BIN_DIR/termim" --version 2>/dev/null); then
+        success "Binary access verified: $VER"
+        "$BIN_DIR/termim" doctor
+    else
+        error "Verification failed. Check your architecture and permissions."
+    fi
+else
+    error "Binary not found at $BIN_DIR/termim"
+fi
+
+echo -e "\n${CYAN}====================================================${NC}"
+echo -e "  ${GREEN}Termim v1.1.3 Installed Successfully${NC}"
+echo -e "${CYAN}====================================================${NC}"
+echo -e "  ${YELLOW}RESTART your terminal to activate Termim.${NC}"
+echo -e "  Once restarted, press UP-ARROW to see history."
+echo -e "  Run 'termim --help' for command reference."
+echo -e "${CYAN}====================================================${NC}\n"

@@ -173,14 +173,26 @@ $finalContent = ([string]$cleanContent).Trim()
 $finalContent = $finalContent + "`n" + $initBlock
 
 [System.IO.File]::WriteAllText($profilePath, $finalContent.Trim())
-Write-Host "[success] Updated $profilePath" -ForegroundColor Green
+# 6. Verification & Health Check
+Write-Host "`n[info] Running final diagnostics..." -ForegroundColor Gray
+try {
+    # Add to current session PATH for testing
+    $env:PATH = "$binDir;" + $env:PATH
+    
+    $ver = & (Join-Path $binDir "termim.exe") --version
+    Write-Host "[success] Binary access verified: $ver" -ForegroundColor Green
+    
+    & (Join-Path $binDir "termim.exe") doctor
+} catch {
+    Write-Host "[error] Verification failed. The binary might be blocked by system policy." -ForegroundColor Red
+}
 
-# Instant Activation
-Write-Host "[info] Activating for current session..." -ForegroundColor Gray
-$env:PATH = "$binDir;" + $env:PATH
-if (Test-Path $psScript) { . $psScript }
-Write-Host "[success] Session PATH updated and integration sourced." -ForegroundColor Green
-
-Write-Host "`n=== Installation Complete! ===" -ForegroundColor Cyan
+Write-Host "`n====================================================" -ForegroundColor Cyan
+Write-Host "  Termim v1.1.3 Installed Successfully" -ForegroundColor Green
+Write-Host "====================================================" -ForegroundColor Cyan
+Write-Host "  RESTART your terminal to activate Termim."
+Write-Host "  Once restarted, press UP-ARROW to see context-aware history."
+Write-Host "  Run 'termim --help' for command reference."
+Write-Host "====================================================`n" -ForegroundColor Cyan
 Write-Host "Termim is ready! Try 'Up Arrow' or 'Ctrl+P' immediately."
 Write-Host ""
