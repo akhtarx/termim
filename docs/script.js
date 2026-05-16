@@ -57,10 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const termBody = document.getElementById('hero-term');
     const narrativeBadge = document.getElementById('term-narrative');
     
-    // Create Key Hint Toast
-    const keyHint = document.createElement('div');
-    keyHint.className = 'key-hint';
-    termBody.appendChild(keyHint);
+    if (termBody && narrativeBadge) {
+        // Create Key Hint Toast
+        const keyHint = document.createElement('div');
+        keyHint.className = 'key-hint';
+        termBody.appendChild(keyHint);
 
     async function updateNarrative(text) {
         narrativeBadge.classList.remove('visible');
@@ -237,7 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
     style.innerHTML = `@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }`;
     document.head.appendChild(style);
     
-    setTimeout(typeTerminal, 1000);
+        setTimeout(typeTerminal, 1000);
+    }
 
     // 5. FAQ Accordion Logic
     const faqTriggers = document.querySelectorAll('.faq-trigger');

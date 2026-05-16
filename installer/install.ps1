@@ -83,6 +83,12 @@ if ($Build) {
         }
 
         Write-Host "[success] Termim binary installed to $targetExe" -ForegroundColor Green
+        
+        # Programmatic Security Bypass: Unblock the file to prevent "App Control" policy issues
+        if (Get-Command Unblock-File -ErrorAction SilentlyContinue) {
+            Write-Host "[info] Unblocking binary for system execution..." -ForegroundColor Gray
+            Unblock-File -Path $targetExe
+        }
     } catch {
         Write-Host "[error] Download failed. Please check your internet connection or GitHub status. To build from source, clone the repository and run with -Build." -ForegroundColor Red
         exit 1
@@ -121,6 +127,9 @@ if ($NoFzf) {
         Invoke-WebRequest -Uri $fzfUrl -OutFile $fzfZip -UseBasicParsing
         Expand-Archive -Path $fzfZip -DestinationPath $env:TEMP -Force
         Move-Item -Path (Join-Path $env:TEMP "fzf.exe") -Destination (Join-Path $binDir "fzf.exe") -Force
+        if (Get-Command Unblock-File -ErrorAction SilentlyContinue) {
+            Unblock-File -Path (Join-Path $binDir "fzf.exe")
+        }
         Write-Host "[success] Local fzf v$fzfVer installed." -ForegroundColor Green
     }
 }

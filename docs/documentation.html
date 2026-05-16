@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation | Termim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="docs.css">
+    <link rel="icon" href="assets/logo.png" type="image/png">
+</head>
+
+<body class="docs-page">
+    <div id="ambient-bg" class="ambient-background"></div>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <header class="blur-nav">
+        <div class="container header-inner">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Termim Logo" class="logo-img">
+                <span class="logo-text">Termim</span>
+            </div>
+            <nav class="desktop-nav">
+                <a href="documentation.html">Docs</a>
+                <a href="index.html#comparison">Compare</a>
+                <a href="index.html#features">Features</a>
+                <a href="index.html#installation" class="nav-cta">Install Now</a>
+                <a href="https://github.com/akhtarx/termim" target="_blank" class="github-link">
+                    <svg height="20" viewBox="0 0 16 16" width="20" fill="currentColor">
+                        <path
+                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+                        </path>
+                    </svg>
+                    <span class="star-count">...</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="docs-container container">
+        <aside class="docs-sidebar" id="docs-sidebar">
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <h4>Getting Started</h4>
+                    <a href="#introduction" class="active">Introduction</a>
+                    <a href="#philosophy">The "Anti-Feature" Philosophy</a>
+                    <a href="#installation">Installation Guide</a>
+                </div>
+                <div class="nav-group">
+                    <h4>The Context Engine</h4>
+                    <a href="#directory-isolation">Directory Isolation</a>
+                    <a href="#the-escape-path">The Escape Path</a>
+                    <a href="#metadata-capture">Metadata Capture</a>
+                </div>
+                <div class="nav-group">
+                    <h4>Intelligence Layer</h4>
+                    <a href="#markov-ranking">Predictive Markov Ranking</a>
+                    <a href="#ecosystem-advice">Ecosystem Advice</a>
+                    <a href="#learning-model">Success-Only Learning</a>
+                </div>
+                <div class="nav-group">
+                    <h4>Command Reference</h4>
+                    <a href="#cmd-init">termim init</a>
+                    <a href="#cmd-query">termim query</a>
+                    <a href="#cmd-log">termim log</a>
+                    <a href="#cmd-suggest">termim suggest</a>
+                    <a href="#cmd-doctor">termim doctor</a>
+                    <a href="#cmd-stats">termim stats</a>
+                </div>
+                <div class="nav-group">
+                    <h4>Privacy & Security</h4>
+                    <a href="#privacy-sieve">Privacy Sieve (Redaction)</a>
+                    <a href="#data-location">Data Sovereignty</a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="docs-content">
+            <section id="introduction">
+                <h1>Guide & Reference</h1>
+                <p class="lead">Termim is a tool that keeps your terminal history separate for each project folder. It
+                    makes sure that when you are working in one project, you don't get distracted by commands you used
+                    in a different one.</p>
+
+                <div class="info-card">
+                    <span class="card-icon">📁</span>
+                    <p><strong>The Main Idea:</strong> Termim treats every folder like its own world. Your history stays
+                        where you used it, so your <code>↑ Up Arrow</code> always shows the most helpful command for the
+                        task you are doing right now.</p>
+                </div>
+
+                <h3>💻 Developer Scenario</h3>
+                <p>Imagine you are working on a <strong>Website</strong> and an <strong>API</strong>. In the Website
+                    folder, you use <code>npm run dev</code>. In the API folder, you use
+                    <code>python manage.py runserver</code>.</p>
+                <ul>
+                    <li>With normal history: Pressing <code>Up</code> in the API folder might show
+                        <code>npm run dev</code>.</li>
+                    <li>With Termim: Pressing <code>Up</code> in the API folder will <strong>only</strong> show your
+                        Python commands.</li>
+                </ul>
+            </section>
+
+            <section id="philosophy">
+                <h2>How Termim is Built</h2>
+                <p>Termim is designed to be simple, safe, and fast. We follow these rules to make sure it never gets in
+                    your way:</p>
+                <ul>
+                    <li><strong>No Background Apps:</strong> Termim only runs when you press a key. It doesn't stay open
+                        in the background, so it doesn't use your battery or RAM.</li>
+                    <li><strong>No Internet Needed:</strong> Termim never connects to the internet. It doesn't send any
+                        of your data anywhere. Everything stays on your computer.</li>
+                    <li><strong>Safe File Saving:</strong> We use special locking to make sure your history is never
+                        lost or corrupted, even if you have many terminal windows open at the same time.</li>
+                    <li><strong>Super Fast:</strong> The core is written in Rust, which is very fast. Most actions
+                        happen in less than 5 milliseconds, so you won't even notice it's there.</li>
+                </ul>
+            </section>
+
+            <section id="installation">
+                <h2>How to Install</h2>
+                <p>Termim comes as a single file that is ready to run. You just need to run one command to set it up.
+                </p>
+
+                <h3>For Mac and Linux</h3>
+                <div class="code-snippet">
+                    <code>curl -fsSL https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.sh | bash</code>
+                </div>
+
+                <h3>For Windows (PowerShell)</h3>
+                <div class="code-snippet">
+                    <code>irm https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.ps1 | iex</code>
+                </div>
+
+                <p>After you run the command, restart your terminal to start using Termim.</p>
+            </section>
+
+            <section id="directory-isolation">
+                <h2>How Folders are Separated</h2>
+                <p>Termim is <strong>Directory Context Aware</strong>. Instead of trying to guess where your project
+                    starts and ends, it treats every unique folder as its own isolated history context.</p>
+
+                <h3>💻 Developer Scenario</h3>
+                <p>You have a project in <code>~/code/app-one</code>. Termim looks at your current path and says "This
+                    is my current world." It takes that absolute path and creates a unique fingerprint (a hash) to save
+                    your history.</p>
+                <div class="code-snippet">
+                    <code>Folder: ~/code/app-one<br>Fingerprint: a1b2c3d4...</code>
+                </div>
+                <p>If you move to a sub-folder like <code>~/code/app-one/src</code>, Termim treats that as a <strong>new
+                        unique context</strong> by default. This ensures that the history you see is exactly what you
+                    did in that specific spot.</p>
+            </section>
+
+            <section id="the-escape-path">
+                <h2>Finding Your History</h2>
+                <p>Termim looks for your commands in three steps to make sure you always find what you need:</p>
+                <ul>
+                    <li><strong>Step 1:</strong> It looks for commands you used in the current folder.</li>
+                    <li><strong>Step 2:</strong> If it can't find anything there, it looks through all your other
+                        projects.</li>
+                    <li><strong>Step 3:</strong> If it still can't find a match, it uses your normal terminal history.
+                    </li>
+                </ul>
+
+                <h3>💻 Developer Scenario</h3>
+                <p>You are in a brand new project folder. You press <code>Up</code>.</p>
+                <ol>
+                    <li>Termim sees the folder is empty.</li>
+                    <li>It automatically looks at your "Global" history and shows the <code>git clone</code> or
+                        <code>npm install</code> commands you used in other projects.</li>
+                    <li>This helps you set up new projects using the same patterns you used before.</li>
+                </ol>
+            </section>
+
+            <section id="metadata-capture">
+                <h2>What We Save</h2>
+                <p>Every time you run a command, Termim saves a few extra details to help it stay organized:</p>
+                <ul>
+                    <li><strong>Did it work?</strong> (Exit Code)</li>
+                    <li><strong>When?</strong> (Date and Time)</li>
+                    <li><strong>Which branch?</strong> (Git Branch name)</li>
+                    <li><strong>Where?</strong> (Folder Path)</li>
+                </ul>
+
+                <h3>💻 Developer Scenario</h3>
+                <p>If you run a command that fails (like a typo <code>gti status</code>), Termim notes that the result
+                    was an error. Later, when you press <code>Up</code>, it will prioritize the successful
+                    <code>git status</code> and hide the typo.</p>
+            </section>
+
+            <section id="markov-ranking">
+                <h2>Smart Suggestions</h2>
+                <p>Termim learns from your habits. It looks at which commands you usually run together.</p>
+
+                <h3>💻 Developer Scenario</h3>
+                <p>You frequently do this sequence:</p>
+                <div class="code-snippet">
+                    <code>1. git add .<br>2. git commit -m "update"</code>
+                </div>
+                <p>Termim learns that "Step 2" usually follows "Step 1". Next time you type <code>git add .</code> and
+                    press <code>Enter</code>, the very next time you press <code>Up</code> (or <code>Down</code> on an
+                    empty prompt), <code>git commit</code> will be the first thing you see.</p>
+            </section>
+
+            <section id="learning-model">
+                <h2>Hiding Mistakes</h2>
+                <p>Termim tries to be helpful by hiding your mistakes. It uses the "Exit Code" of your commands to
+                    decide what to show you.</p>
+
+                <h3>💻 Developer Scenario</h3>
+                <p>You type <code>npm run devv</code> by mistake. It fails. Then you type <code>npm run dev</code> and
+                    it works. Termim will "down-weight" the mistake. Your history stays clean, showing only the commands
+                    that actually did something useful.</p>
+            </section>
+
+            <section id="privacy-sieve">
+                <h2>Hiding Secrets</h2>
+                <p>Termim has a built-in "scrubber" that hides sensitive information before it is saved to your
+                    computer.</p>
+
+                <h3>💻 Developer Scenario</h3>
+                <p>You run this command to set a password:</p>
+                <div class="code-snippet">
+                    <code>export DATABASE_URL="postgres://user:password123@localhost:5432"</code>
+                </div>
+                <p>Termim sees the password and saves it like this instead:</p>
+                <div class="code-snippet">
+                    <code>export DATABASE_URL="postgres://user:********@localhost:5432"</code>
+                </div>
+                <p>Your secrets are never saved in plain text in your history files.</p>
+            </section>
+
+            <section id="cmd-init">
+                <h2>The 'init' command</h2>
+                <p>This command registers your current folder as a "Project Root." If you run <code>termim init</code>
+                    in a folder, Termim will treat that folder and all its sub-folders as a single unified project
+                    history. This is helpful for large projects with many sub-directories.</p>
+            </section>
+
+            <section id="cmd-query">
+                <h2>The 'query' command</h2>
+                <p>This is the main search tool. It looks up your history for the current folder. It can take extra
+                    options:</p>
+                <ul>
+                    <li><code>--history-only</code>: Only shows commands you used in this folder (Recency mode).</li>
+                    <li><code>--suggest-only</code>: Only shows predicted commands (Transition mode).</li>
+                    <li><code>--branch</code>: Filters history for a specific Git branch.</li>
+                </ul>
+            </section>
+
+            <section id="cmd-log">
+                <h2>The 'log' command</h2>
+                <p>This command saves a new command to your history. It is called automatically by your shell. It takes
+                    these details:</p>
+                <ul>
+                    <li><code>command_str</code>: The text of the command you ran.</li>
+                    <li><code>--exit</code>: The numeric result (so Termim knows if it worked).</li>
+                    <li><code>--prev</code>: The command you ran right before this one (to learn your habits).</li>
+                </ul>
+            </section>
+
+            <section id="cmd-suggest">
+                <h2>The 'suggest' command</h2>
+                <p>This is used to get a list of what you should type next. It can take a <code>prefix</code> (like
+                    "git") to filter the suggestions so they only show commands starting with that word.</p>
+            </section>
+
+            <section id="cmd-doctor">
+                <h2>The 'doctor' command</h2>
+                <p>This runs a health check. It verifies if your shell scripts are installed correctly, checks if your
+                    history files are readable, and benchmarks how fast Termim is running.</p>
+            </section>
+
+            <section id="cmd-stats">
+                <h2>The 'stats' command</h2>
+                <p>This shows your usage patterns. It tells you how many different projects Termim is tracking and how
+                    many commands you have saved across your entire computer.</p>
+            </section>
+
+            <section id="cmd-update">
+                <h2>The 'update' command</h2>
+                <p>Checks if there is a newer version of Termim available on GitHub. It compares your current version
+                    with the latest release.</p>
+            </section>
+
+            <section id="cmd-clear">
+                <h2>The 'clear' command</h2>
+                <p>Deletes your history and statistics. Use <code>--force</code> if you want to skip the confirmation
+                    prompt. <strong>Warning:</strong> This cannot be undone.</p>
+            </section>
+
+            <section id="cmd-uninstall">
+                <h2>The 'uninstall' command</h2>
+                <p>Completely removes Termim from your system. It deletes the binary, your history files, and tries to
+                    clean up your shell profile.</p>
+            </section>
+
+            <section id="data-location">
+                <h2>Your Data is Yours</h2>
+                <p>All your data stays on your own computer. Termim never sends your data to any servers or trackers.
+                    You have total control.</p>
+                <ul>
+                    <li><strong>Mac/Linux:</strong> <code>~/.termim/</code></li>
+                    <li><strong>Windows:</strong> <code>C:\Users\[YourName]\.termim\</code></li>
+                </ul>
+                <p>If you want to move your history to a new computer, just copy that folder. It's that simple.</p>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <img src="assets/logo.png" alt="Termim Logo" class="logo-img"> <span>Termim</span>
+                <p>Systems thinking applied to the terminal.</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/akhtarx/termim">GitHub Repository</a>
+                <a href="https://github.com/akhtarx/termim/releases">Releases</a>
+                <a href="https://github.com/akhtarx/termim/blob/main/CHANGELOG.md">Changelog</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="docs.js"></script>
+</body>
+
+</html>

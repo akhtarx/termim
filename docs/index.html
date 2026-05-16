@@ -47,9 +47,9 @@
                 <span class="logo-text">Termim</span>
             </div>
             <nav class="desktop-nav">
+                <a href="documentation.html">Docs</a>
                 <a href="#comparison">Compare</a>
                 <a href="#features">Features</a>
-                <a href="#philosophy">Design</a>
                 <a href="#installation" class="nav-cta">Install Now</a>
                 <a href="https://github.com/akhtarx/termim" target="_blank" class="github-link">
                     <svg height="20" viewBox="0 0 16 16" width="20" fill="currentColor">
@@ -664,14 +664,14 @@
 
                 <div class="code-box active" id="code-win">
                     <div class="code-content">
-                        <code>git clone https://github.com/akhtarx/termim.git; cd termim; .\installer\install.ps1</code>
+                        <code>irm https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.ps1 | iex</code>
                     </div>
                     <button class="copy-btn" onclick="copyToClipboard(this)">Copy</button>
                 </div>
 
                 <div class="code-box" id="code-unix">
                     <div class="code-content">
-                        <code>git clone https://github.com/akhtarx/termim.git && cd termim && bash installer/install.sh</code>
+                        <code>curl -fsSL https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.sh | bash</code>
                     </div>
                     <button class="copy-btn" onclick="copyToClipboard(this)">Copy</button>
                 </div>

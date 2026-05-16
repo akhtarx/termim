@@ -113,6 +113,12 @@ else
         
         mv "$BIN_DIR/$FILE_NAME" "$BIN_DIR/termim"
         success "Termim binary installed to $BIN_DIR/termim"
+
+        # Programmatic Security Bypass: Remove quarantine bit on macOS
+        if [ "$OS" = "darwin" ] && command -v xattr &>/dev/null; then
+            info "Unblocking binary for macOS execution..."
+            xattr -d com.apple.quarantine "$BIN_DIR/termim" 2>/dev/null || true
+        fi
     else
         error "Download failed. Please check your internet connection or GitHub status. To build from source, clone the repository and run with --build."
     fi
@@ -159,6 +165,9 @@ else
             tar -xzf "$BIN_DIR/fzf.tar.gz" -C "$BIN_DIR" fzf
             rm "$BIN_DIR/fzf.tar.gz"
             chmod +x "$BIN_DIR/fzf"
+            if [ "$OS" = "darwin" ] && command -v xattr &>/dev/null; then
+                xattr -d com.apple.quarantine "$BIN_DIR/fzf" 2>/dev/null || true
+            fi
             success "Local fzf installed."
         else
             warn "fzf download failed. Please install it manually: https://github.com/junegunn/fzf"
