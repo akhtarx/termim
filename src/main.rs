@@ -377,6 +377,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+
+            // 3. Global History Fallback — cross-project recovery
+            if !suggest_only {
+                let global_path = dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".termim")
+                    .join("global_stats.txt");
+                
+                if let Ok(lines) = read_file_tail(&global_path) {
+                    for line in lines.iter().rev() {
+                        if seen.insert(line.clone()) {
+                            println!("{}", line);
+                        }
+                    }
+                }
+            }
         }
 
         Some(Commands::Suggest { prefix, prev, cwd: _, branch }) => {
@@ -487,7 +503,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Doctor) => {
-            println!("=== Termim Diagnostic Check (v1.1.2) ===\n");
+            println!("=== Termim Diagnostic Check (v1.1.3) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -782,7 +798,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Directory & Context-aware terminal history + intelligence v1.1.2
+  Directory & Context-aware terminal history + intelligence v1.1.3
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}
