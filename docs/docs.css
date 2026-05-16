@@ -11,9 +11,9 @@ body.docs-page {
 
 .docs-container {
     display: flex;
-    margin-top: 100px;
+    padding-top: 100px;
     gap: 40px;
-    min-height: calc(100vh - 100px);
+    min-height: 100vh;
 }
 
 /* Sidebar */

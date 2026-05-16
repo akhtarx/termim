@@ -1,0 +1,139 @@
+/* Community Review Grid Styles */
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.review-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.review-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-5px);
+}
+
+.review-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, transparent 50%, rgba(99, 102, 241, 0.05) 50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.review-card:hover::after {
+    opacity: 1;
+}
+
+.review-platform {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 4px 12px;
+    border-radius: 50px;
+    width: fit-content;
+}
+
+.review-content {
+    flex: 1;
+}
+
+.review-quote {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+    margin-bottom: 20px;
+}
+
+.review-response {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 3px solid #6366f1;
+}
+
+.response-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #818cf8;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.response-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #94a3b8;
+}
+
+.review-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 20px;
+}
+
+.reviewer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reviewer-avatar {
+    width: 32px;
+    height: 32px;
+    background: #1e293b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reviewer-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.review-link {
+    color: #64748b;
+    transition: color 0.2s;
+}
+
+.review-link:hover {
+    color: #f8fafc;
+}
+
+@media (max-width: 768px) {
+    .community-grid {
+        grid-template-columns: 1fr;
+    }
+    .review-card {
+        padding: 24px;
+    }
+}

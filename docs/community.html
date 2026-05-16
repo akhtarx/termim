@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community | Termim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="docs.css">
+    <link rel="stylesheet" href="community.css">
+    <link rel="icon" href="assets/logo.png" type="image/png">
+</head>
+
+<body class="docs-page">
+    <div id="ambient-bg" class="ambient-background"></div>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <header class="blur-nav">
+        <div class="container header-inner">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Termim Logo" class="logo-img">
+                <span class="logo-text">Termim</span>
+            </div>
+            <nav class="desktop-nav">
+                <a href="documentation.html">Docs</a>
+                <a href="community.html">Community</a>
+                <a href="index.html#comparison">Compare</a>
+                <a href="index.html#features">Features</a>
+                <a href="index.html#installation" class="nav-cta">Install Now</a>
+                <a href="https://github.com/akhtarx/termim" target="_blank" class="github-link">
+                    <svg height="20" viewBox="0 0 16 16" width="20" fill="currentColor">
+                        <path
+                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+                        </path>
+                    </svg>
+                    <span class="star-count">...</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="docs-container container">
+        <aside class="docs-sidebar" id="docs-sidebar">
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <h4>Topics</h4>
+                    <a href="#context-first">Context vs Search</a>
+                    <a href="#intent-mismatch">Intent Mismatch</a>
+                    <a href="#atuin-comparison">vs Atuin</a>
+                    <a href="#reddit-discussion">No-AI Debate</a>
+                    <a href="#engineering-notes">Notes from Field</a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="docs-content">
+            <section id="introduction">
+                <h1 style="font-size: clamp(2.5rem, 8vw, 3.5rem); color: #f8fafc; font-weight: 800; margin-bottom: 24px;">
+                    Community Review</h1>
+                <p class="lead" style="font-size: 1.25rem; color: #94a3b8; margin-bottom: 40px;">
+                    Raw feedback and technical discussions that shape the Termim engine. Every block links to its original source.
+                </p>
+            </section>
+
+            <div class="community-grid">
+                <!-- Review 1: Intent Mismatch -->
+                <div class="review-card" id="intent-mismatch">
+                    <div class="review-platform">Dev.to Discussion</div>
+                    <div class="review-content">
+                        <p class="review-quote">"shell history without context is basically a log file you search by muscle
+                            memory. multi-project setups are where this breaks hardest."</p>
+                        <div class="review-response">
+                            <span class="response-label">Maker Response (v1.1.3 update)</span>
+                            <p class="response-text">Layered fallback (Local > Global) was added to solve the 'intent
+                                mismatch'—isolation for the noise, global for the search.</p>
+                        </div>
+                    </div>
+                    <div class="review-footer">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">MK</div>
+                            <div class="reviewer-name">Mykola Kondratiuk</div>
+                        </div>
+                        <a href="https://dev.to/itsmimakhtar/i-was-tired-of-my-terminal-being-dumb-so-i-built-termim-5d9h"
+                            target="_blank" class="review-link" title="View Source">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Review 2: No AI -->
+                <div class="review-card" id="reddit-discussion">
+                    <div class="review-platform">Reddit Discussion</div>
+                    <div class="review-content">
+                        <p class="review-quote">"Does it use any type of AI? ...whaaaaaat! YAY (on hearing it's pure logic)"
+                        </p>
+                        <div class="review-response">
+                            <span class="response-label">Maker Note</span>
+                            <p class="response-text">No AI involved. Pure algorithmic Markov models for prediction. Minimal footprint, zero telemetry.</p>
+                        </div>
+                    </div>
+                    <div class="review-footer">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">GT</div>
+                            <div class="reviewer-name">Guilty_Tear_4477</div>
+                        </div>
+                        <a href="https://www.reddit.com/r/seeknwander/comments/1s964l4/ever_tried_to_find_a_command_in_your_terminal/"
+                            target="_blank" class="review-link" title="View Source">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Review 3: Atuin Comparison -->
+                <div class="review-card" id="atuin-comparison">
+                    <div class="review-platform">Platform Comparison</div>
+                    <div class="review-content">
+                        <p class="review-quote">"Do you mind jumping into a bit more detail about this vs Atuin? I'm really
+                            trying to give this a shot."</p>
+                        <div class="review-response">
+                            <span class="response-label">Maker Clarification</span>
+                            <p class="response-text">Atuin is for Global Sync; Termim is for Local Context & Flow. Zero-Daemon, Directory-First, and Privacy Sieve.</p>
+                        </div>
+                    </div>
+                    <div class="review-footer">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">YR</div>
+                            <div class="reviewer-name">Yogindra Raghav</div>
+                        </div>
+                        <a href="https://dev.to/itsmimakhtar/i-was-tired-of-my-terminal-being-dumb-so-i-built-termim-5d9h"
+                            target="_blank" class="review-link" title="View Source">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Review 4: Context Framing -->
+                <div class="review-card" id="context-first">
+                    <div class="review-platform">Industry Feedback</div>
+                    <div class="review-content">
+                        <p class="review-quote">"Terminal history always felt 'off' but I never framed it as a context problem
+                            until now. Project-aware commands is a real upgrade."</p>
+                    </div>
+                    <div class="review-footer">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">EC</div>
+                            <div class="reviewer-name">Ezejah Chimkamma</div>
+                        </div>
+                        <a href="https://dev.to/itsmimakhtar/i-was-tired-of-my-terminal-being-dumb-so-i-built-termim-5d9h"
+                            target="_blank" class="review-link" title="View Source">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Review 5: Search vs Context -->
+                <div class="review-card">
+                    <div class="review-platform">Technical Critique</div>
+                    <div class="review-content">
+                        <p class="review-quote">"alias h='history | rg' ...set history size to 100k"</p>
+                        <div class="review-response">
+                            <span class="response-label">The Difference</span>
+                            <p class="response-text">Termim is Context-First. Ideally, you don't even reach for grep because the right command is already at your fingertips.</p>
+                        </div>
+                    </div>
+                    <div class="review-footer">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">PV</div>
+                            <div class="reviewer-name">Peter Vivo</div>
+                        </div>
+                        <a href="https://dev.to/itsmimakhtar/i-was-tired-of-my-terminal-being-dumb-so-i-built-termim-5d9h"
+                            target="_blank" class="review-link" title="View Source">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Review 6: Use Case -->
+                <div class="review-card" id="engineering-notes">
+                    <div class="review-platform">Developer Utility</div>
+                    <div class="review-content">
+                        <p class="review-quote">"As someone who has started spending more of my time in the terminal this is genuinely something that I could benefit from using!"</p>
+                    </div>
+                    <div class="review-footer">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">DS</div>
+                            <div class="reviewer-name">d3d snx</div>
+                        </div>
+                        <a href="https://dev.to/itsmimakhtar/i-was-tired-of-my-terminal-being-dumb-so-i-built-termim-5d9h"
+                            target="_blank" class="review-link" title="View Source">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <img src="assets/logo.png" alt="Termim Logo" class="logo-img"> <span>Termim</span>
+                <p>Systems thinking applied to the terminal.</p>
+            </div>
+            <div class="footer-links">
+                <a href="documentation.html">Documentation</a>
+                <a href="https://github.com/akhtarx/termim">GitHub Repository</a>
+                <a href="https://github.com/akhtarx/termim/releases">Releases</a>
+                <a href="https://github.com/akhtarx/termim/blob/main/CHANGELOG.md">Changelog</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="docs.js"></script>
+</body>
+
+</html>
