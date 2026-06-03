@@ -801,19 +801,32 @@ mod tests {
 
         let profile = analyze_project(temp_dir.path());
         assert!(profile.ecosystems.contains(&Ecosystem::Rust));
-        assert!(profile.suggestions.iter().any(|s| s.command == "cargo build"));
+        assert!(profile
+            .suggestions
+            .iter()
+            .any(|s| s.command == "cargo build"));
     }
 
     #[test]
     fn test_analyze_project_node() {
         let temp_dir = tempfile::tempdir().unwrap();
         let pkg_json = temp_dir.path().join("package.json");
-        fs::write(pkg_json, r#"{"scripts": {"dev": "vite", "test": "vitest"}}"#).unwrap();
+        fs::write(
+            pkg_json,
+            r#"{"scripts": {"dev": "vite", "test": "vitest"}}"#,
+        )
+        .unwrap();
 
         let profile = analyze_project(temp_dir.path());
         assert!(profile.ecosystems.contains(&Ecosystem::Node));
-        assert!(profile.suggestions.iter().any(|s| s.command == "npm run dev"));
-        assert!(profile.suggestions.iter().any(|s| s.command == "npm run test"));
+        assert!(profile
+            .suggestions
+            .iter()
+            .any(|s| s.command == "npm run dev"));
+        assert!(profile
+            .suggestions
+            .iter()
+            .any(|s| s.command == "npm run test"));
     }
 
     #[test]

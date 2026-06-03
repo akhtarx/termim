@@ -63,7 +63,7 @@ pub fn append_to_file_locked(path: &Path, content: &str) -> std::io::Result<()> 
     // Read existing content while holding the lock.
     let reader = BufReader::new(&*guard);
     let mut lines: Vec<String> = reader.lines().map_while(Result::ok).collect();
-    
+
     // Drop guard and lock to close file handles before rename (crucial for Windows)
     drop(guard);
     drop(lock);
@@ -146,7 +146,7 @@ pub fn prune_log(path: &Path, max_lines: usize) -> std::io::Result<()> {
     }
 
     let start_idx = lines.len().saturating_sub(max_lines);
-    
+
     // Drop guard and lock to close file handles before rename (crucial for Windows)
     drop(guard);
     drop(lock);
