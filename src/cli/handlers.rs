@@ -125,7 +125,7 @@ pub fn handle_command(
                             }
                         }
                         let mut ranked: Vec<_> = transitions.into_iter().collect();
-                        ranked.sort_by(|a, b| b.1.cmp(&a.1));
+                        ranked.sort_by_key(|b| std::cmp::Reverse(b.1));
                         for (cmd, _) in ranked {
                             if seen.insert(cmd.clone()) {
                                 println!("{}", cmd);
@@ -236,7 +236,7 @@ pub fn handle_command(
             // 4. Unified Weighted Ranking & Filtering
             let prefix_str = prefix.unwrap_or_default().to_lowercase();
             let mut ranked: Vec<_> = counts.into_iter().collect();
-            ranked.sort_by(|a, b| b.1.cmp(&a.1));
+            ranked.sort_by_key(|b| std::cmp::Reverse(b.1));
 
             let filtered: Vec<_> = ranked
                 .into_iter()
@@ -281,7 +281,7 @@ pub fn handle_command(
                 }
 
                 let mut ranked: Vec<_> = counts.into_iter().collect();
-                ranked.sort_by(|a, b| b.1.cmp(&a.1));
+                ranked.sort_by_key(|b| std::cmp::Reverse(b.1));
 
                 println!("=== Termim Usage Statistics ===");
                 println!("Total Commands Logged: {}", total);
