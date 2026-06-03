@@ -301,7 +301,7 @@ pub fn handle_command(
         }
 
         Commands::Doctor => {
-            println!("=== Termim Diagnostic Check (v1.1.4) ===\n");
+            println!("=== Termim Diagnostic Check (v1.1.5) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -629,7 +629,7 @@ pub fn show_banner(root: &std::path::Path) {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.1.4
+  Project-aware terminal history + intelligence v1.1.5
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}If you find Termim useful, please star the repo!

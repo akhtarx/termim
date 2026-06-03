@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.1.4
+# Version 1.1.5
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
@@ -210,6 +210,19 @@ if (Get-Module PSReadLine) {
 
 # Post-Execution logic in the prompt function
 function prompt {
+    # Automatic self-cleanup if Termim binary was uninstalled
+    if ($Global:TermimBin -and -not (Test-Path $Global:TermimBin)) {
+        if (Get-Module PSReadLine) {
+            Set-PSReadLineKeyHandler -Key UpArrow -Function PreviousHistory -ErrorAction SilentlyContinue
+            Set-PSReadLineKeyHandler -Key DownArrow -Function NextHistory -ErrorAction SilentlyContinue
+            Set-PSReadLineKeyHandler -Key Enter -Function AcceptLine -ErrorAction SilentlyContinue
+            Remove-PSReadLineKeyHandler -Key "Ctrl+p" -ErrorAction SilentlyContinue
+        }
+        $Global:TermimBin = $null
+        function Global:prompt { "PS $(Get-Location)> " }
+        return "PS $(Get-Location)> "
+    }
+
     # 1. Capture exit status immediately (Must be first action)
     $lastExit = $LASTEXITCODE
     if ($null -eq $lastExit) { $lastExit = if ($?) { 0 } else { 1 } }

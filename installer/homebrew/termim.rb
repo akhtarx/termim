@@ -1,10 +1,10 @@
 class Termim < Formula
   desc "Directory & Context-aware terminal history and command intelligence"
   homepage "https://github.com/akhtarx/termim"
-  url "https://github.com/akhtarx/termim/archive/refs/tags/v1.1.4.tar.gz"
-  # Note: When releasing v1.1.4, update this SHA256 checksum with the value of the release tarball.
-  # You can find it by running: curl -sSL https://github.com/akhtarx/termim/archive/refs/tags/v1.1.4.tar.gz | sha256sum
-  sha256 "33edd89c42a28c1589340d09953f49cd91ff297a5aef4448163c1b536d8c562f"
+  url "https://github.com/akhtarx/termim/archive/refs/tags/v1.1.5.tar.gz"
+  # Note: When releasing v1.1.5, update this SHA256 checksum with the value of the release tarball.
+  # You can find it by running: curl -sSL https://github.com/akhtarx/termim/archive/refs/tags/v1.1.5.tar.gz | sha256sum
+  sha256 "PENDING_SHA256"
   license "MIT"
 
   depends_on "rust" => :build

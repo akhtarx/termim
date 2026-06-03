@@ -57,6 +57,19 @@ _termim_preexec() {
 
 # Post-execution hook: Capture exit code and log to termim
 _termim_precmd() {
+    # Automatic self-cleanup if Termim binary was uninstalled
+    if [[ "$_TERMIM_BIN" != "termim" && ! -f "$_TERMIM_BIN" && ! -x "$_TERMIM_BIN" ]]; then
+        bindkey '^[[A' up-line-or-history
+        bindkey '^[OA' up-line-or-history
+        bindkey '^[[B' down-line-or-history
+        bindkey '^[OB' down-line-or-history
+        bindkey '^P' self-insert 2>/dev/null || bindkey '^P' '^P'
+        bindkey '^p' self-insert 2>/dev/null || bindkey '^p' '^p'
+        add-zsh-hook -d preexec _termim_preexec
+        add-zsh-hook -d precmd _termim_precmd
+        return
+    fi
+
     local exit_status=$?
     _TERMIM_BRANCH=$(git branch --show-current 2>/dev/null || echo "none")
 
@@ -88,7 +101,7 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Directory-aware terminal history and command intelligence v1.1.4
+        # Termim: Directory-aware terminal history and command intelligence v1.1.5
 # ---------------------------------------------------------------------
         # Fetch strictly history-only results (Recency)
         _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")

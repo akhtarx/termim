@@ -44,6 +44,21 @@ trap '_termim_preexec' DEBUG
 
 # Log the last executed command
 _termim_log() {
+    # Automatic self-cleanup if Termim binary was uninstalled
+    if [[ "$_TERMIM_BIN" != "termim" && ! -f "$_TERMIM_BIN" && ! -x "$_TERMIM_BIN" ]]; then
+        bind '"\e[A": previous-history' 2>/dev/null
+        bind '"\eOA": previous-history' 2>/dev/null
+        bind '"\e[B": next-history' 2>/dev/null
+        bind '"\eOB": next-history' 2>/dev/null
+        bind '"\C-p": self-insert' 2>/dev/null
+        bind '"\cp": self-insert' 2>/dev/null
+        # Remove ourselves from PROMPT_COMMAND
+        PROMPT_COMMAND="${PROMPT_COMMAND//_termim_log;/}"
+        PROMPT_COMMAND="${PROMPT_COMMAND//_termim_log/}"
+        trap - DEBUG
+        return
+    fi
+
     local last_status=$? # Capture exit status immediately (must be first action)
     
     # Reset navigation on new prompt
@@ -95,7 +110,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Directory-aware terminal history and command intelligence v1.1.4
+        # Termim: Directory-aware terminal history and command intelligence v1.1.5
         local branch=$(git branch --show-current 2>/dev/null || echo "none")
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
         _TERMIM_IDX=1

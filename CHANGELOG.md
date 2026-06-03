@@ -4,6 +4,12 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.1.5] - 2026-06-03
+### 🔧 Fixes & Self-Healing
+- **CLI Default Output**: Restored the default help banner and project context output when the CLI is run with no subcommands/arguments.
+- **Uninstall Self-Healing**: Enhanced shell integrations (PowerShell, Zsh, and Bash) to detect when the Termim binary has been uninstalled, automatically restoring native shell keybindings and hooks instantly.
+- **Clippy Cleanliness**: Resolved compilation errors from new `unnecessary-sort-by` lints.
+
 ## [1.1.4] - 2026-06-03
 ### ⚡ Performance & Hardening
 - **Windows File Locking Parity**: Updated `append_to_file_locked` and `prune_log` to safely release file handle locks on Windows before renaming temporary files, eliminating `Access is denied` errors.
