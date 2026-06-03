@@ -599,8 +599,8 @@ pub fn handle_command(
                                 continue;
                             }
                             if line.contains("# <<< termim initialize <<<") {
-                                  in_block = false;
-                                  continue;
+                                in_block = false;
+                                continue;
                             }
                             if !in_block {
                                 if !line.contains(".termim/shell") {
