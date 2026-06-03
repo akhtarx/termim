@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::env;
 use termim::cli::args::{Cli, Commands};
-use termim::cli::handlers::handle_command;
+use termim::cli::handlers::{handle_command, show_banner};
 use termim::core::project::{detect_project_root, hash_project_path, normalize_path_str};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,6 +31,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(cmd) = cli.command {
         handle_command(cmd, current_dir, root, hash)?;
+    } else {
+        show_banner(&root);
     }
 
     Ok(())

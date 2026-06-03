@@ -9,7 +9,7 @@ use crate::utils::constants::{
     MAX_FILE_SIZE_BYTES, MAX_GLOBAL_STATS_LINES, MAX_HISTORY_LINES, MAX_TRANSITION_LINES,
     PROJECTS_DIR,
 };
-use crate::utils::update::check_for_updates;
+use crate::utils::update::{check_for_updates, fetch_star_count_cached};
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -599,4 +599,57 @@ pub fn handle_command(
         }
     }
     Ok(())
+}
+
+pub fn show_banner(root: &std::path::Path) {
+    let profile = analyze_project(root);
+    let eco_str = if profile.ecosystems.is_empty() {
+        "Generic Project".to_string()
+    } else {
+        profile
+            .ecosystems
+            .iter()
+            .map(|e| format!("{:?}", e))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    let stars_str = if let Some(stars) = fetch_star_count_cached() {
+        format!("★ {} Stars | ", stars)
+    } else {
+        String::new()
+    };
+
+    println!(
+        r#"
+  _______                  _
+ |__   __|                (_)
+    | | ___ _ __ _ __ ___  _ _ __ ___
+    | |/ _ \ '__| '_ ` _ \| | '_ ` _ \
+    | |  __/ |  | | | | | | | | | | | |
+    |_|\___|_|  |_| |_| |_|_|_| |_| |_|
+
+  Project-aware terminal history + intelligence v1.1.4
+  ----------------------------------------------------
+  GitHub: https://github.com/akhtarx/termim
+  {}If you find Termim useful, please star the repo!
+
+  Current Context:
+  • Project: {}
+  • Ecosystems: {}
+
+  Quick Commands:
+  • termim init    : Register a project for zero-pollution history
+  • termim query   : Show ranked history for this project
+  • termim suggest : Show intelligent command suggestions
+  • termim stats   : Global usage statistics
+  • termim doctor  : Health check & diagnostics
+  • termim clear   : Reset all data & history
+  • termim update  : Check for latest version
+  • termim uninstall : COMPLETELY remove Termim from your system
+"#,
+        stars_str,
+        root.display(),
+        eco_str
+    );
 }
