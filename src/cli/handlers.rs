@@ -568,11 +568,9 @@ pub fn handle_command(
                                     in_block = false;
                                     continue;
                                 }
-                                if !in_block {
-                                    if !line.contains(".termim\\shell") {
-                                        new_content.push_str(line);
-                                        new_content.push('\n');
-                                    }
+                                if !in_block && !line.contains(".termim\\shell") {
+                                    new_content.push_str(line);
+                                    new_content.push('\n');
                                 }
                             }
                             let _ = std::fs::write(&p, new_content.trim());
@@ -602,11 +600,9 @@ pub fn handle_command(
                                 in_block = false;
                                 continue;
                             }
-                            if !in_block {
-                                if !line.contains(".termim/shell") {
-                                    new_content.push_str(line);
-                                    new_content.push('\n');
-                                }
+                            if !in_block && !line.contains(".termim/shell") {
+                                new_content.push_str(line);
+                                new_content.push('\n');
                             }
                         }
                         let _ = std::fs::write(&rc_file, new_content.trim());
