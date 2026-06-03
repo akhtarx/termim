@@ -4,7 +4,7 @@ class Termim < Formula
   url "https://github.com/akhtarx/termim/archive/refs/tags/v1.1.5.tar.gz"
   # Note: When releasing v1.1.5, update this SHA256 checksum with the value of the release tarball.
   # You can find it by running: curl -sSL https://github.com/akhtarx/termim/archive/refs/tags/v1.1.5.tar.gz | sha256sum
-  sha256 "5eac1bd92ab5d79be7fe0577e08adc419172935429f8cdf58f41bca89e7b061c"
+  sha256 "0cf7b3e925c2748f5a3f75dccbb74dc3f13d2b34a2ed8a18818f8101942d9185"
   license "MIT"
 
   depends_on "rust" => :build
