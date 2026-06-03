@@ -557,12 +557,59 @@ pub fn handle_command(
                 for p in profile_paths {
                     if p.exists() {
                         if let Ok(content) = std::fs::read_to_string(&p) {
-                            let new_lines: Vec<_> = content
-                                .lines()
-                                .filter(|line| !line.contains(".termim\\shell"))
-                                .collect::<Vec<_>>();
-                            let _ = std::fs::write(&p, new_lines.join("\n"));
+                            let mut new_content = String::new();
+                            let mut in_block = false;
+                            for line in content.lines() {
+                                if line.contains("# >>> termim initialize >>>") {
+                                    in_block = true;
+                                    continue;
+                                }
+                                if line.contains("# <<< termim initialize <<<") {
+                                    in_block = false;
+                                    continue;
+                                }
+                                if !in_block {
+                                    if !line.contains(".termim\\shell") {
+                                        new_content.push_str(line);
+                                        new_content.push('\n');
+                                    }
+                                }
+                            }
+                            let _ = std::fs::write(&p, new_content.trim());
                         }
+                    }
+                }
+            }
+
+            // 2.7. Automatically remove integration from Bash, Zsh, and Fish profile files
+            let home_dir = dirs::home_dir().unwrap_or_default();
+            let rc_files = vec![
+                home_dir.join(".bashrc"),
+                home_dir.join(".zshrc"),
+                home_dir.join(".config").join("fish").join("config.fish"),
+            ];
+            for rc_file in rc_files {
+                if rc_file.exists() {
+                    if let Ok(content) = std::fs::read_to_string(&rc_file) {
+                        let mut new_content = String::new();
+                        let mut in_block = false;
+                        for line in content.lines() {
+                            if line.contains("# >>> termim initialize >>>") {
+                                in_block = true;
+                                continue;
+                            }
+                            if line.contains("# <<< termim initialize <<<") {
+                                  in_block = false;
+                                  continue;
+                            }
+                            if !in_block {
+                                if !line.contains(".termim/shell") {
+                                    new_content.push_str(line);
+                                    new_content.push('\n');
+                                }
+                            }
+                        }
+                        let _ = std::fs::write(&rc_file, new_content.trim());
                     }
                 }
             }
