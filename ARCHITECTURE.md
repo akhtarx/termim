@@ -18,7 +18,7 @@ A zero-latency dispatch registry providing follow-up suggestions without unneces
 ## 2. Robust Operations
 
 ### Optimized RegEx
-Termim uses precise regular expressions for robust credential redaction. Patterns are compiled once via `once_cell` and applied to every command before it touches the disk.
+Termim uses precise regular expressions for robust credential redaction. Patterns are compiled once via `std::sync::OnceLock` and applied to every command before it touches the disk.
 
 ### State Initialization
 Uses fast and reliable lazy initialization patterns to ensure efficient, safe startup. This minimizes the binary's impact on shell startup time.
@@ -31,11 +31,11 @@ Every file-write operation is protected by cross-platform advisory locks. This p
 ### Atomic Write-Rename
 When pruning or updating history files, Termim writes to a temporary sibling file and then performs an atomic rename. This ensures that history files are never corrupted, even if the process is interrupted.
 
-## 4. Adaptive Intelligence (Markov Weighting)
+## 4. Adaptive Intelligence (Weighted Command Transitions)
 
 Termim uses a **Unified Weighted Ranking Engine** to prioritize history and predictions:
 
-- **Behavioral Transitions**: High-coefficient weighting for literal next-step habits based on Markov Chain analysis.
+- **Behavioral Transitions**: High-coefficient weighting for literal next-step habits based on weighted transition prediction.
 - **Ecosystem Defaults**: Static dispatch for stack-defining commands.
 - **Directory Context**: Frequency-based ranking within the local directory boundary.
 

@@ -1,6 +1,6 @@
-/// Termim Fundamentals Engine
-/// Static, compiled-in transitions for context-aware developer flows.
-/// High-performance, zero disk I/O.
+//! Termim Fundamentals Registry
+//! Static, compiled-in transitions for context-aware developer flows.
+//! High-performance, zero disk I/O.
 
 pub struct FundamentalsRegistry;
 
@@ -22,12 +22,10 @@ impl FundamentalsRegistry {
                     vec!["git push", "git status"]
                 } else if cmd_clean.contains(" status") {
                     vec!["git add .", "git diff"]
-                } else if cmd_clean.contains(" pull") || cmd_clean.contains(" checkout") {
-                    vec!["git status"]
                 } else {
                     vec!["git status"]
                 }
-            },
+            }
 
             // Rust / Cargo Flow
             "cargo" => {
@@ -35,25 +33,15 @@ impl FundamentalsRegistry {
                     vec!["cargo build"]
                 } else if cmd_clean.contains(" build") {
                     vec!["cargo run", "cargo test"]
-                } else if cmd_clean.contains(" test") {
-                    vec!["cargo build"]
-                } else if cmd_clean.contains(" run") {
-                    vec!["cargo build"]
                 } else {
                     vec!["cargo build"]
                 }
-            },
+            }
 
             // Node / NPM / Yarn Flow
             "npm" | "yarn" | "pnpm" | "bun" => {
-                if cmd_clean.contains(" install") || cmd_clean.contains(" i") {
-                    vec!["npm start", "npm run dev"]
-                } else if cmd_clean.contains(" run build") || cmd_clean.contains(" build") {
-                    vec!["npm start", "npm run dev"]
-                } else {
-                    vec!["npm start", "npm run dev"]
-                }
-            },
+                vec!["npm start", "npm run dev"]
+            }
 
             // Docker Flow
             "docker" => {
@@ -64,20 +52,16 @@ impl FundamentalsRegistry {
                 } else {
                     vec!["docker ps"]
                 }
-            },
+            }
 
             // Go Flow (v1.6.3)
             "go" => {
                 if cmd_clean.contains(" build") {
                     vec!["go run .", "go test ./..."]
-                } else if cmd_clean.contains(" test") {
-                    vec!["go build"]
-                } else if cmd_clean.contains(" run") {
-                    vec!["go build"]
                 } else {
                     vec!["go build"]
                 }
-            },
+            }
 
             // Maven Flow (v1.6.3)
             "mvn" => {
@@ -90,20 +74,16 @@ impl FundamentalsRegistry {
                 } else {
                     vec!["mvn clean"]
                 }
-            },
+            }
 
             // Dotnet Flow (v1.6.3)
             "dotnet" => {
                 if cmd_clean.contains(" build") {
                     vec!["dotnet run", "dotnet test"]
-                } else if cmd_clean.contains(" run") {
-                    vec!["dotnet build"]
-                } else if cmd_clean.contains(" test") {
-                    vec!["dotnet build"]
                 } else {
                     vec!["dotnet build"]
                 }
-            },
+            }
 
             // Terraform Flow (v1.6.3)
             "terraform" => {
@@ -116,7 +96,7 @@ impl FundamentalsRegistry {
                 } else {
                     vec!["terraform plan"]
                 }
-            },
+            }
 
             // Base OS Navigation
             "cd" => vec!["ls", "ls -la"],
@@ -125,5 +105,24 @@ impl FundamentalsRegistry {
 
             _ => vec![],
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_suggested_follow_ups() {
+        let git_init_sug = FundamentalsRegistry::get_suggested_follow_ups("git init");
+        assert!(git_init_sug.contains(&"git status"));
+        assert!(git_init_sug.contains(&"git add ."));
+
+        let cargo_build_sug = FundamentalsRegistry::get_suggested_follow_ups("cargo build");
+        assert!(cargo_build_sug.contains(&"cargo run"));
+        assert!(cargo_build_sug.contains(&"cargo test"));
+
+        let cd_sug = FundamentalsRegistry::get_suggested_follow_ups("cd foo");
+        assert!(cd_sug.contains(&"ls"));
     }
 }

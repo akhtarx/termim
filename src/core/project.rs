@@ -19,7 +19,6 @@ pub fn normalize_path_internal(path: &Path) -> String {
     normalize_path_str(&path.to_string_lossy())
 }
 
-
 pub fn detect_project_root(current_dir: &Path) -> PathBuf {
     // 1. Check Global Registry (~/.termim/registry.txt) for explicit grouping
     if let Some(mut registry_path) = dirs::home_dir() {
@@ -33,10 +32,12 @@ pub fn detect_project_root(current_dir: &Path) -> PathBuf {
                 if !line.trim().is_empty() {
                     let registered_raw = Path::new(line);
                     let registered_norm = normalize_path_internal(registered_raw);
-                    
+
                     // Direct string-based component matching for absolute symmetry
-                    if current_norm == registered_norm || current_norm.starts_with(&format!("{}/", registered_norm)) {
-                         return registered_raw.to_path_buf();
+                    if current_norm == registered_norm
+                        || current_norm.starts_with(&format!("{}/", registered_norm))
+                    {
+                        return registered_raw.to_path_buf();
                     }
                 }
             }
@@ -53,4 +54,26 @@ pub fn hash_project_path(path: &Path) -> String {
     let path_str = normalize_path_internal(path);
     hasher.update(path_str.as_bytes());
     format!("{:x}", hasher.finalize())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_path_str() {
+        let res = normalize_path_str("a\\b\\C");
+        if cfg!(any(target_os = "windows", target_os = "macos")) {
+            assert_eq!(res, "a/b/c");
+        } else {
+            assert_eq!(res, "a/b/C");
+        }
+    }
+
+    #[test]
+    fn test_hash_project_path() {
+        let h1 = hash_project_path(Path::new("a/b/c"));
+        let h2 = hash_project_path(Path::new("a\\b\\c"));
+        assert_eq!(h1, h2);
+    }
 }

@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         { action: 'key', content: `DOWN ARROW`, delay: 1500 }, // Predicting next MOVE (Forward in time)
         { action: 'instant', content: `<span class="t-prediction">git add . && git commit -m "update schema"</span>`, delay: 200 },
-        { action: 'instruction', content: `Termim: Suggested next command via Markov-chain analysis.`, delay: 3000 },
+        { action: 'instruction', content: `Termim: Suggested next command via weighted transition analysis.`, delay: 3000 },
         { action: 'key', content: `ENTER`, delay: 200 },
         { action: 'output', content: `\n[main 8a4c12] update schema\n 1 file changed, 12 insertions(+)\n`, delay: 1500 },
 
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const scenarioMeta = [
         { title: "Project Isolation", desc: "Termim understands project boundaries. Your history stays where it belongs." },
-        { title: "Behavioral Prediction", desc: "Markov-chain analysis predicts your next command before you even type it." },
+        { title: "Behavioral Prediction", desc: "Weighted transition analysis predicts your next command before you even type it." },
         { title: "The Privacy Sieve", desc: "Automatic redaction scrubs credentials and secrets before they hit your disk." },
         { title: "Success-Only History", desc: "Zero noise. Termim prunes typos and failed commands for a cleaner workflow." }
     ];

@@ -14,7 +14,7 @@ By participating in this project, you agree to maintain a professional, inclusiv
 
 Termim is built on the principle of **High-Performance Efficiency.** Every contribution should adhere to these core technical standards:
 
-1. **The Performance Moat**: Core logic should avoid heavy dependencies (like `regex` or `once_cell`) that incur a startup tax. We aim for sub-20ms total execution time.
+1. **The Performance Moat**: Core logic should avoid heavy external dependencies (preferring standard library utilities like `std::sync::OnceLock` instead of external crates like `once_cell`) that incur a startup tax. We aim for sub-20ms total execution time.
 2. **Concurrency Safety**: All file-write operations must use **Universal Advisory Locking (`fd-lock`)** and atomic swap logic to ensure data integrity across parallel sessions.
 3. **Contextual Isolation**: Project detection must strictly follow the established markers to ensure accurate ecosystem isolation (Rust, Node, PHP, etc).
 4. **Privacy-First Sanitization**: Credentials and secrets must be scrubbed using the established manual sieve *before* they are logged to disk.

@@ -118,7 +118,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Node / JavaScript / TypeScript ───────────────────
     if pkg_json_path.exists() {
         ecosystems.push(Ecosystem::Node);
-        
+
         // 1. Extract Scripts (if possible)
         if let Some(ref json) = pkg_json_value {
             if let Some(scripts) = json.get("scripts").and_then(|s| s.as_object()) {
@@ -786,4 +786,53 @@ pub fn filter_suggestions<'a>(
         .iter()
         .filter(|s| s.command.to_lowercase().contains(&lower))
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+
+    #[test]
+    fn test_analyze_project_rust() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let cargo_toml = temp_dir.path().join("Cargo.toml");
+        File::create(cargo_toml).unwrap();
+
+        let profile = analyze_project(temp_dir.path());
+        assert!(profile.ecosystems.contains(&Ecosystem::Rust));
+        assert!(profile.suggestions.iter().any(|s| s.command == "cargo build"));
+    }
+
+    #[test]
+    fn test_analyze_project_node() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let pkg_json = temp_dir.path().join("package.json");
+        fs::write(pkg_json, r#"{"scripts": {"dev": "vite", "test": "vitest"}}"#).unwrap();
+
+        let profile = analyze_project(temp_dir.path());
+        assert!(profile.ecosystems.contains(&Ecosystem::Node));
+        assert!(profile.suggestions.iter().any(|s| s.command == "npm run dev"));
+        assert!(profile.suggestions.iter().any(|s| s.command == "npm run test"));
+    }
+
+    #[test]
+    fn test_filter_suggestions() {
+        let suggestions = vec![
+            SuggestedCommand {
+                command: "git status".to_string(),
+                source: SuggestionSource::EcosystemDefault,
+                base_score: 1,
+            },
+            SuggestedCommand {
+                command: "cargo build".to_string(),
+                source: SuggestionSource::EcosystemDefault,
+                base_score: 1,
+            },
+        ];
+
+        let filtered = filter_suggestions(&suggestions, "cargo");
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].command, "cargo build");
+    }
 }

@@ -95,7 +95,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Directory-aware terminal history and command intelligence v1.1.3
+        # Termim: Directory-aware terminal history and command intelligence v1.1.4
         local branch=$(git branch --show-current 2>/dev/null || echo "none")
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
         _TERMIM_IDX=1

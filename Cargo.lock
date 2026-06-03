@@ -835,12 +835,11 @@ dependencies = [
 
 [[package]]
 name = "termim"
-version = "1.1.2"
+version = "1.1.4"
 dependencies = [
  "clap",
  "dirs",
  "fd-lock",
- "once_cell",
  "regex",
  "serde",
  "serde_json",

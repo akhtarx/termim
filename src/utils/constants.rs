@@ -10,4 +10,3 @@ pub const MAX_FILE_SIZE_BYTES: u64 = 512 * 1024;
 pub const QUERY_TAIL_LINES: usize = 500;
 /// Project history subdirectory name
 pub const PROJECTS_DIR: &str = "projects";
-

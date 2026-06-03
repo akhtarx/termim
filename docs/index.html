@@ -67,7 +67,7 @@
     <main>
         <!-- Hero Section -->
         <section class="hero container">
-            <div class="hero-chip animate-fade-up">v1.1.3 is now live</div>
+            <div class="hero-chip animate-fade-up">v1.1.4 is now live</div>
             <h1 class="hero-title animate-fade-up delay-1">
                 Stop fighting your <kbd>↑ Up Arrow</kbd> key to find the command <span class="gradient-text">you ran
                     yesterday.</span>
@@ -277,7 +277,7 @@
                                 </div>
                                 <div class="logic-step">
                                     <div class="step-header"><span class="step-icon thinking">Termim</span><span
-                                            class="step-badge success">Markov Engine</span></div>
+                                            class="step-badge success">Transition Engine</span></div>
                                     <div class="step-content">
                                         <p class="dim">Analyzing transitions from 'git status'...</p>
                                     </div>
@@ -366,7 +366,7 @@
                     <span class="status-label">ENGINE STATUS: NOMINAL</span>
                 </div>
                 <div class="sys-meta">
-                    <span class="meta-tag">CORE: V1.1.3</span>
+                    <span class="meta-tag">CORE: V1.1.4</span>
                     <span class="meta-tag">EXECUTION: NATIVE</span>
                 </div>
             </div>
@@ -426,7 +426,7 @@
                     <div class="bp-content">
                         <div class="bp-split">
                             <div class="bp-info">
-                                <h3>Behavioral Markov Engine</h3>
+                                <h3>Behavioral Transition Engine</h3>
                                 <p class="bp-text">High-coefficient weighting based on true command transitions. Termim
                                     observes your habits to rank context by probability, not just frequency.</p>
                             </div>
@@ -492,7 +492,7 @@
                 <div class="phil-card glow-card" data-glow>
                     <h3>🚫 No Artificial AI</h3>
                     <p>LLM hallucinations have no place in critical production environments. Termim uses deterministic
-                        First-Order Markov Chains, meaning predictable, repeatable suggestions.</p>
+                        weighted command transition tables, meaning predictable, repeatable suggestions.</p>
                 </div>
                 <div class="phil-card glow-card" data-glow>
                     <h3>🚫 No Network Requests</h3>
@@ -531,7 +531,7 @@
                     <div class="line split"></div>
                     <div class="node-row">
                         <div class="node data">Path Hash Lookup</div>
-                        <div class="node data">Markov Parsing</div>
+                        <div class="node data">Transition Reranking</div>
                     </div>
                 </div>
             </div>
@@ -591,7 +591,7 @@
                     </div>
                     <div class="faq-content">
                         <div class="faq-inner">
-                            <p>Everything stays on your machine. All history, Markov weights, and directory hashes are stored in `~/.termim/`. Termim performs <strong>Zero Telemetry</strong> and zero cloud syncing.</p>
+                            <p>Everything stays on your machine. All history, transition weights, and directory hashes are stored in `~/.termim/`. Termim performs <strong>Zero Telemetry</strong> and zero cloud syncing.</p>
                         </div>
                     </div>
                 </div>

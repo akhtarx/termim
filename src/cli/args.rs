@@ -1,7 +1,11 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "termim", version = "1.1.3", about = "Directory & Context-aware terminal history and command intelligence")]
+#[command(
+    name = "termim",
+    version = "1.1.4",
+    about = "Directory & Context-aware terminal history and command intelligence"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -14,7 +18,7 @@ pub enum Commands {
     Log {
         /// The command string to log
         command_str: String,
-        /// The previous command executed (for Markov transition logic)
+        /// The previous command executed (for behavioral transition logic)
         #[arg(short, long)]
         prev: Option<String>,
         /// The exit code of the log command (Intelligence only learns from 0)

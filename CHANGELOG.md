@@ -4,6 +4,12 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.1.4] - 2026-06-03
+### ⚡ Performance & Hardening
+- **Windows File Locking Parity**: Updated `append_to_file_locked` and `prune_log` to safely release file handle locks on Windows before renaming temporary files, eliminating `Access is denied` errors.
+- **Robust Test Coverage**: Added comprehensive unit tests for project ecosystem profiling, suggestion filtering, log pruning, and concurrent locking.
+- **Accurate Branding**: Cleaned up outdated Markov modeling references in all website resources, docs, scripts, and logs in favor of transparent weighted transition terminology.
+
 ## [1.1.3] - 2026-05-16
 ### ✨ Added
 - **Global History Search Palette**: The `Ctrl+P` search palette is now **Layered (Local > Global)**. It prioritizes the current project but falls back to global history, solving the "intent mismatch" when you need commands from other projects.

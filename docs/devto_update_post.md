@@ -49,7 +49,7 @@ iex (iwr -useb https://raw.githubusercontent.com/akhtarx/termim/main/installer/i
 
 ### 📖 Moving Toward Transparency
 
-We’ve also released a detailed **[ARCHITECTURE.md](https://github.com/akhtarx/termim/blob/main/ARCHITECTURE.md)** for those who want to see the "how" (Markov models, atomic locking, and state machines). 
+We’ve also released a detailed **[ARCHITECTURE.md](https://github.com/akhtarx/termim/blob/main/ARCHITECTURE.md)** for those who want to see the "how" (weighted transition tables, atomic locking, and state machines). 
 
 Termim is built by engineers, for engineers. We’re focused on making the terminal a more focused, high-signal environment.
 
