@@ -26,48 +26,59 @@ pub fn handle_command(
             exit,
             cwd: _,
             branch,
+            pre_exec,
+            post_exec,
         } => {
             let sanitized_cmd = sanitize_command(&command_str);
             if sanitized_cmd.is_empty() {
                 return Ok(());
             }
 
-            // Atomic Direct-to-Disk Logging
+            let do_history = pre_exec || (!pre_exec && !post_exec);
+            let do_transitions = post_exec || (!pre_exec && !post_exec);
+
             let projects_dir = dirs::home_dir()
                 .unwrap_or_default()
                 .join(".termim")
                 .join(PROJECTS_DIR);
-            let _ = std::fs::create_dir_all(&projects_dir);
-            let project_file = projects_dir.join(format!("{}.txt", hash));
-            if let Err(e) = append_to_file_locked(&project_file, &sanitized_cmd) {
-                eprintln!("[termim] warn: could not write history: {}", e);
-            }
-            // Atomic prune — keeps newest MAX_HISTORY_LINES entries
-            let _ = prune_log(&project_file, MAX_HISTORY_LINES);
 
-            // Global Stats backup (atomic append + prune)
-            let global_path = dirs::home_dir()
-                .unwrap_or_default()
-                .join(".termim")
-                .join("global_stats.txt");
-            let _ = append_to_file_locked(&global_path, &sanitized_cmd);
-            let _ = prune_log(&global_path, MAX_GLOBAL_STATS_LINES);
+            if do_history {
+                // Atomic Direct-to-Disk Logging
+                let _ = std::fs::create_dir_all(&projects_dir);
+                let project_file = projects_dir.join(format!("{}.txt", hash));
+                if let Err(e) = append_to_file_locked(&project_file, &sanitized_cmd) {
+                    eprintln!("[termim] warn: could not write history: {}", e);
+                }
+                // Atomic prune — keeps newest MAX_HISTORY_LINES entries
+                let _ = prune_log(&project_file, MAX_HISTORY_LINES);
+
+                // Global Stats backup (atomic append + prune)
+                let global_path = dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".termim")
+                    .join("global_stats.txt");
+                let _ = append_to_file_locked(&global_path, &sanitized_cmd);
+                let _ = prune_log(&global_path, MAX_GLOBAL_STATS_LINES);
+            }
 
             // Behavioral Intelligence: Record Behavioral Transition (State-Aware Learning)
-            if let Some(prev_cmd) = prev {
-                let sanitized_prev = sanitize_command(&prev_cmd);
-                if !sanitized_prev.is_empty() && sanitized_prev != sanitized_cmd {
-                    let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
-                    let exit_code = exit.unwrap_or(0);
-                    let branch_str = branch.unwrap_or_else(|| "none".to_string());
-                    // Format: prev ::: next ::: exit ::: branch
-                    let record = format!(
-                        "{} ::: {} ::: {} ::: {}",
-                        sanitized_prev, sanitized_cmd, exit_code, branch_str
-                    );
-                    let _ = append_to_file_locked(&trans_file, &record);
-                    // Atomic prune — keeps newest MAX_TRANSITION_LINES entries
-                    let _ = prune_log(&trans_file, MAX_TRANSITION_LINES);
+            if do_transitions {
+                if let Some(prev_cmd) = prev {
+                    let sanitized_prev = sanitize_command(&prev_cmd);
+                    if !sanitized_prev.is_empty() && sanitized_prev != sanitized_cmd {
+                        let _ = std::fs::create_dir_all(&projects_dir);
+                        let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
+                        let exit_code = exit.unwrap_or(0);
+                        let branch_str = branch.unwrap_or_else(|| "none".to_string());
+                        // Format: prev ::: next ::: exit ::: branch
+                        let record = format!(
+                            "{} ::: {} ::: {} ::: {}",
+                            sanitized_prev, sanitized_cmd, exit_code, branch_str
+                        );
+                        let _ = append_to_file_locked(&trans_file, &record);
+                        // Atomic prune — keeps newest MAX_TRANSITION_LINES entries
+                        let _ = prune_log(&trans_file, MAX_TRANSITION_LINES);
+                    }
                 }
             }
         }
@@ -301,7 +312,7 @@ pub fn handle_command(
         }
 
         Commands::Doctor => {
-            println!("=== Termim Diagnostic Check (v1.1.5) ===\n");
+            println!("=== Termim Diagnostic Check (v1.1.6) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -672,7 +683,7 @@ pub fn show_banner(root: &std::path::Path) {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.1.5
+  Project-aware terminal history + intelligence v1.1.6
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}If you find Termim useful, please star the repo!

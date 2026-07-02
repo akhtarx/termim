@@ -4,6 +4,11 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.1.6] - 2026-07-02
+### 🐛 Bug Fixes
+- **Long-Running Command Tracking**: Solved an issue where commands that run indefinitely (like `npm run dev` or `php artisan serve`) were not recorded if the terminal was closed before they finished.
+- **Split-Phase Logging**: Introduced a dual-phase logging architecture (`--pre-exec` and `--post-exec`). Commands are now saved instantly upon execution, while exit codes and behavioral transitions are still captured natively upon completion.
+
 ## [1.1.5] - 2026-06-03
 ### 🔧 Fixes & Self-Healing
 - **CLI Default Output**: Restored the default help banner and project context output when the CLI is run with no subcommands/arguments.

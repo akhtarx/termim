@@ -49,6 +49,12 @@ set -g _TERMIM_PREEXEC_DIR ""
 # Capture directory before command execution
 function _termim_preexec --on-event fish_preexec
     set -g _TERMIM_PREEXEC_DIR $PWD
+    
+    set -l cmd $argv[1]
+    if test -n "$cmd"
+        "$_TERMIM_BIN" log "$cmd" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec 2>>"$_TERMIM_LOG" &
+        disown 2>/dev/null
+    end
 end
 
 # Post-Execution logic in Fish: Capture exit status and log
@@ -71,7 +77,7 @@ function termim_postexec --on-event fish_postexec
 
     # Log to Termim with explicit CWD, branch detection and diagnostic logging
     set -l branch (git branch --show-current 2>/dev/null; or echo "none")
-    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" 2>>"$_TERMIM_LOG" &
+    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" --post-exec 2>>"$_TERMIM_LOG" &
     disown 2>/dev/null
     
     set -g _TERMIM_PREEXEC_DIR ""

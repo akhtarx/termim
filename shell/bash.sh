@@ -39,6 +39,12 @@ _TERMIM_PREEXEC_DIR=""
 # Capture current directory before any command executes
 _termim_preexec() {
     _TERMIM_PREEXEC_DIR="$PWD"
+    
+    if [[ -n "$BASH_COMMAND" && "$BASH_COMMAND" != *"_termim"* ]]; then
+        (
+            "$_TERMIM_BIN" log "$BASH_COMMAND" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec 2>>"$_TERMIM_LOG"
+        & ) 2>/dev/null
+    fi
 }
 trap '_termim_preexec' DEBUG
 
@@ -77,7 +83,7 @@ _termim_log() {
         # Run logging in background with explicit CWD and branch detection
         (
             local branch=$(git branch --show-current 2>/dev/null || echo "none")
-            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" 2>>"$_TERMIM_LOG"
+            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" --post-exec 2>>"$_TERMIM_LOG"
         & ) 
         disown 2>/dev/null
     fi
@@ -110,7 +116,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Directory-aware terminal history and command intelligence v1.1.5
+        # Termim: Directory-aware terminal history and command intelligence v1.1.6
         local branch=$(git branch --show-current 2>/dev/null || echo "none")
         mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
         _TERMIM_IDX=1

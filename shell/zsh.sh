@@ -53,6 +53,10 @@ _termim_preexec() {
     _TERMIM_PREEXEC_DIR="$PWD"
     _TERMIM_IDX=0 
     _TERMIM_CACHE=() 
+    
+    if [[ -n "$1" ]]; then
+        "$_TERMIM_BIN" log "$1" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec 2>>"$_TERMIM_LOG" &!
+    fi
 }
 
 # Post-execution hook: Capture exit code and log to termim
@@ -78,7 +82,7 @@ _termim_precmd() {
         local prev_cmd="$(fc -ln -2 -1 2>/dev/null | sed 's/^[[:space:]]*//' | head -n 1)"
         
         # Log to Termim with explicit CWD, branch detection and diagnostic logging
-        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$_TERMIM_BRANCH" 2>>"$_TERMIM_LOG" &!
+        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$_TERMIM_BRANCH" --post-exec 2>>"$_TERMIM_LOG" &!
         
         _TERMIM_PENDING_CMD=""
         _TERMIM_PREEXEC_DIR=""
@@ -101,7 +105,7 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Directory-aware terminal history and command intelligence v1.1.5
+        # Termim: Directory-aware terminal history and command intelligence v1.1.6
 # ---------------------------------------------------------------------
         # Fetch strictly history-only results (Recency)
         _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")

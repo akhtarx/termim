@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "termim",
-    version = "1.1.5",
+    version = "1.1.6",
     about = "Directory & Context-aware terminal history and command intelligence"
 )]
 pub struct Cli {
@@ -30,6 +30,12 @@ pub enum Commands {
         /// The current git branch (to enable branch-aware context)
         #[arg(short, long)]
         branch: Option<String>,
+        /// Log only to history and global stats (pre-execution)
+        #[arg(long)]
+        pre_exec: bool,
+        /// Log only to transitions (post-execution)
+        #[arg(long)]
+        post_exec: bool,
     },
     /// Query the ranked, project-specific history for the current context.
     /// Used by shell buffer-swapping for 0ms lag history.

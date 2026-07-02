@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.1.5
+# Version 1.1.6
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
@@ -57,7 +57,7 @@ $null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
 
 
 function Global:Invoke-TermimLogAsync {
-    param([string]$command, [int]$exitCode = 0, [string]$cwd = "", [string]$branch = "none")
+    param([string]$command, [int]$exitCode = 0, [string]$cwd = "", [string]$branch = "none", [switch]$preExec, [switch]$postExec)
     if (-not $Global:TermimBin) { return }
     
     # Run logging in a separate thread to avoid blocking
@@ -67,7 +67,9 @@ function Global:Invoke-TermimLogAsync {
         # The 'previous' command is the one before that.
         $prev = if ($history.Count -ge 2) { $history[-2].CommandLine } else { "" }
         
-        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' --branch '$($branch.Replace("'", "''"))' 2>>`"$Global:TermimHome\termim.log`"")
+        $preFlag = if ($preExec) { "--pre-exec" } else { "" }
+        $postFlag = if ($postExec) { "--post-exec" } else { "" }
+        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' --branch '$($branch.Replace("'", "''"))' $preFlag $postFlag 2>>`"$Global:TermimHome\termim.log`"")
         $Global:TermimLogger.Commands.Clear() | Out-Null
         $Global:TermimLogger.AddScript($sb) | Out-Null
         $Global:TermimLogger.BeginInvoke() | Out-Null
@@ -163,7 +165,7 @@ if (Get-Module PSReadLine) {
         }
     }
 
-    # Log command on Enter (Mark as pending for post-exec logging)
+    # Log command on Enter (Mark as pending for post-exec logging, and execute pre-exec logging)
     Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
         $l = ""; $c = 0
         [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$l, [ref]$c)
@@ -173,6 +175,11 @@ if (Get-Module PSReadLine) {
             $Global:TermimPendingCommand = $line
             # [v1.0.4] Absolute Context Capture
             $Global:TermimPreExecDir = (Get-Location).Path
+            
+            # Log pre-execution immediately to catch long-running commands
+            if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
+                Invoke-TermimLogAsync -command $line -cwd $Global:TermimPreExecDir -preExec
+            }
         }
         [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
     }
@@ -232,10 +239,10 @@ function prompt {
     if (-not $branch) { $branch = "none" }
     $Global:TermimBranch = $branch
 
-    # 2. Perform background logging for any pending command
+    # 2. Perform background logging for any pending command (post-exec transition logic)
     if ($Global:TermimPendingCommand) {
         if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
-            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir -branch $branch
+            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir -branch $branch -postExec
         }
         $Global:TermimPendingCommand = $null
         $Global:TermimPreExecDir = $null

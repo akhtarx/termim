@@ -232,13 +232,8 @@ if [ -d "$HOME/.config/fish" ]; then
     configure_shell "$HOME/.config/fish/config.fish" "fish"
 fi
 
-echo -e "\n${GREEN}=== Installation Complete! ===${NC}"
-echo -e "${YELLOW}Important:${NC} To start using Termim in this window, run:"
-
-# Detect active shell from $SHELL env var (more reliable when running via pipe)
-case "$SHELL" in
 # 6. Verification & Health Check
-echo -e "\n[info] Running final diagnostics..."
+info "Running final diagnostics..."
 if [ -f "$BIN_DIR/termim" ]; then
     # Add to current path for test
     export PATH="$BIN_DIR:$PATH"
@@ -253,8 +248,33 @@ else
     error "Binary not found at $BIN_DIR/termim"
 fi
 
+echo -e "\n${GREEN}=== Installation Complete! ===${NC}"
+echo -e "${YELLOW}Important:${NC} To start using Termim in this window, run:"
+
+# Detect active shell from $SHELL env var (more reliable when running via pipe)
+case "$SHELL" in
+    */zsh)
+        echo -e "  ${BLUE}source ~/.zshrc${NC}"
+        ;;
+    */bash)
+        echo -e "  ${BLUE}source ~/.bashrc${NC}"
+        ;;
+    */fish)
+        echo -e "  ${BLUE}source ~/.config/fish/config.fish${NC}"
+        ;;
+    *)
+        # Fallback to shell-specific detection if SHELL is unset
+        if [ -n "$ZSH_VERSION" ]; then
+            echo -e "  ${BLUE}source ~/.zshrc${NC}"
+        else
+            echo -e "  ${BLUE}source ~/.bashrc${NC}"
+        fi
+        ;;
+esac
+echo -e "\nOr just open a new terminal tab. Enjoy!"
+
 echo -e "\n${CYAN}====================================================${NC}"
-echo -e "  ${GREEN}Termim v1.1.5 Installed Successfully${NC}"
+echo -e "  ${GREEN}Termim v1.1.6 Installed Successfully${NC}"
 echo -e "${CYAN}====================================================${NC}"
 echo -e "  ${YELLOW}RESTART your terminal to activate Termim.${NC}"
 echo -e "  Once restarted, press UP-ARROW to see history."
