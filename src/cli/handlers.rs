@@ -34,8 +34,8 @@ pub fn handle_command(
                 return Ok(());
             }
 
-            let do_history = pre_exec || (!pre_exec && !post_exec);
-            let do_transitions = post_exec || (!pre_exec && !post_exec);
+            let do_history = pre_exec || !post_exec;
+            let do_transitions = post_exec || !pre_exec;
 
             let projects_dir = dirs::home_dir()
                 .unwrap_or_default()
