@@ -27,7 +27,7 @@ ureq = { version = "2.9", optional = true }
 winreg = "0.51"
 
 [features]
-default = []
+default = ["update-check"]
 update-check = ["dep:ureq"]
 
 [[bin]]
