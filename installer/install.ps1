@@ -50,7 +50,17 @@ if ($Build) {
     }
 } else {
     # Automatic download
-    $fileName = "termim-windows-x86_64.exe"
+    $arch = $env:PROCESSOR_ARCHITECTURE.ToLower()
+    if ($arch -eq "amd64" -or $arch -eq "x86_64") {
+        $t_arch = "x86_64"
+    } elseif ($arch -eq "arm64" -or $arch -eq "aarch64") {
+        $t_arch = "aarch64"
+    } else {
+        Write-Host "[error] Unsupported architecture: $arch. Please use -Build." -ForegroundColor Red
+        exit 1
+    }
+
+    $fileName = "termim-windows-$t_arch.exe"
     $downloadUrl = if ($Version -eq "latest") { 
         "https://github.com/$repo/releases/latest/download/$fileName" 
     } else { 
