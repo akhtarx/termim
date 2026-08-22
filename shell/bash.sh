@@ -42,8 +42,8 @@ _termim_preexec() {
     
     if [[ -n "$BASH_COMMAND" && "$BASH_COMMAND" != *"_termim"* ]]; then
         (
-            "$_TERMIM_BIN" log "$BASH_COMMAND" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec 2>>"$_TERMIM_LOG"
-        & ) 2>/dev/null
+            "$_TERMIM_BIN" log "$BASH_COMMAND" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec 2>>"$_TERMIM_LOG" &
+        ) 2>/dev/null
     fi
 }
 trap '_termim_preexec' DEBUG
@@ -83,8 +83,8 @@ _termim_log() {
         # Run logging in background with explicit CWD and branch detection
         (
             local branch=$(git branch --show-current 2>/dev/null || echo "none")
-            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" --post-exec 2>>"$_TERMIM_LOG"
-        & ) 
+            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" --post-exec 2>>"$_TERMIM_LOG" &
+        ) 
         disown 2>/dev/null
     fi
     
