@@ -21,11 +21,21 @@ jobs:
             suffix: ""
             name_os: linux
             name_arch: x86_64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            suffix: ""
+            name_os: linux
+            name_arch: aarch64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             suffix: ".exe"
             name_os: windows
             name_arch: x86_64
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            suffix: ".exe"
+            name_os: windows
+            name_arch: aarch64
           - os: macos-latest
             target: x86_64-apple-darwin
             suffix: ""
@@ -50,7 +60,13 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
+      - name: Install cross-compiler (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu' && matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Build
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Prepare Artifact
