@@ -40,12 +40,35 @@ if ($Build) {
         Write-Host "[error] Cargo/Rust not found. Install Rust or run without -Build." -ForegroundColor Red
         exit 1
     }
+    
+    $buildDir = ""
+    $originalPath = (Get-Location).Path
+    if (-not (Test-Path "Cargo.toml")) {
+        Write-Host "[info] Source code not found locally. Downloading from main branch..." -ForegroundColor Gray
+        $buildDir = Join-Path $env:TEMP ("termim_build_" + [Guid]::NewGuid().ToString().Substring(0,8))
+        New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
+        $zipPath = Join-Path $buildDir "main.zip"
+        Invoke-WebRequest -Uri "https://github.com/$repo/archive/refs/heads/main.zip" -OutFile $zipPath -UseBasicParsing
+        Expand-Archive -Path $zipPath -DestinationPath $buildDir -Force
+        Set-Location (Join-Path $buildDir "termim-main")
+    }
+
     cargo build --release
-    if ($LASTEXITCODE -eq 0) {
+    $buildResult = $LASTEXITCODE
+
+    if ($buildResult -eq 0) {
         Copy-Item "target\release\termim.exe" $targetExe -Force
         Write-Host "[success] Built and installed to $targetExe" -ForegroundColor Green
     } else {
         Write-Host "[error] Build failed." -ForegroundColor Red
+    }
+
+    if ($buildDir -ne "") {
+        Set-Location $originalPath
+        Remove-Item -Path $buildDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
+    if ($buildResult -ne 0) {
         exit 1
     }
 } else {

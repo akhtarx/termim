@@ -61,10 +61,28 @@ if [ "$DO_BUILD" = true ]; then
     if ! command -v cargo &>/dev/null; then
         error "Cargo/Rust not found. Install Rust or run without --build to use prebuilt binaries."
     fi
+    
+    BUILD_DIR=""
+    if [ ! -f "Cargo.toml" ]; then
+        info "Source code not found locally. Downloading from main branch..."
+        BUILD_DIR=$(mktemp -d)
+        curl -fsSL "https://github.com/$REPO/archive/refs/heads/main.tar.gz" | tar -xz -C "$BUILD_DIR" --strip-components=1
+        cd "$BUILD_DIR" || error "Failed to cd into build directory"
+    fi
+
     if cargo build --release; then
         cp target/release/termim "$BIN_DIR/termim"
         success "Built and installed to $BIN_DIR/termim"
+        
+        if [ -n "$BUILD_DIR" ]; then
+            cd - > /dev/null
+            rm -rf "$BUILD_DIR"
+        fi
     else
+        if [ -n "$BUILD_DIR" ]; then
+            cd - > /dev/null
+            rm -rf "$BUILD_DIR"
+        fi
         error "Build failed."
     fi
 else
