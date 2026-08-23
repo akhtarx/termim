@@ -157,7 +157,7 @@ pub fn handle_command(
 
                         // Apply Risk Penalties to bury dangerous commands
                         ranked.retain(|(cmd, _)| assess_risk(cmd) != RiskLevel::Dangerous);
-                        
+
                         for (cmd, score) in ranked.iter_mut() {
                             if assess_risk(cmd) == RiskLevel::Caution {
                                 *score -= 2_000;
@@ -291,7 +291,7 @@ pub fn handle_command(
 
             // Apply Risk Penalties to bury dangerous commands
             ranked.retain(|(cmd, _)| assess_risk(cmd) != RiskLevel::Dangerous);
-            
+
             for (cmd, score) in ranked.iter_mut() {
                 if assess_risk(cmd) == RiskLevel::Caution {
                     *score -= 2_000;

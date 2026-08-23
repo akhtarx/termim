@@ -17,16 +17,10 @@ fn get_binary_path() -> PathBuf {
 
 #[test]
 fn test_bash_integration() {
-    if cfg!(windows) {
-        // Skip bash test on standard windows runner unless WSL/GitBash is present
-        // In GitHub Actions, we could rely on bash being available, but let's be safe.
-        let output = Command::new("bash").arg("-c").arg("echo hi").output();
-        if output.is_err() || !output.unwrap().status.success() {
-            println!(
-                "Skipping bash integration test on Windows (bash not found or WSL not configured)"
-            );
-            return;
-        }
+    let output = Command::new("bash").arg("-c").arg("echo hi").output();
+    if output.is_err() || !output.unwrap().status.success() {
+        println!("Skipping bash integration test (bash not found or failing)");
+        return;
     }
 
     let bin_path = get_binary_path();
@@ -64,12 +58,10 @@ fn test_powershell_integration() {
 
 #[test]
 fn test_zsh_integration() {
-    if cfg!(windows) {
-        let output = Command::new("zsh").arg("-c").arg("echo hi").output();
-        if output.is_err() || !output.unwrap().status.success() {
-            println!("Skipping zsh integration test on Windows (zsh not found)");
-            return;
-        }
+    let output = Command::new("zsh").arg("-c").arg("echo hi").output();
+    if output.is_err() || !output.unwrap().status.success() {
+        println!("Skipping zsh integration test (zsh not found or failing)");
+        return;
     }
 
     let bin_path = get_binary_path();
@@ -84,12 +76,10 @@ fn test_zsh_integration() {
 
 #[test]
 fn test_fish_integration() {
-    if cfg!(windows) {
-        let output = Command::new("fish").arg("-c").arg("echo hi").output();
-        if output.is_err() || !output.unwrap().status.success() {
-            println!("Skipping fish integration test on Windows (fish not found)");
-            return;
-        }
+    let output = Command::new("fish").arg("-c").arg("echo hi").output();
+    if output.is_err() || !output.unwrap().status.success() {
+        println!("Skipping fish integration test (fish not found or failing)");
+        return;
     }
 
     let bin_path = get_binary_path();

@@ -229,7 +229,9 @@ mod tests {
             "curl -H 'Authorization: basic [REDACTED]'"
         );
         assert_eq!(
-            sanitize_command("git remote add origin https://username:p@ssw0rd!@github.com/repo.git"),
+            sanitize_command(
+                "git remote add origin https://username:p@ssw0rd!@github.com/repo.git"
+            ),
             "git remote add origin https://username:[REDACTED]@ssw0rd!@github.com/repo.git"
         );
         assert_eq!(

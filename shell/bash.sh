@@ -116,7 +116,10 @@ _termim_up() {
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
         # Termim: Directory-aware terminal history and command intelligence v1.1.8
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
+        _TERMIM_CACHE=()
+        while IFS= read -r line; do
+            [[ -n "$line" ]] && _TERMIM_CACHE+=("$line")
+        done < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
         _TERMIM_IDX=1
     else
         _TERMIM_IDX=$((_TERMIM_IDX + 1))
@@ -177,7 +180,10 @@ _termim_down() {
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
         
         # Fetch strictly predictions-only
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
+        _TERMIM_CACHE=()
+        while IFS= read -r line; do
+            [[ -n "$line" ]] && _TERMIM_CACHE+=("$line")
+        done < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
         
         if [[ ${#_TERMIM_CACHE[@]} -gt 0 ]]; then
             _TERMIM_IDX=-1
