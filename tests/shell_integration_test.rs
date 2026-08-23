@@ -17,14 +17,20 @@ fn get_binary_path() -> PathBuf {
 
 #[test]
 fn test_bash_integration() {
-    let output = Command::new("bash").arg("-c").arg("echo hi").output();
+    let bash_exe = if cfg!(windows) {
+        "C:\\Program Files\\Git\\bin\\bash.exe"
+    } else {
+        "bash"
+    };
+    
+    let output = Command::new(bash_exe).arg("-c").arg("echo hi").output();
     if output.is_err() || !output.unwrap().status.success() {
         println!("Skipping bash integration test (bash not found or failing)");
         return;
     }
 
     let bin_path = get_binary_path();
-    let status = Command::new("bash")
+    let status = Command::new(bash_exe)
         .arg("tests/integration/test_bash.sh")
         .env("TERMIM_BIN", bin_path)
         .status()

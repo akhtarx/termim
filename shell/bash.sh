@@ -41,9 +41,7 @@ _termim_preexec() {
     _TERMIM_PREEXEC_DIR="$PWD"
     
     if [[ -n "$BASH_COMMAND" && "$BASH_COMMAND" != *"_termim"* ]]; then
-        (
-            "$_TERMIM_BIN" log "$BASH_COMMAND" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec 2>>"$_TERMIM_LOG" &
-        ) 2>/dev/null
+        "$_TERMIM_BIN" log "$BASH_COMMAND" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec >> "$_TERMIM_LOG" 2>&1
     fi
 }
 trap '_termim_preexec' DEBUG
@@ -81,10 +79,7 @@ _termim_log() {
     
     if [[ -n "$last_cmd" ]]; then
         # Run logging in background with explicit CWD and branch detection
-        (
-            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --post-exec 2>>"$_TERMIM_LOG" &
-        ) 
-        disown 2>/dev/null
+        "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --post-exec >> "$_TERMIM_LOG" 2>&1
     fi
     
     # v1.1.0: Export last status for query-time context weighting
@@ -117,7 +112,7 @@ _termim_up() {
 
         # Termim: Directory-aware terminal history and command intelligence v1.1.8
         _TERMIM_CACHE=()
-        while IFS= read -r line; do
+        while IFS= read -r line || [[ -n "$line" ]]; do
             [[ -n "$line" ]] && _TERMIM_CACHE+=("$line")
         done < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
         _TERMIM_IDX=1
@@ -181,7 +176,7 @@ _termim_down() {
         
         # Fetch strictly predictions-only
         _TERMIM_CACHE=()
-        while IFS= read -r line; do
+        while IFS= read -r line || [[ -n "$line" ]]; do
             [[ -n "$line" ]] && _TERMIM_CACHE+=("$line")
         done < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
         
