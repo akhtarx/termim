@@ -87,7 +87,8 @@ fn extracted(cmd: String, score: i64) -> SuggestedCommand {
 
 /// Analyze a project root and return its full profile with suggestions.
 pub fn analyze_project(root: &Path) -> ProjectProfile {
-    let mut confidences: std::collections::HashMap<Ecosystem, f32> = std::collections::HashMap::new();
+    let mut confidences: std::collections::HashMap<Ecosystem, f32> =
+        std::collections::HashMap::new();
     let mut suggestions: Vec<SuggestedCommand> = Vec::new();
 
     // ── Hoist I/O — read everything once ─────────────────
@@ -713,12 +714,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Haskell / Stack / Cabal ───────────────────────────
     if dir_files.contains("stack.yaml") {
         *confidences.entry(Ecosystem::Haskell).or_insert(0.0) += 0.90;
-        for cmd in &[
-            "stack run",
-            "stack build",
-            "stack test",
-            "stack ghci",
-        ] {
+        for cmd in &["stack run", "stack build", "stack test", "stack ghci"] {
             suggestions.push(default(cmd, 6));
         }
     } else if has_ext(".cabal") {
@@ -763,12 +759,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     }
 
     // ── Universal git commands ────────────────────────────
-    for cmd in &[
-        "git status",
-        "git commit -m \"\"",
-        "git push",
-        "git pull",
-    ] {
+    for cmd in &["git status", "git commit -m \"\"", "git push", "git pull"] {
         suggestions.push(default(cmd, 2));
     }
 

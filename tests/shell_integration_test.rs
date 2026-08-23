@@ -1,6 +1,6 @@
-use std::process::Command;
 use std::env;
 use std::path::PathBuf;
+use std::process::Command;
 
 fn get_binary_path() -> PathBuf {
     let mut path = env::current_exe().unwrap();
@@ -22,7 +22,9 @@ fn test_bash_integration() {
         // In GitHub Actions, we could rely on bash being available, but let's be safe.
         let output = Command::new("bash").arg("-c").arg("echo hi").output();
         if output.is_err() || !output.unwrap().status.success() {
-            println!("Skipping bash integration test on Windows (bash not found or WSL not configured)");
+            println!(
+                "Skipping bash integration test on Windows (bash not found or WSL not configured)"
+            );
             return;
         }
     }
@@ -40,7 +42,7 @@ fn test_bash_integration() {
 #[test]
 fn test_powershell_integration() {
     let pwsh = if cfg!(windows) { "powershell" } else { "pwsh" };
-    
+
     let output = Command::new(pwsh).arg("-Version").output();
     if output.is_err() {
         println!("Skipping PowerShell integration test (powershell/pwsh not found)");

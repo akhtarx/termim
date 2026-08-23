@@ -71,7 +71,6 @@ pub fn resolve_git_branch(cwd: &Path) -> String {
     "none".to_string()
 }
 
-
 pub fn hash_project_path(path: &Path) -> String {
     let mut hasher = Sha256::new();
     // Normalize BEFORE hashing to guarantee a single file identity
@@ -106,13 +105,13 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let git_dir = dir.path().join(".git");
         std::fs::create_dir(&git_dir).unwrap();
-        
+
         let head_path = git_dir.join("HEAD");
         std::fs::write(&head_path, "ref: refs/heads/feature/fast-git\n").unwrap();
-        
+
         let sub_dir = dir.path().join("src/nested");
         std::fs::create_dir_all(&sub_dir).unwrap();
-        
+
         let branch = resolve_git_branch(&sub_dir);
         assert_eq!(branch, "feature/fast-git");
     }

@@ -50,7 +50,6 @@ pub enum Commands {
         /// Only return intelligent predictions (Transitions-First)
         #[arg(long)]
         suggest_only: bool,
-
     },
     /// Display intelligent command suggestions based on the project tech-stack.
     Suggest {
@@ -62,7 +61,6 @@ pub enum Commands {
         /// Override the current working directory for accurate project detection
         #[arg(long)]
         cwd: Option<String>,
-
     },
     /// Show global usage statistics analyzed from ~/.termim/global_stats.txt.
     Stats,

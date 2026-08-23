@@ -58,7 +58,6 @@ pub fn append_to_file_locked(path: &Path, content: &str) -> std::io::Result<()> 
 
     let target = std::fs::OpenOptions::new()
         .read(true)
-        .write(true)
         .create(true)
         .append(true)
         .open(path)?;
