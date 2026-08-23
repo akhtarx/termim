@@ -43,13 +43,14 @@ _TERMIM_ORIGINAL_INPUT="echo zsh_world"
 
 echo "Test UP Arrow..."
 
-# Use zsh-native (@f) flag to split query output on newlines into an array.
-# The bash-style `while IFS= read` loop does not reliably populate arrays in
-# non-interactive zsh due to process-substitution scoping differences.
-# This is the same idiom used in shell/zsh.sh's _termim_up function.
-_TERMIM_CACHE=("${(@f)$("$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" 2>/dev/null)}")
-
-BUFFER="${_TERMIM_CACHE[1]}"
+# Write query output to a temp file and read the first line from it.
+# This avoids all process-substitution scoping and array-split edge cases in
+# non-interactive zsh (while-read loops and (@f) both silently fail here).
+_TERMIM_TMP=$(mktemp)
+"$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" > "$_TERMIM_TMP" 2>/dev/null
+BUFFER=""
+IFS= read -r BUFFER < "$_TERMIM_TMP"
+rm -f "$_TERMIM_TMP"
 
 if [[ "$BUFFER" != "echo zsh_world" ]]; then
     echo "FAIL: Expected BUFFER to be 'echo zsh_world', got '$BUFFER'"
