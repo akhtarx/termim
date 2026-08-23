@@ -1,7 +1,8 @@
 [package]
 name = "termim"
-version = "1.1.8"
+version = "1.1.9"
 edition = "2021"
+authors = ["Md Mim Akhtar <mim@akhtarx.com>"]
 description = "Directory & Context-aware terminal history and command intelligence"
 repository = "https://github.com/akhtarx/termim"
 license = "MIT"

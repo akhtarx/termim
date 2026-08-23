@@ -95,7 +95,7 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ### 🛠️ Hardening
 - **Deterministic Shell Parity (v1.5.3)**: Unified 1:1 navigation logic across PowerShell, Bash, Zsh, and Fish. Mathematical symmetry achieved across all pointers.
-- **Identity Normalization (v1.1.8)**: String-based path normalization (Lowercase/UNC-strip) ensures deterministic context detection across Windows and POSIX environments.
+- **Identity Normalization (v1.1.9)**: String-based path normalization (Lowercase/UNC-strip) ensures deterministic context detection across Windows and POSIX environments.
 
 ## [1.0.4] - 2026-04-03
 ### ✨ Added
