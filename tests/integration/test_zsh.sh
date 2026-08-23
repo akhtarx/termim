@@ -42,6 +42,8 @@ BUFFER="${_TERMIM_CACHE[1]}"
 
 if [[ "$BUFFER" != "echo zsh_world" ]]; then
     echo "FAIL: Expected BUFFER to be 'echo zsh_world', got '$BUFFER'"
+    echo "--- termim.log ---"
+    cat "$_TERMIM_LOG"
     exit 1
 fi
 

@@ -22,7 +22,7 @@ fn test_bash_integration() {
     } else {
         "bash"
     };
-    
+
     let output = Command::new(bash_exe).arg("-c").arg("echo hi").output();
     if output.is_err() || !output.unwrap().status.success() {
         println!("Skipping bash integration test (bash not found or failing)");

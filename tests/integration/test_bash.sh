@@ -47,6 +47,8 @@ READLINE_LINE="${_TERMIM_CACHE[0]}"
 
 if [[ "$READLINE_LINE" != "echo hello_world" ]]; then
     echo "FAIL: Expected READLINE_LINE to be 'echo hello_world', got '$READLINE_LINE'"
+    echo "--- termim.log ---"
+    cat "$_TERMIM_LOG"
     exit 1
 fi
 
