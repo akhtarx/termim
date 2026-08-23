@@ -20,8 +20,13 @@ export TERMIM_BIN="${TERMIM_BIN:-termim}"
 echo "AFTER FALLBACK TERMIM_BIN is '$TERMIM_BIN'" >> "$_TERMIM_LOG"
 _TERMIM_BIN="$TERMIM_BIN"
 
-# Source the hook
-source shell/zsh.sh
+# Source the hook (may produce non-fatal errors in non-interactive zsh)
+source shell/zsh.sh 2>>"$_TERMIM_LOG" || true
+
+# Re-assert _TERMIM_BIN after sourcing: in non-interactive zsh, ZLE/add-zsh-hook
+# failures during source can prevent the assignment from sticking.
+_TERMIM_BIN="$TERMIM_BIN"
+echo "DEBUG: _TERMIM_BIN='$_TERMIM_BIN'" >> "$_TERMIM_LOG"
 
 echo "Log command 1..."
 export PWD="$HOME"
