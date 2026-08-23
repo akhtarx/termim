@@ -76,8 +76,7 @@ function termim_postexec --on-event fish_postexec
     set -l prev (history | head -n 2 | tail -n 1)
 
     # Log to Termim with explicit CWD, branch detection and diagnostic logging
-    set -l branch (git branch --show-current 2>/dev/null; or echo "none")
-    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" --post-exec 2>>"$_TERMIM_LOG" &
+    "$_TERMIM_BIN" log "$cmd" --prev "$prev" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --post-exec 2>>"$_TERMIM_LOG" &
     disown 2>/dev/null
     
     set -g _TERMIM_PREEXEC_DIR ""
@@ -105,8 +104,7 @@ function termim_up
         
         # Capture context for ranking
         set -l prev_cmd (history | head -n 1)
-        set -l branch (git branch --show-current 2>/dev/null; or echo "none")
-        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd (pwd) --branch "$branch" 2>/dev/null)
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd (pwd) 2>/dev/null)
         set -g _TERMIM_IDX 1
     else
         set -g _TERMIM_IDX (math $_TERMIM_IDX + 1)
@@ -148,8 +146,7 @@ function termim_down
         set -l prev_cmd (history | head -n 1)
         
         # Fetch strictly predictions-only
-        set -l branch (git branch --show-current 2>/dev/null; or echo "none")
-        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd (pwd) --branch "$branch" 2>/dev/null)
+        set -g _TERMIM_CACHE ("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd (pwd) 2>/dev/null)
         
         if test (count $_TERMIM_CACHE) -gt 0
             set -g _TERMIM_IDX -1
@@ -215,8 +212,7 @@ function termim_palette
 
     # Use temp file to avoid TTY issues
     set -l tmp_hist (mktemp)
-    set -l branch (git branch --show-current 2>/dev/null; or echo "none")
-    "$_TERMIM_BIN" query --cwd (pwd) --branch "$branch" 2>/dev/null > "$tmp_hist"
+    "$_TERMIM_BIN" query --cwd (pwd) 2>/dev/null > "$tmp_hist"
 
     set -l selected (cat "$tmp_hist" | $fzf_cmd \
         --height=40% \

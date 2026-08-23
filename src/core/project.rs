@@ -48,6 +48,30 @@ pub fn detect_project_root(current_dir: &Path) -> PathBuf {
     current_dir.to_path_buf()
 }
 
+/// Natively resolves the current Git branch by crawling up the directory tree
+/// and reading `.git/HEAD`. This avoids the OS overhead of spawning `git branch`.
+pub fn resolve_git_branch(cwd: &Path) -> String {
+    let mut current = cwd;
+    loop {
+        let head_path = current.join(".git/HEAD");
+        if let Ok(content) = std::fs::read_to_string(&head_path) {
+            let content = content.trim();
+            if let Some(branch) = content.strip_prefix("ref: refs/heads/") {
+                return branch.to_string();
+            } else {
+                return "detached".to_string();
+            }
+        }
+        if let Some(parent) = current.parent() {
+            current = parent;
+        } else {
+            break;
+        }
+    }
+    "none".to_string()
+}
+
+
 pub fn hash_project_path(path: &Path) -> String {
     let mut hasher = Sha256::new();
     // Normalize BEFORE hashing to guarantee a single file identity
@@ -75,5 +99,21 @@ mod tests {
         let h1 = hash_project_path(Path::new("a/b/c"));
         let h2 = hash_project_path(Path::new("a\\b\\c"));
         assert_eq!(h1, h2);
+    }
+
+    #[test]
+    fn test_resolve_git_branch() {
+        let dir = tempfile::tempdir().unwrap();
+        let git_dir = dir.path().join(".git");
+        std::fs::create_dir(&git_dir).unwrap();
+        
+        let head_path = git_dir.join("HEAD");
+        std::fs::write(&head_path, "ref: refs/heads/feature/fast-git\n").unwrap();
+        
+        let sub_dir = dir.path().join("src/nested");
+        std::fs::create_dir_all(&sub_dir).unwrap();
+        
+        let branch = resolve_git_branch(&sub_dir);
+        assert_eq!(branch, "feature/fast-git");
     }
 }

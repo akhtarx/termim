@@ -82,8 +82,7 @@ _termim_log() {
     if [[ -n "$last_cmd" ]]; then
         # Run logging in background with explicit CWD and branch detection
         (
-            local branch=$(git branch --show-current 2>/dev/null || echo "none")
-            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$branch" --post-exec 2>>"$_TERMIM_LOG" &
+            "$_TERMIM_BIN" log "$last_cmd" --prev "$prev_cmd" --exit "$last_status" --cwd "$_TERMIM_PREEXEC_DIR" --post-exec 2>>"$_TERMIM_LOG" &
         ) 
         disown 2>/dev/null
     fi
@@ -116,9 +115,8 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Directory-aware terminal history and command intelligence v1.1.7
-        local branch=$(git branch --show-current 2>/dev/null || echo "none")
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
+        # Termim: Directory-aware terminal history and command intelligence v1.1.8
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
         _TERMIM_IDX=1
     else
         _TERMIM_IDX=$((_TERMIM_IDX + 1))
@@ -179,8 +177,7 @@ _termim_down() {
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
         
         # Fetch strictly predictions-only
-        local branch=$(git branch --show-current 2>/dev/null || echo "none")
-        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" --branch "$branch" 2>/dev/null)
+        mapfile -t _TERMIM_CACHE < <("$_TERMIM_BIN" query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)
         
         if [[ ${#_TERMIM_CACHE[@]} -gt 0 ]]; then
             _TERMIM_IDX=-1
@@ -248,8 +245,7 @@ if [[ $- == *i* ]]; then
         # Use temp file to avoid TTY issues with bind -x
         local tmp_hist
         tmp_hist=$(mktemp)
-        local branch=$(git branch --show-current 2>/dev/null || echo "none")
-        "$_TERMIM_BIN" query --cwd "$PWD" --branch "$branch" 2>/dev/null > "$tmp_hist"
+        "$_TERMIM_BIN" query --cwd "$PWD" 2>/dev/null > "$tmp_hist"
 
         local selected
         selected=$($fzf_cmd \

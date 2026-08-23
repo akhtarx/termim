@@ -45,7 +45,7 @@ _TERMIM_ORIGINAL_INPUT=""
 
 _TERMIM_PENDING_CMD=""
 _TERMIM_PREEXEC_DIR=""
-_TERMIM_BRANCH="none"
+_TERMIM_PREEXEC_DIR=""
 
 # Pre-execution hook: Mark command as pending
 _termim_preexec() {
@@ -75,14 +75,12 @@ _termim_precmd() {
     fi
 
     local exit_status=$?
-    _TERMIM_BRANCH=$(git branch --show-current 2>/dev/null || echo "none")
 
     if [[ -n "$_TERMIM_PENDING_CMD" ]]; then
         # Penultimate command (the one before the command that just finished)
         local prev_cmd="$(fc -ln -2 -1 2>/dev/null | sed 's/^[[:space:]]*//' | head -n 1)"
         
-        # Log to Termim with explicit CWD, branch detection and diagnostic logging
-        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --branch "$_TERMIM_BRANCH" --post-exec 2>>"$_TERMIM_LOG" &!
+        "$_TERMIM_BIN" log "$_TERMIM_PENDING_CMD" --prev "$prev_cmd" --exit "$exit_status" --cwd "$_TERMIM_PREEXEC_DIR" --post-exec 2>>"$_TERMIM_LOG" &!
         
         _TERMIM_PENDING_CMD=""
         _TERMIM_PREEXEC_DIR=""
@@ -105,10 +103,9 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Directory-aware terminal history and command intelligence v1.1.7
+        # Termim: Directory-aware terminal history and command intelligence v1.1.8
 # ---------------------------------------------------------------------
-        # Fetch strictly history-only results (Recency)
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")
         _TERMIM_IDX=1
     else
         _TERMIM_IDX=$((_TERMIM_IDX + 1))
@@ -149,8 +146,7 @@ _termim_down() {
         # INTELLIGENCE TRIGGER (Future): Trigger prediction on empty prompt
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Fetch strictly predictions-only
-        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --suggest-only --prev "$prev_cmd" --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null)}")
+        _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --suggest-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")
         
         if [[ ${#_TERMIM_CACHE} -gt 0 ]]; then
             _TERMIM_IDX=-1
@@ -230,7 +226,7 @@ if [[ -o interactive ]]; then
             fzf_cmd="winpty $_FZF_BIN"
         fi
         local tmp_hist=$(mktemp)
-        "$_TERMIM_BIN" query --cwd "$PWD" --branch "$_TERMIM_BRANCH" 2>/dev/null > "$tmp_hist"
+        "$_TERMIM_BIN" query --cwd "$PWD" 2>/dev/null > "$tmp_hist"
         local selected=$($fzf_cmd \
             --height=40% --reverse --border=rounded \
             --prompt="  termim > " --header="Directory History" --no-sort \

@@ -1,6 +1,6 @@
 # Termim Architecture
 
-Termim is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for low-latency execution and 100% data integrity.
+Termim is built on the principle of **Reliable Continuity.** Every architectural decision—from binary startup to file pruning—is optimized for low-latency execution and strong data integrity.
 
 ## 1. Technical Core
 
@@ -13,7 +13,10 @@ Termim distinguishes between Git branches and prioritizes recovery commands afte
 A deterministic state machine providing 1:1 parity between PowerShell, Bash, Zsh, and Fish. All four shell hooks share a synchronized logic for managing history indices.
 
 ### Static Dispatch
-A zero-latency dispatch registry providing follow-up suggestions without unnecessary disk I/O. It uses a predefined map of "stack-defining" commands (e.g., `npm install` -> `npm run dev`).
+A low-latency dispatch registry providing follow-up suggestions without unnecessary disk I/O. It uses a predefined map of "stack-defining" commands (e.g., `npm install` -> `npm run dev`).
+
+### The Zero-Daemon Tradeoff
+Termim explicitly avoids a persistent background daemon architecture. Spawning a new Rust process per command incurs an OS penalty (~10-20ms) that a daemon could avoid by amortizing startup costs via IPC. However, because humans type commands at a frequency of seconds, this 20ms penalty is imperceptible. In exchange for this marginal CPU penalty, Termim completely eliminates persistent background memory footprints, IPC socket complexities, and zombie process lifecycles. It is a conscious tradeoff favoring absolute state simplicity and zero idle memory over raw micro-latency.
 
 ## 2. Robust Operations
 
@@ -28,8 +31,8 @@ Uses fast and reliable lazy initialization patterns to ensure efficient, safe st
 ### Universal Advisory Locking (`fd-lock`)
 Every file-write operation is protected by cross-platform advisory locks. This prevents race conditions between multiple parallel terminal sessions.
 
-### Atomic Write-Rename
-When pruning or updating history files, Termim writes to a temporary sibling file and then performs an atomic rename. This ensures that history files are never corrupted, even if the process is interrupted.
+### Atomic In-Place Modifications
+When pruning or updating history files, Termim writes modifications in-place while continuously holding the lock. This ensures that history files are never corrupted or subjected to lost updates across concurrent sessions.
 
 ## 4. Adaptive Intelligence (Weighted Command Transitions)
 

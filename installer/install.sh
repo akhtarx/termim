@@ -121,12 +121,12 @@ else
             elif command -v shasum &>/dev/null; then
                 (cd "$BIN_DIR" && shasum -a 256 -c "$FILE_NAME.sha256") || error "Checksum mismatch!"
             else
-                warn "shasum/sha256sum not found. Skipping verification."
+                error "shasum/sha256sum not found. Mandatory verification cannot proceed."
             fi
             rm "$BIN_DIR/$FILE_NAME.sha256"
             success "Checksum verified."
         else
-            warn "No checksum file found on server. Skipping verification."
+            error "Failed to fetch checksum from server. Mandatory verification failed. Aborting."
         fi
         
         mv "$BIN_DIR/$FILE_NAME" "$BIN_DIR/termim"
@@ -134,7 +134,7 @@ else
 
         # Programmatic Security Bypass: Remove quarantine bit on macOS
         if [ "$OS" = "darwin" ] && command -v xattr &>/dev/null; then
-            info "Unblocking binary for macOS execution..."
+            warn "Unblocking binary for macOS execution (bypassing macOS Quarantine / Gatekeeper)..."
             xattr -d com.apple.quarantine "$BIN_DIR/termim" 2>/dev/null || true
         fi
     else
@@ -292,7 +292,7 @@ esac
 echo -e "\nOr just open a new terminal tab. Enjoy!"
 
 echo -e "\n${CYAN}====================================================${NC}"
-echo -e "  ${GREEN}Termim v1.1.7 Installed Successfully${NC}"
+echo -e "  ${GREEN}Termim v1.1.8 Installed Successfully${NC}"
 echo -e "${CYAN}====================================================${NC}"
 echo -e "  ${YELLOW}RESTART your terminal to activate Termim.${NC}"
 echo -e "  Once restarted, press UP-ARROW to see history."

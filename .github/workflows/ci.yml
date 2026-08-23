@@ -8,8 +8,12 @@ on:
 
 jobs:
   test:
-    name: Test & Build (Ubuntu)
-    runs-on: ubuntu-latest
+    name: Test & Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -17,6 +21,7 @@ jobs:
       
       - name: Check Formatting
         run: cargo fmt --all -- --check
+        if: matrix.os == 'ubuntu-latest'
 
       - name: Clippy Lints
         run: cargo clippy --all-targets -- -D warnings

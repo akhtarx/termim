@@ -5,6 +5,7 @@ use crate::core::history::{
 };
 use crate::core::intelligence::analyze_project;
 use crate::core::project::{hash_project_path, normalize_path_str};
+use crate::core::risk::{assess_risk, RiskLevel};
 use crate::utils::constants::{
     MAX_FILE_SIZE_BYTES, MAX_GLOBAL_STATS_LINES, MAX_HISTORY_LINES, MAX_TRANSITION_LINES,
     PROJECTS_DIR,
@@ -25,7 +26,6 @@ pub fn handle_command(
             prev,
             exit,
             cwd: _,
-            branch,
             pre_exec,
             post_exec,
         } => {
@@ -69,7 +69,7 @@ pub fn handle_command(
                         let _ = std::fs::create_dir_all(&projects_dir);
                         let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
                         let exit_code = exit.unwrap_or(0);
-                        let branch_str = branch.unwrap_or_else(|| "none".to_string());
+                        let branch_str = crate::core::project::resolve_git_branch(&current_dir);
                         // Format: prev ::: next ::: exit ::: branch
                         let record = format!(
                             "{} ::: {} ::: {} ::: {}",
@@ -88,7 +88,6 @@ pub fn handle_command(
             cwd: _,
             history_only,
             suggest_only,
-            branch,
         } => {
             let projects_dir = dirs::home_dir()
                 .unwrap_or_default()
@@ -110,7 +109,7 @@ pub fn handle_command(
                     let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
                     if let Ok(content) = read_file_locked(&trans_file) {
                         let mut transitions = std::collections::HashMap::with_capacity(100);
-                        let target_branch = branch.unwrap_or_else(|| "none".to_string());
+                        let target_branch = crate::core::project::resolve_git_branch(&current_dir);
 
                         for line in content.lines() {
                             let parts: Vec<_> = line.split(" ::: ").collect();
@@ -136,6 +135,16 @@ pub fn handle_command(
                             }
                         }
                         let mut ranked: Vec<_> = transitions.into_iter().collect();
+                        
+                        // Apply Risk Penalties to bury dangerous commands
+                        for (cmd, score) in ranked.iter_mut() {
+                            match assess_risk(cmd) {
+                                RiskLevel::Dangerous => *score -= 10_000,
+                                RiskLevel::Caution => *score -= 2_000,
+                                RiskLevel::Safe => {}
+                            }
+                        }
+                        
                         ranked.sort_by_key(|b| std::cmp::Reverse(b.1));
                         for (cmd, _) in ranked {
                             if seen.insert(cmd.clone()) {
@@ -192,7 +201,6 @@ pub fn handle_command(
             prefix,
             prev,
             cwd: _,
-            branch,
         } => {
             let profile = analyze_project(&root);
             let mut counts = std::collections::HashMap::with_capacity(200);
@@ -209,7 +217,7 @@ pub fn handle_command(
                     .ok()
                     .and_then(|s| s.parse::<i32>().ok())
                     .unwrap_or(0);
-                let target_branch = branch.unwrap_or_else(|| "none".to_string());
+                let target_branch = crate::core::project::resolve_git_branch(&current_dir);
 
                 if let Ok(content) = read_file_locked(&trans_file) {
                     for line in content.lines() {
@@ -247,6 +255,16 @@ pub fn handle_command(
             // 4. Unified Weighted Ranking & Filtering
             let prefix_str = prefix.unwrap_or_default().to_lowercase();
             let mut ranked: Vec<_> = counts.into_iter().collect();
+            
+            // Apply Risk Penalties to bury dangerous commands
+            for (cmd, score) in ranked.iter_mut() {
+                match assess_risk(cmd) {
+                    RiskLevel::Dangerous => *score -= 10_000,
+                    RiskLevel::Caution => *score -= 2_000,
+                    RiskLevel::Safe => {}
+                }
+            }
+            
             ranked.sort_by_key(|b| std::cmp::Reverse(b.1));
 
             let filtered: Vec<_> = ranked
@@ -312,7 +330,7 @@ pub fn handle_command(
         }
 
         Commands::Doctor => {
-            println!("=== Termim Diagnostic Check (v1.1.7) ===\n");
+            println!("=== Termim Diagnostic Check (v1.1.8) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -663,7 +681,7 @@ pub fn show_banner(root: &std::path::Path) {
         profile
             .ecosystems
             .iter()
-            .map(|e| format!("{:?}", e))
+            .map(|(e, conf)| format!("{:?} ({:.0}% conf)", e, conf * 100.0))
             .collect::<Vec<_>>()
             .join(", ")
     };
@@ -683,7 +701,7 @@ pub fn show_banner(root: &std::path::Path) {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.1.7
+  Project-aware terminal history + intelligence v1.1.8
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}If you find Termim useful, please star the repo!

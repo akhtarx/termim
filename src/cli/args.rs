@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "termim",
-    version = "1.1.7",
+    version = "1.1.8",
     about = "Directory & Context-aware terminal history and command intelligence"
 )]
 pub struct Cli {
@@ -27,9 +27,7 @@ pub enum Commands {
         /// Override the current working directory for accurate project detection
         #[arg(long)]
         cwd: Option<String>,
-        /// The current git branch (to enable branch-aware context)
-        #[arg(short, long)]
-        branch: Option<String>,
+
         /// Log only to history and global stats (pre-execution)
         #[arg(long)]
         pre_exec: bool,
@@ -52,9 +50,7 @@ pub enum Commands {
         /// Only return intelligent predictions (Transitions-First)
         #[arg(long)]
         suggest_only: bool,
-        /// The current git branch (to enable branch-aware context)
-        #[arg(short, long)]
-        branch: Option<String>,
+
     },
     /// Display intelligent command suggestions based on the project tech-stack.
     Suggest {
@@ -66,9 +62,7 @@ pub enum Commands {
         /// Override the current working directory for accurate project detection
         #[arg(long)]
         cwd: Option<String>,
-        /// The current git branch (to enable branch-aware context)
-        #[arg(short, long)]
-        branch: Option<String>,
+
     },
     /// Show global usage statistics analyzed from ~/.termim/global_stats.txt.
     Stats,

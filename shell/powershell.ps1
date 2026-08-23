@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.1.7
+# Version 1.1.8
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
@@ -102,8 +102,7 @@ if (Get-Module PSReadLine) {
             $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
             
             # Fetch strictly history-only results (Recency)
-            $branch = if ($Global:TermimBranch) { $Global:TermimBranch } else { "none" }
-            $Global:TermimCache = @(& $Global:TermimBin query --history-only --prev "$prev" --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Select-Object -Unique)
+            $Global:TermimCache = @(& $Global:TermimBin query --history-only --prev "$prev" --cwd "$Global:TermimPreExecDir" 2>$null | Select-Object -Unique)
             $Global:TermimIdx = 1
         } else {
             $Global:TermimIdx++
@@ -145,8 +144,7 @@ if (Get-Module PSReadLine) {
             $prev = if ($history.Count -gt 0) { $history[-1].CommandLine } else { "" }
             
             # Fetch strictly predictions-only
-            $branch = if ($Global:TermimBranch) { $Global:TermimBranch } else { "none" }
-            $Global:TermimCache = @(& $Global:TermimBin query --suggest-only --prev "$prev" --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Where-Object { $_.Trim() -ne "" } | Select-Object -Unique)
+            $Global:TermimCache = @(& $Global:TermimBin query --suggest-only --prev "$prev" --cwd "$Global:TermimPreExecDir" 2>$null | Where-Object { $_.Trim() -ne "" } | Select-Object -Unique)
             
             if ($Global:TermimCache.Count -gt 0) {
                 $Global:TermimIdx = -1
@@ -194,9 +192,7 @@ if (Get-Module PSReadLine) {
         if ($Global:TermimBin) {
             # Capture current directory context
             $Global:TermimPreExecDir = (Get-Location).Path
-            $branch = (git branch --show-current 2>$null)
-            if (-not $branch) { $branch = "none" }
-            $history = & $Global:TermimBin query --cwd "$Global:TermimPreExecDir" --branch "$branch" 2>$null | Select-Object -Unique
+            $history = & $Global:TermimBin query --cwd "$Global:TermimPreExecDir" 2>$null | Select-Object -Unique
             if ($history.Length -gt 0) {
                 $reversed = [array]$history
                 [Array]::Reverse($reversed)
@@ -234,15 +230,11 @@ function prompt {
     $lastExit = $LASTEXITCODE
     if ($null -eq $lastExit) { $lastExit = if ($?) { 0 } else { 1 } }
 
-    # Fetch git branch once per prompt
-    $branch = (git branch --show-current 2>$null)
-    if (-not $branch) { $branch = "none" }
-    $Global:TermimBranch = $branch
 
     # 2. Perform background logging for any pending command (post-exec transition logic)
     if ($Global:TermimPendingCommand) {
         if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
-            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir -branch $branch -postExec
+            Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir -postExec
         }
         $Global:TermimPendingCommand = $null
         $Global:TermimPreExecDir = $null

@@ -5,11 +5,11 @@ use std::path::Path;
 /// Detected project profile
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProjectProfile {
-    pub ecosystems: Vec<Ecosystem>,
+    pub ecosystems: std::collections::HashMap<Ecosystem, f32>,
     pub suggestions: Vec<SuggestedCommand>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub enum Ecosystem {
     // Web / Frontend frameworks
     Node,
@@ -87,7 +87,7 @@ fn extracted(cmd: String, score: i64) -> SuggestedCommand {
 
 /// Analyze a project root and return its full profile with suggestions.
 pub fn analyze_project(root: &Path) -> ProjectProfile {
-    let mut ecosystems = Vec::new();
+    let mut confidences: std::collections::HashMap<Ecosystem, f32> = std::collections::HashMap::new();
     let mut suggestions: Vec<SuggestedCommand> = Vec::new();
 
     // ── Hoist I/O — read everything once ─────────────────
@@ -117,7 +117,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Node / JavaScript / TypeScript ───────────────────
     if pkg_json_path.exists() {
-        ecosystems.push(Ecosystem::Node);
+        *confidences.entry(Ecosystem::Node).or_insert(0.0) += 0.90;
 
         // 1. Extract Scripts (if possible)
         if let Some(ref json) = pkg_json_value {
@@ -146,7 +146,12 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Rust ─────────────────────────────────────────────
     if root.join("Cargo.toml").exists() {
-        ecosystems.push(Ecosystem::Rust);
+        *confidences.entry(Ecosystem::Rust).or_insert(0.0) += 0.90;
+    }
+    if has_ext(".rs") {
+        *confidences.entry(Ecosystem::Rust).or_insert(0.0) += 0.20;
+    }
+    if confidences.contains_key(&Ecosystem::Rust) {
         for cmd in &[
             "cargo run",
             "cargo build",
@@ -155,7 +160,6 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
             "cargo check",
             "cargo clippy",
             "cargo fmt",
-            "cargo clean",
         ] {
             suggestions.push(default(cmd, 5));
         }
@@ -168,7 +172,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
         || root.join("setup.cfg").exists();
 
     if has_python {
-        ecosystems.push(Ecosystem::Python);
+        *confidences.entry(Ecosystem::Python).or_insert(0.0) += 0.90;
 
         // Django
         if root.join("manage.py").exists() {
@@ -214,14 +218,13 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── PHP / Laravel / Symfony ───────────────────────────
     let has_composer = root.join("composer.json").exists();
     if has_composer {
-        ecosystems.push(Ecosystem::PHP);
+        *confidences.entry(Ecosystem::PHP).or_insert(0.0) += 0.90;
 
         // Laravel (artisan present)
         if root.join("artisan").exists() {
             for cmd in &[
                 "php artisan serve",
                 "php artisan migrate",
-                "php artisan migrate:fresh --seed",
                 "php artisan make:model",
                 "php artisan make:controller",
                 "php artisan make:migration",
@@ -260,7 +263,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Ruby / Rails ──────────────────────────────────────
     let has_ruby = root.join("Gemfile").exists();
     if has_ruby {
-        ecosystems.push(Ecosystem::Ruby);
+        *confidences.entry(Ecosystem::Ruby).or_insert(0.0) += 0.90;
 
         // Rails
         if root.join("config/application.rb").exists() || root.join("config.ru").exists() {
@@ -268,8 +271,6 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
                 "rails server",
                 "rails console",
                 "rails db:migrate",
-                "rails db:seed",
-                "rails db:reset",
                 "rails generate model",
                 "rails generate controller",
                 "rails routes",
@@ -295,7 +296,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     let has_gradle = root.join("build.gradle").exists() || root.join("build.gradle.kts").exists();
 
     if has_maven {
-        ecosystems.push(Ecosystem::Java);
+        *confidences.entry(Ecosystem::Java).or_insert(0.0) += 0.90;
         for cmd in &[
             "mvn spring-boot:run",
             "mvn clean install",
@@ -309,8 +310,8 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     }
 
     if has_gradle && !has_maven {
-        if !ecosystems.contains(&Ecosystem::Java) {
-            ecosystems.push(Ecosystem::Java);
+        if !confidences.contains_key(&Ecosystem::Java) {
+            *confidences.entry(Ecosystem::Java).or_insert(0.0) += 0.90;
         }
         let gradle_cmd = if root.join("gradlew").exists() {
             "./gradlew"
@@ -325,7 +326,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── .NET / C# ─────────────────────────────────────────
     let has_dotnet = has_ext(".csproj") || has_ext(".sln") || has_ext(".fsproj");
     if has_dotnet {
-        ecosystems.push(Ecosystem::DotNet);
+        *confidences.entry(Ecosystem::DotNet).or_insert(0.0) += 0.90;
         for cmd in &[
             "dotnet run",
             "dotnet build",
@@ -341,7 +342,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Elixir / Phoenix ──────────────────────────────────
     let has_elixir = root.join("mix.exs").exists();
     if has_elixir {
-        ecosystems.push(Ecosystem::Elixir);
+        *confidences.entry(Ecosystem::Elixir).or_insert(0.0) += 0.90;
 
         // Phoenix
         let is_phoenix = root.join("config").join("config.exs").exists();
@@ -372,7 +373,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Flutter / Dart ────────────────────────────────────
     let has_flutter = root.join("pubspec.yaml").exists();
     if has_flutter {
-        ecosystems.push(Ecosystem::Flutter);
+        *confidences.entry(Ecosystem::Flutter).or_insert(0.0) += 0.90;
         for cmd in &[
             "flutter run",
             "flutter build apk",
@@ -401,7 +402,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
             .unwrap_or(false);
 
     if has_swift {
-        ecosystems.push(Ecosystem::Swift);
+        *confidences.entry(Ecosystem::Swift).or_insert(0.0) += 0.90;
         for cmd in &[
             "swift build",
             "swift test",
@@ -415,7 +416,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Go ────────────────────────────────────────────────
     if root.join("go.mod").exists() {
-        ecosystems.push(Ecosystem::Go);
+        *confidences.entry(Ecosystem::Go).or_insert(0.0) += 0.90;
         for cmd in &[
             "go run .",
             "go build ./...",
@@ -434,7 +435,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
         || dir_files.contains("compose.yml");
 
     if has_docker {
-        ecosystems.push(Ecosystem::Docker);
+        *confidences.entry(Ecosystem::Docker).or_insert(0.0) += 0.90;
         for cmd in &[
             "docker compose up",
             "docker compose up -d",
@@ -451,7 +452,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Makefile ─────────────────────────────────────────
     let makefile = root.join("Makefile");
     if makefile.exists() {
-        ecosystems.push(Ecosystem::Make);
+        *confidences.entry(Ecosystem::Make).or_insert(0.0) += 0.90;
 
         if let Ok(content) = fs::read_to_string(&makefile) {
             for line in content.lines() {
@@ -472,7 +473,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // Detect by @nestjs/core in cached package.json content
     if let Some(ref content) = pkg_json_content {
         if content.contains("@nestjs/core") {
-            ecosystems.push(Ecosystem::NestJs);
+            *confidences.entry(Ecosystem::NestJs).or_insert(0.0) += 0.90;
             for cmd in &[
                 "nest start",
                 "nest start --watch",
@@ -488,7 +489,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Svelte / SvelteKit ───────────────────────────────
     if dir_files.contains("svelte.config.js") || dir_files.contains("svelte.config.ts") {
-        ecosystems.push(Ecosystem::Svelte);
+        *confidences.entry(Ecosystem::Svelte).or_insert(0.0) += 0.90;
         for cmd in &[
             "npm run dev",
             "npm run build",
@@ -502,8 +503,8 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Kotlin ───────────────────────────────────────────
     let has_kotlin = has_ext(".kt") || dir_files.contains("build.gradle.kts");
-    if has_kotlin && !ecosystems.contains(&Ecosystem::Java) {
-        ecosystems.push(Ecosystem::Kotlin);
+    if has_kotlin && !confidences.contains_key(&Ecosystem::Java) {
+        *confidences.entry(Ecosystem::Kotlin).or_insert(0.0) += 0.90;
         // Prefer gradlew if available
         let kw = if root.join("gradlew").exists() {
             "./gradlew"
@@ -518,7 +519,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Scala / SBT ──────────────────────────────────────
     if root.join("build.sbt").exists() {
-        ecosystems.push(Ecosystem::Scala);
+        *confidences.entry(Ecosystem::Scala).or_insert(0.0) += 0.90;
         for cmd in &[
             "sbt run",
             "sbt compile",
@@ -538,7 +539,12 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
         has_cmake || has_ext(".cpp") || has_ext(".cc") || has_ext(".cxx") || has_ext(".c");
 
     if has_cpp {
-        ecosystems.push(Ecosystem::Cpp);
+        *confidences.entry(Ecosystem::Cpp).or_insert(0.0) += 0.40;
+        if has_cmake || root.join("Makefile").exists() {
+            *confidences.entry(Ecosystem::Cpp).or_insert(0.0) += 0.60;
+        }
+    }
+    if confidences.contains_key(&Ecosystem::Cpp) {
         if has_cmake {
             for cmd in &[
                 "cmake -B build",
@@ -559,7 +565,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Next.js ───────────────────────────────────────────
     if dir_files.contains("next.config.js") || dir_files.contains("next.config.ts") {
-        ecosystems.push(Ecosystem::NextJs);
+        *confidences.entry(Ecosystem::NextJs).or_insert(0.0) += 0.90;
         for cmd in &["next dev", "next build", "next start", "next lint"] {
             suggestions.push(default(cmd, 9));
         }
@@ -570,7 +576,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
         || dir_files.contains("vite.config.ts")
         || dir_files.contains("vite.config.mjs")
     {
-        ecosystems.push(Ecosystem::Vite);
+        *confidences.entry(Ecosystem::Vite).or_insert(0.0) += 0.90;
         for cmd in &["vite", "vite build", "vite preview"] {
             suggestions.push(default(cmd, 8));
         }
@@ -578,7 +584,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Nuxt.js ───────────────────────────────────────────
     if dir_files.contains("nuxt.config.js") || dir_files.contains("nuxt.config.ts") {
-        ecosystems.push(Ecosystem::Nuxt);
+        *confidences.entry(Ecosystem::Nuxt).or_insert(0.0) += 0.90;
         for cmd in &["nuxt dev", "nuxt build", "nuxt generate", "nuxt preview"] {
             suggestions.push(default(cmd, 9));
         }
@@ -590,7 +596,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     {
         if let Some(ref c) = pkg_json_content {
             if c.contains("react-native") {
-                ecosystems.push(Ecosystem::ReactNative);
+                *confidences.entry(Ecosystem::ReactNative).or_insert(0.0) += 0.90;
                 for cmd in &[
                     "npx react-native start",
                     "npx react-native run-android",
@@ -605,7 +611,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Deno ─────────────────────────────────────────────
     if dir_files.contains("deno.json") || dir_files.contains("deno.jsonc") {
-        ecosystems.push(Ecosystem::Deno);
+        *confidences.entry(Ecosystem::Deno).or_insert(0.0) += 0.90;
         for cmd in &[
             "deno run",
             "deno task dev",
@@ -621,7 +627,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Bun ──────────────────────────────────────────────
     if dir_files.contains("bun.lockb") || dir_files.contains("bunfig.toml") {
-        ecosystems.push(Ecosystem::Bun);
+        *confidences.entry(Ecosystem::Bun).or_insert(0.0) += 0.90;
         for cmd in &[
             "bun run dev",
             "bun run build",
@@ -636,13 +642,11 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Terraform ────────────────────────────────────────
     if has_ext(".tf") {
-        ecosystems.push(Ecosystem::Terraform);
+        *confidences.entry(Ecosystem::Terraform).or_insert(0.0) += 0.90;
         for cmd in &[
             "terraform init",
             "terraform plan",
             "terraform apply",
-            "terraform apply -auto-approve",
-            "terraform destroy",
             "terraform fmt",
             "terraform validate",
             "terraform output",
@@ -657,7 +661,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
         || dir_files.contains("playbook.yml")
         || dir_files.contains("site.yml")
     {
-        ecosystems.push(Ecosystem::Ansible);
+        *confidences.entry(Ecosystem::Ansible).or_insert(0.0) += 0.90;
         let playbook = if dir_files.contains("playbook.yml") {
             "playbook.yml"
         } else {
@@ -675,11 +679,12 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Kubernetes / Helm ─────────────────────────────────
     if root.join("Chart.yaml").exists() || root.join("Chart.yml").exists() {
-        ecosystems.push(Ecosystem::Kubernetes);
+        *confidences.entry(Ecosystem::Kubernetes).or_insert(0.0) += 0.90;
+    }
+    if root.join("Chart.yaml").exists() || root.join("Chart.yml").exists() {
         for cmd in &[
             "helm install",
             "helm upgrade --install",
-            "helm uninstall",
             "helm template .",
             "helm lint",
             "helm package",
@@ -691,8 +696,8 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
         .any(|f| f.ends_with(".yaml") && f.contains("deploy"))
     {
         // Raw kubectl manifests (deployment*.yaml at root)
-        if !ecosystems.contains(&Ecosystem::Kubernetes) {
-            ecosystems.push(Ecosystem::Kubernetes);
+        if !confidences.contains_key(&Ecosystem::Kubernetes) {
+            *confidences.entry(Ecosystem::Kubernetes).or_insert(0.0) += 0.30;
         }
         for cmd in &[
             "kubectl apply -f .",
@@ -707,18 +712,17 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Haskell / Stack / Cabal ───────────────────────────
     if dir_files.contains("stack.yaml") {
-        ecosystems.push(Ecosystem::Haskell);
+        *confidences.entry(Ecosystem::Haskell).or_insert(0.0) += 0.90;
         for cmd in &[
             "stack run",
             "stack build",
             "stack test",
             "stack ghci",
-            "stack clean",
         ] {
             suggestions.push(default(cmd, 6));
         }
     } else if has_ext(".cabal") {
-        ecosystems.push(Ecosystem::Haskell);
+        *confidences.entry(Ecosystem::Haskell).or_insert(0.0) += 0.90;
         for cmd in &["cabal run", "cabal build", "cabal test", "cabal repl"] {
             suggestions.push(default(cmd, 6));
         }
@@ -726,7 +730,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
 
     // ── Zig ───────────────────────────────────────────────
     if dir_files.contains("build.zig") {
-        ecosystems.push(Ecosystem::Zig);
+        *confidences.entry(Ecosystem::Zig).or_insert(0.0) += 0.90;
         for cmd in &[
             "zig build",
             "zig build run",
@@ -742,7 +746,12 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Julia ─────────────────────────────────────────────
     // Julia uses Project.toml but so does nothing else (Cargo uses Cargo.toml)
     if dir_files.contains("Project.toml") && !dir_files.contains("Cargo.toml") {
-        ecosystems.push(Ecosystem::Julia);
+        *confidences.entry(Ecosystem::Julia).or_insert(0.0) += 0.40;
+    }
+    if has_ext(".jl") {
+        *confidences.entry(Ecosystem::Julia).or_insert(0.0) += 0.60;
+    }
+    if confidences.contains_key(&Ecosystem::Julia) {
         for cmd in &[
             "julia",
             "julia .",
@@ -756,7 +765,7 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     // ── Universal git commands ────────────────────────────
     for cmd in &[
         "git status",
-        "git add -A && git commit -m \"\"",
+        "git commit -m \"\"",
         "git push",
         "git pull",
     ] {
@@ -767,8 +776,17 @@ pub fn analyze_project(root: &Path) -> ProjectProfile {
     let mut seen = std::collections::HashSet::new();
     suggestions.retain(|s| seen.insert(s.command.clone()));
 
+    // Threshold filtering
+    let mut final_ecosystems = std::collections::HashMap::new();
+    for (eco, conf) in confidences {
+        let capped = conf.min(1.0);
+        if capped >= 0.70 {
+            final_ecosystems.insert(eco, capped);
+        }
+    }
+
     ProjectProfile {
-        ecosystems,
+        ecosystems: final_ecosystems,
         suggestions,
     }
 }
@@ -800,7 +818,7 @@ mod tests {
         File::create(cargo_toml).unwrap();
 
         let profile = analyze_project(temp_dir.path());
-        assert!(profile.ecosystems.contains(&Ecosystem::Rust));
+        assert!(profile.ecosystems.contains_key(&Ecosystem::Rust));
         assert!(profile
             .suggestions
             .iter()
@@ -818,7 +836,7 @@ mod tests {
         .unwrap();
 
         let profile = analyze_project(temp_dir.path());
-        assert!(profile.ecosystems.contains(&Ecosystem::Node));
+        assert!(profile.ecosystems.contains_key(&Ecosystem::Node));
         assert!(profile
             .suggestions
             .iter()

@@ -112,14 +112,15 @@ if ($Build) {
             }
             Remove-Item $shaFile -Force
         } catch {
-            Write-Host "[warn] No checksum found on server. Skipping verification." -ForegroundColor Yellow
+            Write-Host "[error] Failed to fetch checksum from server. Mandatory verification failed. Aborting." -ForegroundColor Red
+            exit 1
         }
 
         Write-Host "[success] Termim binary installed to $targetExe" -ForegroundColor Green
         
         # Programmatic Security Bypass: Unblock the file to prevent "App Control" policy issues
         if (Get-Command Unblock-File -ErrorAction SilentlyContinue) {
-            Write-Host "[info] Unblocking binary for system execution..." -ForegroundColor Gray
+            Write-Host "[warn] Unblocking binary for system execution (bypassing Windows Mark of the Web)..." -ForegroundColor Yellow
             Unblock-File -Path $targetExe
         }
     } catch {
@@ -221,7 +222,7 @@ try {
 }
 
 Write-Host "`n====================================================" -ForegroundColor Cyan
-Write-Host "  Termim v1.1.7 Installed Successfully" -ForegroundColor Green
+Write-Host "  Termim v1.1.8 Installed Successfully" -ForegroundColor Green
 Write-Host "====================================================" -ForegroundColor Cyan
 Write-Host "  RESTART your terminal to activate Termim."
 Write-Host "  Once restarted, press UP-ARROW to see context-aware history."
