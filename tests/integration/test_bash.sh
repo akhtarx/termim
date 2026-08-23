@@ -6,13 +6,14 @@ echo "Running bash integration test..."
 export HOME=$(mktemp -d)
 export USERPROFILE="$HOME"
 
-# Export env vars for TERMIM binary
-export TERMIM_BIN="${TERMIM_BIN:-termim}"
-_TERMIM_BIN="$TERMIM_BIN"
-
 _TERMIM_HOME="$HOME/.termim"
 _TERMIM_LOG="$_TERMIM_HOME/termim.log"
 mkdir -p "$_TERMIM_HOME"
+
+echo "INITIAL TERMIM_BIN is '$TERMIM_BIN'" >> "$_TERMIM_LOG"
+export TERMIM_BIN="${TERMIM_BIN:-termim}"
+echo "AFTER FALLBACK TERMIM_BIN is '$TERMIM_BIN'" >> "$_TERMIM_LOG"
+_TERMIM_BIN="$TERMIM_BIN"
 
 # Source the hook
 source shell/bash.sh

@@ -9,15 +9,17 @@ export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=1000
 export SAVEHIST=1000
 setopt inc_append_history
-export TERMIM_BIN="${TERMIM_BIN:-termim}"
-
-# Source the hook
-source shell/zsh.sh
-
-_TERMIM_BIN="$TERMIM_BIN"
 _TERMIM_HOME="$HOME/.termim"
 _TERMIM_LOG="$_TERMIM_HOME/termim.log"
 mkdir -p "$_TERMIM_HOME"
+
+echo "INITIAL TERMIM_BIN is '$TERMIM_BIN'" >> "$_TERMIM_LOG"
+export TERMIM_BIN="${TERMIM_BIN:-termim}"
+echo "AFTER FALLBACK TERMIM_BIN is '$TERMIM_BIN'" >> "$_TERMIM_LOG"
+_TERMIM_BIN="$TERMIM_BIN"
+
+# Source the hook
+source shell/zsh.sh
 
 echo "Log command 1..."
 export PWD="$HOME"
