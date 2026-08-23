@@ -17,7 +17,7 @@ if [[ ! -d "$_TERMIM_HOME" ]]; then
 fi
 
 # Find the termim binary
-_TERMIM_BIN="termim"
+_TERMIM_BIN="${TERMIM_BIN:-termim}"
 possiblePaths=("$_TERMIM_HOME/bin/termim.exe" "$_TERMIM_HOME/bin/termim" "$HOME/.termim/bin/termim.exe" "$HOME/.termim/bin/termim")
 for p in "${possiblePaths[@]}"; do
     if [[ -x "$p" ]]; then
@@ -28,6 +28,12 @@ for p in "${possiblePaths[@]}"; do
         break
     fi
 done
+
+# Ensure log path exists or fallback to null (must be before trap is set)
+_TERMIM_LOG="$_TERMIM_HOME/termim.log"
+if [[ ! -d "$(dirname "$_TERMIM_LOG" 2>/dev/null)" ]]; then
+    _TERMIM_LOG="/dev/null"
+fi
 
 # History navigation state
 _TERMIM_IDX=0
@@ -40,7 +46,7 @@ _TERMIM_PREEXEC_DIR=""
 _termim_preexec() {
     _TERMIM_PREEXEC_DIR="$PWD"
     
-    if [[ -n "$BASH_COMMAND" && "$BASH_COMMAND" != *"_termim"* ]]; then
+    if [[ -n "$BASH_COMMAND" && "$BASH_COMMAND" != *"_termim"* && -n "$_TERMIM_LOG" ]]; then
         "$_TERMIM_BIN" log "$BASH_COMMAND" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec >> "$_TERMIM_LOG" 2>&1
     fi
 }
@@ -86,11 +92,7 @@ _termim_log() {
     export TERMIM_LAST_EXIT="$last_status"
 }
 
-# Ensure log path exists or fallback to null (Hardened v1.2.6)
-_TERMIM_LOG="$_TERMIM_HOME/termim.log"
-if [[ ! -d "$(dirname "$_TERMIM_LOG" 2>/dev/null)" ]]; then
-    _TERMIM_LOG="/dev/null"
-fi
+# Log path already initialized above (before DEBUG trap)
 
 # Add logging hook to PROMPT_COMMAND (Hardened v1.2.6)
 if [[ "$PROMPT_COMMAND" != *"_termim_log"* ]]; then

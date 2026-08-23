@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
-set -e
+# Note: do NOT use set -e here; sourcing zsh.sh in a non-interactive shell
+# causes add-zsh-hook to fail (it requires interactive mode), which would
+# abort the test prematurely.
 
 echo "Running zsh integration test..."
 
