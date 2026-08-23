@@ -26,7 +26,6 @@ source shell/zsh.sh 2>>"$_TERMIM_LOG" || true
 # Re-assert _TERMIM_BIN after sourcing: in non-interactive zsh, ZLE/add-zsh-hook
 # failures during source can prevent the assignment from sticking.
 _TERMIM_BIN="$TERMIM_BIN"
-echo "DEBUG: _TERMIM_BIN='$_TERMIM_BIN'" >> "$_TERMIM_LOG"
 
 echo "Log command 1..."
 
@@ -37,29 +36,18 @@ _TEST_CWD="$HOME"
 # Mock pre-exec
 _TERMIM_PREEXEC_DIR="$_TEST_CWD"
 "$_TERMIM_BIN" log "echo zsh_world" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec >> "$_TERMIM_LOG" 2>&1
-echo "DEBUG: termim log pre-exec exit=$?" >> "$_TERMIM_LOG"
 
 # Mock post-exec
 _TERMIM_ORIGINAL_INPUT="echo zsh_world"
 "$_TERMIM_BIN" log "$_TERMIM_ORIGINAL_INPUT" --prev "none" --exit 0 --cwd "$_TEST_CWD" --post-exec >> "$_TERMIM_LOG" 2>&1
-echo "DEBUG: termim log post-exec exit=$?" >> "$_TERMIM_LOG"
-
-# Show what files termim created (it uses dirs::home_dir() which may differ from $HOME on macOS)
-echo "DEBUG: _TEST_CWD=$_TEST_CWD" >> "$_TERMIM_LOG"
-echo "DEBUG: HOME=$HOME" >> "$_TERMIM_LOG"
-echo "DEBUG: files in _TERMIM_HOME:" >> "$_TERMIM_LOG"
-find "$_TERMIM_HOME" -type f >> "$_TERMIM_LOG" 2>&1
-echo "DEBUG: termim query output:" >> "$_TERMIM_LOG"
-"$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" >> "$_TERMIM_LOG" 2>&1
-echo "DEBUG: query exit=$?" >> "$_TERMIM_LOG"
 
 echo "Test UP Arrow..."
 
-# We must mock history because non-interactive shells have no history.
-_TERMIM_CACHE=()
-while IFS= read -r line || [[ -n "$line" ]]; do
-    [[ -n "$line" ]] && _TERMIM_CACHE+=("$line")
-done < <("$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" 2>/dev/null)
+# Use zsh-native (@f) flag to split query output on newlines into an array.
+# The bash-style `while IFS= read` loop does not reliably populate arrays in
+# non-interactive zsh due to process-substitution scoping differences.
+# This is the same idiom used in shell/zsh.sh's _termim_up function.
+_TERMIM_CACHE=("${(@f)$("$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" 2>/dev/null)}")
 
 BUFFER="${_TERMIM_CACHE[1]}"
 
@@ -71,4 +59,3 @@ if [[ "$BUFFER" != "echo zsh_world" ]]; then
 fi
 
 echo "PASS: Zsh integration successful."
-
