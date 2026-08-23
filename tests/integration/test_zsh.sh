@@ -37,10 +37,21 @@ _TEST_CWD="$HOME"
 # Mock pre-exec
 _TERMIM_PREEXEC_DIR="$_TEST_CWD"
 "$_TERMIM_BIN" log "echo zsh_world" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec >> "$_TERMIM_LOG" 2>&1
+echo "DEBUG: termim log pre-exec exit=$?" >> "$_TERMIM_LOG"
 
 # Mock post-exec
 _TERMIM_ORIGINAL_INPUT="echo zsh_world"
 "$_TERMIM_BIN" log "$_TERMIM_ORIGINAL_INPUT" --prev "none" --exit 0 --cwd "$_TEST_CWD" --post-exec >> "$_TERMIM_LOG" 2>&1
+echo "DEBUG: termim log post-exec exit=$?" >> "$_TERMIM_LOG"
+
+# Show what files termim created (it uses dirs::home_dir() which may differ from $HOME on macOS)
+echo "DEBUG: _TEST_CWD=$_TEST_CWD" >> "$_TERMIM_LOG"
+echo "DEBUG: HOME=$HOME" >> "$_TERMIM_LOG"
+echo "DEBUG: files in _TERMIM_HOME:" >> "$_TERMIM_LOG"
+find "$_TERMIM_HOME" -type f >> "$_TERMIM_LOG" 2>&1
+echo "DEBUG: termim query output:" >> "$_TERMIM_LOG"
+"$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" >> "$_TERMIM_LOG" 2>&1
+echo "DEBUG: query exit=$?" >> "$_TERMIM_LOG"
 
 echo "Test UP Arrow..."
 
