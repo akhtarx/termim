@@ -3,16 +3,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn get_binary_path() -> PathBuf {
-    let mut path = env::current_exe().unwrap();
-    path.pop();
-    if path.ends_with("deps") {
-        path.pop();
-    }
-    path.push("termim");
-    if cfg!(windows) {
-        path.set_extension("exe");
-    }
-    path
+    PathBuf::from(env!("CARGO_BIN_EXE_termim"))
 }
 
 #[test]
