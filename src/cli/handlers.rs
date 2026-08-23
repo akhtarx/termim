@@ -11,8 +11,17 @@ use crate::utils::constants::{
     PROJECTS_DIR,
 };
 use crate::utils::update::{check_for_updates, fetch_star_count_cached};
+use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::path::PathBuf;
+
+#[derive(Serialize, Deserialize)]
+struct TransitionRecord {
+    prev: String,
+    next: String,
+    exit: i32,
+    branch: String,
+}
 
 pub fn handle_command(
     command: Commands,
@@ -70,14 +79,17 @@ pub fn handle_command(
                         let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
                         let exit_code = exit.unwrap_or(0);
                         let branch_str = crate::core::project::resolve_git_branch(&current_dir);
-                        // Format: prev ::: next ::: exit ::: branch
-                        let record = format!(
-                            "{} ::: {} ::: {} ::: {}",
-                            sanitized_prev, sanitized_cmd, exit_code, branch_str
-                        );
-                        let _ = append_to_file_locked(&trans_file, &record);
-                        // Atomic prune — keeps newest MAX_TRANSITION_LINES entries
-                        let _ = prune_log(&trans_file, MAX_TRANSITION_LINES);
+                        let record_obj = TransitionRecord {
+                            prev: sanitized_prev,
+                            next: sanitized_cmd,
+                            exit: exit_code,
+                            branch: branch_str,
+                        };
+                        if let Ok(record) = serde_json::to_string(&record_obj) {
+                            let _ = append_to_file_locked(&trans_file, &record);
+                            // Atomic prune — keeps newest MAX_TRANSITION_LINES entries
+                            let _ = prune_log(&trans_file, MAX_TRANSITION_LINES);
+                        }
                     }
                 }
             }
@@ -112,36 +124,43 @@ pub fn handle_command(
                         let target_branch = crate::core::project::resolve_git_branch(&current_dir);
 
                         for line in content.lines() {
-                            let parts: Vec<_> = line.split(" ::: ").collect();
-                            if parts.len() >= 2 && parts[0] == sanitized_p {
-                                let mut weight = 1;
-
-                                // v1.1.0: Context-Aware Weighting
-                                if parts.len() == 4 {
-                                    // 1. Branch Precision (+500 score)
-                                    if parts[3] == target_branch {
+                            if let Ok(rec) = serde_json::from_str::<TransitionRecord>(line) {
+                                if rec.prev == sanitized_p {
+                                    let mut weight = 1;
+                                    if rec.branch == target_branch {
                                         weight += 500;
                                     }
-
-                                    // 2. Failure Recovery Support (+1000 score)
-                                    // If the last command failed, prioritize recovery commands
-                                    let captured_exit = parts[2].parse::<i32>().unwrap_or(0);
-                                    if prev_exit != 0 && captured_exit != 0 {
+                                    if prev_exit != 0 && rec.exit == 0 {
                                         weight += 1000;
                                     }
+                                    *transitions.entry(rec.next).or_insert(0) += weight;
                                 }
-
-                                *transitions.entry(parts[1].to_string()).or_insert(0) += weight;
+                            } else {
+                                // Fallback to legacy delimiter format
+                                let parts: Vec<_> = line.split(" ::: ").collect();
+                                if parts.len() >= 2 && parts[0] == sanitized_p {
+                                    let mut weight = 1;
+                                    if parts.len() == 4 {
+                                        if parts[3] == target_branch {
+                                            weight += 500;
+                                        }
+                                        let captured_exit = parts[2].parse::<i32>().unwrap_or(0);
+                                        if prev_exit != 0 && captured_exit == 0 {
+                                            weight += 1000;
+                                        }
+                                    }
+                                    *transitions.entry(parts[1].to_string()).or_insert(0) += weight;
+                                }
                             }
                         }
                         let mut ranked: Vec<_> = transitions.into_iter().collect();
 
                         // Apply Risk Penalties to bury dangerous commands
+                        ranked.retain(|(cmd, _)| assess_risk(cmd) != RiskLevel::Dangerous);
+                        
                         for (cmd, score) in ranked.iter_mut() {
-                            match assess_risk(cmd) {
-                                RiskLevel::Dangerous => *score -= 10_000,
-                                RiskLevel::Caution => *score -= 2_000,
-                                RiskLevel::Safe => {}
+                            if assess_risk(cmd) == RiskLevel::Caution {
+                                *score -= 2_000;
                             }
                         }
 
@@ -221,19 +240,33 @@ pub fn handle_command(
 
                 if let Ok(content) = read_file_locked(&trans_file) {
                     for line in content.lines() {
-                        let parts: Vec<_> = line.split(" ::: ").collect();
-                        if parts.len() >= 2 && parts[0] == sanitized_p {
-                            let mut weight = 1000;
-                            if parts.len() == 4 {
-                                if parts[3] == target_branch {
+                        if let Ok(rec) = serde_json::from_str::<TransitionRecord>(line) {
+                            if rec.prev == sanitized_p {
+                                let mut weight = 1000;
+                                if rec.branch == target_branch {
                                     weight += 500;
                                 }
-                                let captured_exit = parts[2].parse::<i32>().unwrap_or(0);
-                                if prev_exit != 0 && captured_exit != 0 {
+                                if prev_exit != 0 && rec.exit == 0 {
                                     weight += 1000;
                                 }
+                                *counts.entry(rec.next).or_insert(0) += weight;
                             }
-                            *counts.entry(parts[1].to_string()).or_insert(0) += weight;
+                        } else {
+                            // Fallback to legacy format
+                            let parts: Vec<_> = line.split(" ::: ").collect();
+                            if parts.len() >= 2 && parts[0] == sanitized_p {
+                                let mut weight = 1000;
+                                if parts.len() == 4 {
+                                    if parts[3] == target_branch {
+                                        weight += 500;
+                                    }
+                                    let captured_exit = parts[2].parse::<i32>().unwrap_or(0);
+                                    if prev_exit != 0 && captured_exit == 0 {
+                                        weight += 1000;
+                                    }
+                                }
+                                *counts.entry(parts[1].to_string()).or_insert(0) += weight;
+                            }
                         }
                     }
                 }
@@ -257,11 +290,11 @@ pub fn handle_command(
             let mut ranked: Vec<_> = counts.into_iter().collect();
 
             // Apply Risk Penalties to bury dangerous commands
+            ranked.retain(|(cmd, _)| assess_risk(cmd) != RiskLevel::Dangerous);
+            
             for (cmd, score) in ranked.iter_mut() {
-                match assess_risk(cmd) {
-                    RiskLevel::Dangerous => *score -= 10_000,
-                    RiskLevel::Caution => *score -= 2_000,
-                    RiskLevel::Safe => {}
+                if assess_risk(cmd) == RiskLevel::Caution {
+                    *score -= 2_000;
                 }
             }
 
@@ -450,19 +483,13 @@ pub fn handle_command(
                 }
             }
 
-            match std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&registry)
-            {
-                Ok(mut f) => {
-                    let _ = writeln!(f, "{}", current_dir.to_string_lossy());
-                    println!(
-                        "Initialized Termim directory boundary in {}",
-                        current_dir.display()
-                    );
-                }
-                Err(e) => eprintln!("Error: Failed to update project registry: {}", e),
+            if let Err(e) = append_to_file_locked(&registry, &current_dir.to_string_lossy()) {
+                eprintln!("Error: Failed to update project registry: {}", e);
+            } else {
+                println!(
+                    "Initialized Termim directory boundary in {}",
+                    current_dir.display()
+                );
             }
         }
 

@@ -121,9 +121,10 @@ Termim automatically prunes the "junk" so your history stays pristine.
 ---
 
 ## 🛡️ Security & Privacy
-Termim **Prioritizes Privacy**. Before any command is saved to disk, our engine attempts to mask common sensitive data:
+Termim **Prioritizes Privacy** via a pattern-based redaction engine. Before any command is saved to disk, our heuristic engine attempts to mask common sensitive data:
 - **Credentials**: Strips passwords, API keys, and auth tokens.
 - **Bearer Tokens**: Redacts Authorization headers and JWTs.
+- **Note**: This is a *best-effort safety heuristic*, not an ironclad security sandbox. It cannot guarantee detection of unstructured or arbitrary secrets in weird syntaxes.
 - **Local Only**: All data stays in `~/.termim/`. No telemetry, no cloud, no tracking.
 - **OS Quarantine Bypasses**: For a seamless "one-liner" installation, the official install scripts remove the macOS Gatekeeper quarantine bit (`xattr -d com.apple.quarantine`) and Windows Mark-of-the-Web (`Unblock-File`) from the downloaded binary. This allows immediate execution without manual OS overrides. A loud warning is printed when this occurs. If you prefer strict OS-level Gatekeeper enforcement, use the `--build` flag to compile from source locally.
 
@@ -134,9 +135,9 @@ Termim **Prioritizes Privacy**. Before any command is saved to disk, our engine 
 Termim is more than just a history filter; it's a context engine.
 - **Atomic Continuity**: Every write is protected by `fd-lock`, ensuring zero data corruption across parallel terminal sessions.
 - **Contextual Suggestions**: Uses weighted command transitions and ecosystem detection to suggest whether you need `git push` or `npm start` based on your previous action. (No AI required, just fast, deterministic heuristics).
-- **Privacy Filtering**: Pattern-based redaction engine attempts to filter common credential formats before they hit your history files.
+- **Privacy Filtering**: Pattern-based redaction heuristic attempts to filter common credential formats before they hit your history files.
 - **Branch-Aware Context**: (Optional) Tracks git branches to keep branch-specific commands at the top of your stack.
-- **Smart Pruning**: Automatically removes typos and failed commands to keep your history "high-signal."
+- **Smart Scoring**: Automatically boosts successful recovery commands and demotes dangerous/destructive commands using string-based safety heuristics.
 
 ### Keyboard Controls
 | Key | Action |

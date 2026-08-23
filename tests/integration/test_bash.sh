@@ -40,6 +40,20 @@ if [[ "$READLINE_LINE" != "echo hello_world" ]]; then
     exit 1
 fi
 
+echo "Log complex command..."
+BASH_COMMAND="grep -r \"test\" | awk '{print \$1}' > out.txt && echo 'done'"
+_termim_preexec
+history -s "$BASH_COMMAND"
+_termim_log
+sleep 0.5
+
+READLINE_LINE=""
+_termim_up
+if [[ "$READLINE_LINE" != "$BASH_COMMAND" ]]; then
+    echo "FAIL: Expected READLINE_LINE to be '$BASH_COMMAND', got '$READLINE_LINE'"
+    exit 1
+fi
+
 echo "Test Global Fallback..."
 history -s "global_echo"
 # Simulate pressing up again (exceeding directory history)

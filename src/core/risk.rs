@@ -9,24 +9,26 @@ pub enum RiskLevel {
 pub fn assess_risk(command: &str) -> RiskLevel {
     let cmd = command.trim();
 
-    // 1. Dangerous Commands (Destructive, unrecoverable, or massive mutation)
-    if cmd.starts_with("rm -rf ") || cmd.starts_with("sudo rm ") {
-        return RiskLevel::Dangerous;
-    }
-    if cmd.starts_with("terraform destroy") || cmd.starts_with("terraform apply -auto-approve") {
-        return RiskLevel::Dangerous;
-    }
-    if cmd.starts_with("kubectl delete") || cmd.starts_with("helm uninstall") {
-        return RiskLevel::Dangerous;
-    }
-    if cmd.starts_with("git reset --hard") || cmd.starts_with("git clean -fd") {
-        return RiskLevel::Dangerous;
-    }
     let lower_cmd = cmd.to_lowercase();
-    if lower_cmd.contains("drop database") || lower_cmd.contains("drop table") {
+    let has = |s: &str| lower_cmd.contains(s);
+
+    // 1. Dangerous Commands (Destructive, unrecoverable, or massive mutation)
+    if has("rm -rf") || has("rm -r -f") || has("rm -f -r") || has("sudo rm ") {
         return RiskLevel::Dangerous;
     }
-    if cmd.contains("migrate:fresh") || cmd.contains("db:reset") {
+    if has("terraform destroy") || has("terraform apply -auto-approve") {
+        return RiskLevel::Dangerous;
+    }
+    if has("kubectl delete") || has("helm uninstall") {
+        return RiskLevel::Dangerous;
+    }
+    if has("git reset --hard") || has("git clean -fd") || has("git clean -f") {
+        return RiskLevel::Dangerous;
+    }
+    if has("drop database") || has("drop table") {
+        return RiskLevel::Dangerous;
+    }
+    if has("migrate:fresh") || has("db:reset") || has("db:drop") {
         return RiskLevel::Dangerous;
     }
 
@@ -62,6 +64,8 @@ mod tests {
         assert_eq!(assess_risk("npm publish"), RiskLevel::Caution);
 
         assert_eq!(assess_risk("rm -rf node_modules"), RiskLevel::Dangerous);
+        assert_eq!(assess_risk("sudo rm -rf /"), RiskLevel::Dangerous);
+        assert_eq!(assess_risk("rm -r -f foo"), RiskLevel::Dangerous);
         assert_eq!(
             assess_risk("terraform destroy -auto-approve"),
             RiskLevel::Dangerous

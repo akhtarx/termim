@@ -215,6 +215,28 @@ mod tests {
             "TOKEN=[REDACTED] PASSWORD=[REDACTED] bash -c 'echo'"
         );
 
+        // 7. Various syntaxes and fuzzing
+        assert_eq!(
+            sanitize_command("AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE npm start"),
+            "AWS_SECRET_ACCESS_KEY=[REDACTED_B64] npm start"
+        );
+        assert_eq!(
+            sanitize_command("export DB_PASS=\"super_secret_123!\" && db:reset"),
+            "export DB_PASS=\"[REDACTED]\" && db:reset"
+        );
+        assert_eq!(
+            sanitize_command("curl -H 'Authorization: basic YWxhZGRpbjpvcGVuc2VzYW1l'"),
+            "curl -H 'Authorization: basic [REDACTED]'"
+        );
+        assert_eq!(
+            sanitize_command("git remote add origin https://username:p@ssw0rd!@github.com/repo.git"),
+            "git remote add origin https://username:[REDACTED]@ssw0rd!@github.com/repo.git"
+        );
+        assert_eq!(
+            sanitize_command("echo \"token=ghp_xxxxxxxxxxxxxxxxx\" > .env"),
+            "echo \"token=[REDACTED]\" > .env"
+        );
+
         // No redaction for normal commands
         assert_eq!(sanitize_command("git status"), "git status");
     }
