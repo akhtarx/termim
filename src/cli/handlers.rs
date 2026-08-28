@@ -549,7 +549,9 @@ pub fn handle_command(
 
                         match result {
                             Ok(_) => println!("  OK: Removed {}", path.display()),
-                            Err(e) => eprintln!("  Error: Failed to remove {}: {}", path.display(), e),
+                            Err(e) => {
+                                eprintln!("  Error: Failed to remove {}: {}", path.display(), e)
+                            }
                         }
                     }
                 }
@@ -569,7 +571,9 @@ pub fn handle_command(
                     if path.exists() {
                         match std::fs::remove_file(path) {
                             Ok(_) => println!("  OK: Removed {}", path.display()),
-                            Err(e) => eprintln!("  Error: Failed to remove {}: {}", path.display(), e),
+                            Err(e) => {
+                                eprintln!("  Error: Failed to remove {}: {}", path.display(), e)
+                            }
                         }
                     }
                 }
