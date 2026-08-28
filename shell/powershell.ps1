@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.1.9
+# Version 1.2.0
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
@@ -39,7 +39,7 @@ foreach ($p in $possiblePaths) {
 }
 
 
-# Background logging with runspaces (Silenced v1.1.9)
+# Background logging with runspaces (Silenced v1.2.0)
 $null = ($Global:TermimLogger = [powershell]::Create())
 $null = ($Global:TermimLogger.Runspace = [runspacefactory]::CreateRunspace())
 $null = $Global:TermimLogger.Runspace.Open()

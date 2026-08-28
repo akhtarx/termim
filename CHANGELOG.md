@@ -4,6 +4,11 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.2.0] - 2026-08-28
+### ✨ Added
+- **Command Limitations**: You can now limit the number of returned suggestions using `termim suggest --limit <NUMBER>`.
+- **Scoped Commands**: Added `--scope` support (`this` vs `all`) to `termim clear` and `termim stats` to allow directory-specific context management without blowing away global data by default.
+
 ## [1.1.6] - 2026-07-02
 ### 🐛 Bug Fixes
 - **Long-Running Command Tracking**: Solved an issue where commands that run indefinitely (like `npm run dev` or `php artisan serve`) were not recorded if the terminal was closed before they finished.

@@ -166,11 +166,14 @@ Generate context-aware suggestions for your next command.
 termim suggest --limit 3
 ```
 
-### `termim stats`
-Analyze your terminal habits and global command frequency.
+### `termim stats [scope]`
+Analyze your terminal habits and command frequency.
 ```bash
-# View usage trends across all projects
+# View usage trends for the current directory (default)
 termim stats
+
+# View usage trends across all projects
+termim stats all
 ```
 
 ### `termim doctor`
@@ -185,6 +188,16 @@ Securely download the latest release from GitHub.
 ```bash
 # Checks for updates and provides a one-liner to upgrade
 termim update
+```
+
+### `termim clear [scope]`
+Clear Termim history data.
+```bash
+# Clear history for the current directory (default)
+termim clear
+
+# Clear ALL history across all projects globally
+termim clear all
 ```
 
 ---

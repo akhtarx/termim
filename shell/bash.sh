@@ -112,7 +112,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Directory-aware terminal history and command intelligence v1.1.9
+        # Termim: Directory-aware terminal history and command intelligence v1.2.0
         _TERMIM_CACHE=()
         while IFS= read -r line || [[ -n "$line" ]]; do
             [[ -n "$line" ]] && _TERMIM_CACHE+=("$line")

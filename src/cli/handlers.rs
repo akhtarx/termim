@@ -220,6 +220,7 @@ pub fn handle_command(
             prefix,
             prev,
             cwd: _,
+            limit,
         } => {
             let profile = analyze_project(&root);
             let mut counts = std::collections::HashMap::with_capacity(200);
@@ -300,11 +301,12 @@ pub fn handle_command(
 
             ranked.sort_by_key(|b| std::cmp::Reverse(b.1));
 
+            let final_limit = limit.unwrap_or(10);
             let filtered: Vec<_> = ranked
                 .into_iter()
                 .map(|(cmd, _)| cmd)
                 .filter(|c| prefix_str.is_empty() || c.to_lowercase().contains(&prefix_str))
-                .take(10)
+                .take(final_limit)
                 .collect();
 
             if filtered.is_empty() {
@@ -326,13 +328,24 @@ pub fn handle_command(
             }
         }
 
-        Commands::Stats => {
-            let global_path = dirs::home_dir()
-                .unwrap_or_default()
-                .join(".termim")
-                .join("global_stats.txt");
+        Commands::Stats { scope } => {
+            let target_path = if scope.to_lowercase() == "all" || scope.to_lowercase() == "global" {
+                dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".termim")
+                    .join("global_stats.txt")
+            } else if scope.to_lowercase() == "this" || scope.to_lowercase() == "local" {
+                dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".termim")
+                    .join(PROJECTS_DIR)
+                    .join(format!("{}.txt", hash))
+            } else {
+                eprintln!("Error: Invalid scope '{}'. Use 'this' or 'all'.", scope);
+                return Ok(());
+            };
 
-            if let Ok(content) = read_file_locked(&global_path) {
+            if let Ok(content) = read_file_locked(&target_path) {
                 let mut counts = std::collections::HashMap::new();
                 let mut total = 0;
                 for line in content.lines() {
@@ -345,7 +358,7 @@ pub fn handle_command(
                 let mut ranked: Vec<_> = counts.into_iter().collect();
                 ranked.sort_by_key(|b| std::cmp::Reverse(b.1));
 
-                println!("=== Termim Usage Statistics ===");
+                println!("=== Termim Usage Statistics ({}) ===", scope);
                 println!("Total Commands Logged: {}", total);
                 println!("-----------------------------------------------\n");
                 println!("Top 10 Most Used Commands:");
@@ -363,7 +376,7 @@ pub fn handle_command(
         }
 
         Commands::Doctor => {
-            println!("=== Termim Diagnostic Check (v1.1.9) ===\n");
+            println!("=== Termim Diagnostic Check (v1.2.0) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -497,11 +510,14 @@ pub fn handle_command(
             check_for_updates();
         }
 
-        Commands::Clear { force } => {
+        Commands::Clear { scope, force } => {
             if !force {
-                print!(
+                let msg = if scope.to_lowercase() == "all" || scope.to_lowercase() == "global" {
                     "(!) This will delete all history, registry, and statistics. Continue? (y/N): "
-                );
+                } else {
+                    "(!) This will delete the local history for the current directory. Continue? (y/N): "
+                };
+                print!("{}", msg);
                 let mut input = String::new();
                 std::io::stdout().flush()?;
                 std::io::stdin().read_line(&mut input)?;
@@ -511,31 +527,56 @@ pub fn handle_command(
                 }
             }
 
-            println!("Clearing Termim data...");
-            let home = dirs::home_dir().unwrap_or_default().join(".termim");
+            let scope_lower = scope.to_lowercase();
+            if scope_lower == "all" || scope_lower == "global" {
+                println!("Clearing global Termim data...");
+                let home = dirs::home_dir().unwrap_or_default().join(".termim");
 
-            let targets = vec![
-                (home.join(PROJECTS_DIR), true), // true if directory
-                (home.join("registry.txt"), false),
-                (home.join("global_stats.txt"), false),
-                (home.join("termim.log"), false),
-            ];
+                let targets = vec![
+                    (home.join(PROJECTS_DIR), true), // true if directory
+                    (home.join("registry.txt"), false),
+                    (home.join("global_stats.txt"), false),
+                    (home.join("termim.log"), false),
+                ];
 
-            for (path, is_dir) in targets {
-                if path.exists() {
-                    let result = if is_dir {
-                        std::fs::remove_dir_all(&path)
-                    } else {
-                        std::fs::remove_file(&path)
-                    };
+                for (path, is_dir) in targets {
+                    if path.exists() {
+                        let result = if is_dir {
+                            std::fs::remove_dir_all(&path)
+                        } else {
+                            std::fs::remove_file(&path)
+                        };
 
-                    match result {
-                        Ok(_) => println!("  OK: Removed {}", path.display()),
-                        Err(e) => eprintln!("  Error: Failed to remove {}: {}", path.display(), e),
+                        match result {
+                            Ok(_) => println!("  OK: Removed {}", path.display()),
+                            Err(e) => eprintln!("  Error: Failed to remove {}: {}", path.display(), e),
+                        }
                     }
                 }
+                println!("\n[DONE] Global Termim data cleared successfully.");
+            } else if scope_lower == "this" || scope_lower == "local" {
+                println!("Clearing local Termim data...");
+                let projects_dir = dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".termim")
+                    .join(PROJECTS_DIR);
+
+                let hash = hash_project_path(&current_dir);
+                let hist_file = projects_dir.join(format!("{}.txt", hash));
+                let trans_file = projects_dir.join(format!("{}_transitions.txt", hash));
+
+                for path in &[hist_file, trans_file] {
+                    if path.exists() {
+                        match std::fs::remove_file(path) {
+                            Ok(_) => println!("  OK: Removed {}", path.display()),
+                            Err(e) => eprintln!("  Error: Failed to remove {}: {}", path.display(), e),
+                        }
+                    }
+                }
+                println!("\n[DONE] Local Termim data cleared successfully.");
+            } else {
+                eprintln!("Error: Invalid scope '{}'. Use 'this' or 'all'.", scope);
             }
-            println!("\n[DONE] Termim data cleared successfully.");
         }
 
         Commands::Uninstall { force } => {
@@ -728,7 +769,7 @@ pub fn show_banner(root: &std::path::Path) {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.1.9
+  Project-aware terminal history + intelligence v1.2.0
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}If you find Termim useful, please star the repo!
@@ -741,9 +782,9 @@ pub fn show_banner(root: &std::path::Path) {
   • termim init    : Register a project for zero-pollution history
   • termim query   : Show ranked history for this project
   • termim suggest : Show intelligent command suggestions
-  • termim stats   : Global usage statistics
+  • termim stats   : Usage stats (add 'all' for global stats)
   • termim doctor  : Health check & diagnostics
-  • termim clear   : Reset all data & history
+  • termim clear   : Reset local data (add 'all' to clear everything)
   • termim update  : Check for latest version
   • termim uninstall : COMPLETELY remove Termim from your system
 "#,

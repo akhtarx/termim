@@ -21,7 +21,7 @@ if [[ ! -d "$_TERMIM_HOME" ]]; then
 fi
 
 # Find the termim binary
-_TERMIM_BIN="termim"
+_TERMIM_BIN="${TERMIM_BIN:-termim}"
 possiblePaths=("$_TERMIM_HOME/bin/termim.exe" "$_TERMIM_HOME/bin/termim" "$HOME/.termim/bin/termim.exe" "$HOME/.termim/bin/termim")
 for p in $possiblePaths; do
     if [[ -f "$p" || -x "$p" ]]; then
@@ -103,7 +103,7 @@ _termim_up() {
         # Capture context for ranking
         local prev_cmd="$(fc -ln -1 | sed 's/^[[:space:]]*//')"
         
-        # Termim: Directory-aware terminal history and command intelligence v1.1.9
+        # Termim: Directory-aware terminal history and command intelligence v1.2.0
 # ---------------------------------------------------------------------
         _TERMIM_CACHE=("${(@f)$($_TERMIM_BIN query --history-only --prev "$prev_cmd" --cwd "$PWD" 2>/dev/null)}")
         _TERMIM_IDX=1

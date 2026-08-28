@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "termim",
-    version = "1.1.9",
+    version = "1.2.0",
     about = "Directory & Context-aware terminal history and command intelligence"
 )]
 pub struct Cli {
@@ -14,6 +14,7 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Log a command to the project-specific history.
+    ///
     /// This is called automatically by shell hooks.
     Log {
         /// The command string to log
@@ -36,6 +37,7 @@ pub enum Commands {
         post_exec: bool,
     },
     /// Query the ranked, project-specific history for the current context.
+    ///
     /// Used by shell buffer-swapping for 0ms lag history.
     Query {
         /// The previous command executed (to enable predictive ranking)
@@ -61,17 +63,27 @@ pub enum Commands {
         /// Override the current working directory for accurate project detection
         #[arg(long)]
         cwd: Option<String>,
+        /// Limit the number of suggestions returned
+        #[arg(short, long)]
+        limit: Option<usize>,
     },
-    /// Show global usage statistics analyzed from ~/.termim/global_stats.txt.
-    Stats,
+    /// Show usage statistics. Defaults to the current directory ('this').
+    Stats {
+        /// Scope of statistics: 'this' (current directory) or 'all' (global).
+        #[arg(default_value = "this")]
+        scope: String,
+    },
     /// Perform a diagnostic health check of the Termim installation and shell plugins.
     Doctor,
     /// Manually register a directory as a Termim project (Zero-Pollution via Global Registry).
     Init,
     /// Check for the latest version of Termim from GitHub.
     Update,
-    /// Clear all Termim data (history, registry, and stats).
+    /// Clear Termim data. Defaults to the current directory ('this').
     Clear {
+        /// Scope of data to clear: 'this' (current directory) or 'all' (global).
+        #[arg(default_value = "this")]
+        scope: String,
         /// Force deletion without confirmation prompt.
         #[arg(short, long)]
         force: bool,

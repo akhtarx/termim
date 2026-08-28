@@ -222,7 +222,7 @@ try {
 }
 
 Write-Host "`n====================================================" -ForegroundColor Cyan
-Write-Host "  Termim v1.1.9 Installed Successfully" -ForegroundColor Green
+Write-Host "  Termim v1.2.0 Installed Successfully" -ForegroundColor Green
 Write-Host "====================================================" -ForegroundColor Cyan
 Write-Host "  RESTART your terminal to activate Termim."
 Write-Host "  Once restarted, press UP-ARROW to see context-aware history."
