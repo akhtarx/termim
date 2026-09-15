@@ -92,7 +92,7 @@ if ($Build) {
 
     Write-Host "[info] Downloading $Version prebuilt binary..."
     try {
-        $ProgressPreference = 'SilentlyContinue'
+        # Keep default progress bar
         Invoke-WebRequest -Uri $downloadUrl -OutFile $targetExe -UseBasicParsing
         
         # Checksum Verification
@@ -222,7 +222,7 @@ try {
 }
 
 Write-Host "`n====================================================" -ForegroundColor Cyan
-Write-Host "  Termim v1.2.1 Installed Successfully" -ForegroundColor Green
+Write-Host "  Termim v1.2.2 Installed Successfully" -ForegroundColor Green
 Write-Host "====================================================" -ForegroundColor Cyan
 Write-Host "  RESTART your terminal to activate Termim."
 Write-Host "  Once restarted, press UP-ARROW to see context-aware history."

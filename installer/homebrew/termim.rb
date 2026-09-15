@@ -1,9 +1,9 @@
 class Termim < Formula
   desc "Directory & Context-aware terminal history and command intelligence"
   homepage "https://github.com/akhtarx/termim"
-  url "https://github.com/akhtarx/termim/archive/refs/tags/v1.2.1.tar.gz"
-  # Note: When releasing v1.2.1, update this SHA256 checksum with the value of the release tarball.
-  # You can find it by running: curl -sSL https://github.com/akhtarx/termim/archive/refs/tags/v1.2.1.tar.gz | sha256sum
+  url "https://github.com/akhtarx/termim/archive/refs/tags/v1.2.2.tar.gz"
+  # Note: When releasing v1.2.2, update this SHA256 checksum with the value of the release tarball.
+  # You can find it by running: curl -sSL https://github.com/akhtarx/termim/archive/refs/tags/v1.2.2.tar.gz | sha256sum
   sha256 "778b5648d3bc2b86f926abb2e2b51fe9d473da026520ffdffe7302211028b2b4"
   license "MIT"
 

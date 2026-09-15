@@ -4,6 +4,12 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.2.2] - 2026-09-15
+- Show visible progress bar during download steps in `install.sh` and `install.ps1`.
+- Made `Core hash cost` diagnostic more human-readable (operations per second).
+- Fixed `termim doctor` inaccurately reporting failure when unsupported shell plugins were missing.
+- Updated `termim init` and `termim query` help text for better accuracy.
+
 ## [1.2.1] - 2026-09-15
 - Fixed PowerShell prompt hooking conflict with VS Code shell integration, Starship, and Oh-My-Posh.
 - Refactored async runspace logging into a disposable RunspacePool to resolve concurrency drops.

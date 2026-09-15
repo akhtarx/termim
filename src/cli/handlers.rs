@@ -376,7 +376,7 @@ pub fn handle_command(
         }
 
         Commands::Doctor => {
-            println!("=== Termim Diagnostic Check (v1.2.1) ===\n");
+            println!("=== Termim Diagnostic Check (v1.2.2) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -446,9 +446,11 @@ pub fn handle_command(
 
             // ── Shell plugin checks ──────────────────────────────────────
             println!("\n[Shell Plugins]");
+            let mut found_any_shell = false;
             for shell in &["bash.sh", "zsh.sh", "fish.fish", "powershell.ps1"] {
                 let plugin_path = home.join("shell").join(shell);
                 let status = if plugin_path.exists() {
+                    found_any_shell = true;
                     // Sanity-read the first line to verify it's non-empty
                     let readable = std::fs::read_to_string(&plugin_path)
                         .map(|c| !c.trim().is_empty())
@@ -459,10 +461,12 @@ pub fn handle_command(
                         "[WARN: file is empty]"
                     }
                 } else {
-                    all_ok = false;
                     "[MISSING]"
                 };
                 println!("  ~/.termim/shell/{:<20} {}", shell, status);
+            }
+            if !found_any_shell {
+                all_ok = false;
             }
 
             // ── Latency check ────────────────────────────────────────────
@@ -470,7 +474,25 @@ pub fn handle_command(
             let t_start = std::time::Instant::now();
             let _bench_hash = hash_project_path(&current_dir);
             let elapsed = t_start.elapsed();
-            println!("  Core hash cost: {:?}", elapsed);
+            
+            let ops_per_sec = if elapsed.as_secs_f64() > 0.0 {
+                (1.0 / elapsed.as_secs_f64()) as u64
+            } else {
+                0
+            };
+            
+            // Format operations per second with commas
+            let ops_str = ops_per_sec.to_string();
+            let mut formatted_ops = String::new();
+            for (i, c) in ops_str.chars().rev().enumerate() {
+                if i > 0 && i % 3 == 0 {
+                    formatted_ops.push(',');
+                }
+                formatted_ops.push(c);
+            }
+            let formatted_ops: String = formatted_ops.chars().rev().collect();
+            
+            println!("  Core hash cost: {:?} (capable of {} operations in 1 second)", elapsed, formatted_ops);
 
             // ── Summary ──────────────────────────────────────────────────
             println!("\n[Summary]");
@@ -773,7 +795,7 @@ pub fn show_banner(root: &std::path::Path) {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.2.1
+  Project-aware terminal history + intelligence v1.2.2
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}If you find Termim useful, please star the repo!
@@ -783,8 +805,8 @@ pub fn show_banner(root: &std::path::Path) {
   • Ecosystems: {}
 
   Quick Commands:
-  • termim init    : Register a project for zero-pollution history
-  • termim query   : Show ranked history for this project
+  • termim init    : Register a directory for zero-pollution history
+  • termim query   : Show ranked history for this directory
   • termim suggest : Show intelligent command suggestions
   • termim stats   : Usage stats (add 'all' for global stats)
   • termim doctor  : Health check & diagnostics

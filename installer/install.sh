@@ -110,7 +110,7 @@ else
     fi
 
     info "Downloading $VERSION prebuilt binary ($T_OS/$T_ARCH)..."
-    if curl -fsSL "$DOWNLOAD_URL" -o "$BIN_DIR/$FILE_NAME"; then
+    if curl -f -# -L "$DOWNLOAD_URL" -o "$BIN_DIR/$FILE_NAME"; then
         chmod +x "$BIN_DIR/$FILE_NAME"
         
         # Checksum Verification
@@ -179,7 +179,7 @@ else
         FZF_FILE="fzf-$FZF_VER-${F_OS}_$F_ARCH_MAPPED.tar.gz"
         FZF_URL="https://github.com/junegunn/fzf/releases/download/v$FZF_VER/$FZF_FILE"
         
-        if curl -fsSL "$FZF_URL" -o "$BIN_DIR/fzf.tar.gz"; then
+        if curl -f -# -L "$FZF_URL" -o "$BIN_DIR/fzf.tar.gz"; then
             tar -xzf "$BIN_DIR/fzf.tar.gz" -C "$BIN_DIR" fzf
             rm "$BIN_DIR/fzf.tar.gz"
             chmod +x "$BIN_DIR/fzf"
@@ -292,7 +292,7 @@ esac
 echo -e "\nOr just open a new terminal tab. Enjoy!"
 
 echo -e "\n${CYAN}====================================================${NC}"
-echo -e "  ${GREEN}Termim v1.2.1 Installed Successfully${NC}"
+echo -e "  ${GREEN}Termim v1.2.2 Installed Successfully${NC}"
 echo -e "${CYAN}====================================================${NC}"
 echo -e "  ${YELLOW}RESTART your terminal to activate Termim.${NC}"
 echo -e "  Once restarted, press UP-ARROW to see history."
