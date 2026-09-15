@@ -92,15 +92,25 @@ if ($Build) {
 
     Write-Host "[info] Downloading $Version prebuilt binary..."
     try {
-        # Keep default progress bar
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $targetExe -UseBasicParsing
+        if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+            & curl.exe -f -# -L $downloadUrl -o $targetExe
+            if ($LASTEXITCODE -ne 0) { throw "curl download failed" }
+        } else {
+            # Keep default progress bar for older systems
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $targetExe -UseBasicParsing
+        }
         
         # Checksum Verification
         Write-Host "[info] Verifying checksum..." -ForegroundColor Gray
         try {
             $shaUrl = "$downloadUrl.sha256"
             $shaFile = Join-Path $env:TEMP "termim.sha256"
-            Invoke-WebRequest -Uri $shaUrl -OutFile $shaFile -UseBasicParsing
+            if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+                & curl.exe -f -sSL $shaUrl -o $shaFile
+                if ($LASTEXITCODE -ne 0) { throw "curl checksum download failed" }
+            } else {
+                Invoke-WebRequest -Uri $shaUrl -OutFile $shaFile -UseBasicParsing
+            }
             $expected = (Get-Content $shaFile).Split(' ')[0].Trim().ToLower()
             $actual = (Get-FileHash -Path $targetExe -Algorithm SHA256).Hash.ToLower()
             
@@ -158,7 +168,12 @@ if ($NoFzf) {
         $fzfUrl = "https://github.com/junegunn/fzf/releases/download/v$fzfVer/fzf-$fzfVer-windows_amd64.zip"
         $fzfZip = Join-Path $env:TEMP "fzf.zip"
         
-        Invoke-WebRequest -Uri $fzfUrl -OutFile $fzfZip -UseBasicParsing
+        if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+            & curl.exe -f -# -L $fzfUrl -o $fzfZip
+            if ($LASTEXITCODE -ne 0) { throw "curl fzf download failed" }
+        } else {
+            Invoke-WebRequest -Uri $fzfUrl -OutFile $fzfZip -UseBasicParsing
+        }
         Expand-Archive -Path $fzfZip -DestinationPath $env:TEMP -Force
         Move-Item -Path (Join-Path $env:TEMP "fzf.exe") -Destination (Join-Path $binDir "fzf.exe") -Force
         if (Get-Command Unblock-File -ErrorAction SilentlyContinue) {
@@ -175,8 +190,13 @@ if (Test-Path "shell\powershell.ps1") {
     Copy-Item "shell\bash.sh" (Join-Path $shellDir "bash.sh") -Force
 } else {
     Write-Host "[info] Downloading integration scripts..." -ForegroundColor Gray
-    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$repo/main/shell/powershell.ps1" -OutFile (Join-Path $shellDir "powershell.ps1") -UseBasicParsing
-    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$repo/main/shell/bash.sh" -OutFile (Join-Path $shellDir "bash.sh") -UseBasicParsing
+    if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+        & curl.exe -f -# -L "https://raw.githubusercontent.com/$repo/main/shell/powershell.ps1" -o (Join-Path $shellDir "powershell.ps1")
+        & curl.exe -f -# -L "https://raw.githubusercontent.com/$repo/main/shell/bash.sh" -o (Join-Path $shellDir "bash.sh")
+    } else {
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$repo/main/shell/powershell.ps1" -OutFile (Join-Path $shellDir "powershell.ps1") -UseBasicParsing
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$repo/main/shell/bash.sh" -OutFile (Join-Path $shellDir "bash.sh") -UseBasicParsing
+    }
 }
 
 # 5. Idempotent Profile Config
