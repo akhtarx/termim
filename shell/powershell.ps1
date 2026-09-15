@@ -239,7 +239,7 @@ if ($null -eq $Global:TermimOriginalPrompt) {
     if (Test-Path Function:\prompt) {
         $Global:TermimOriginalPrompt = (Get-Item Function:\prompt).ScriptBlock
     } else {
-        $Global:TermimOriginalPrompt = { "PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) " }
+        $Global:TermimOriginalPrompt = { "PS $(Get-Location)$('>' * ($nestedPromptLevel + 1)) " }
     }
 }
 
@@ -258,7 +258,7 @@ function global:prompt {
             Remove-PSReadLineKeyHandler -Key "Ctrl+p" -ErrorAction SilentlyContinue
         }
         $Global:TermimBin = $null
-        return & $Global:TermimOriginalPrompt
+        return . $Global:TermimOriginalPrompt
     }
 
     # 2. Perform background logging for any pending command (post-exec transition logic)
@@ -281,7 +281,7 @@ function global:prompt {
     # Propagate original last exit code and success state to avoid breaking themes
     $global:? = ($lastExit -eq 0)
     $global:LASTEXITCODE = $lastExit
-    & $Global:TermimOriginalPrompt
+    . $Global:TermimOriginalPrompt
 }
 
 # Fallback hook via PSConsoleHostReadLine for environments where prompt is aggressively overwritten
