@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "termim",
-    version = "1.2.0",
+    version = "1.2.1",
     about = "Directory & Context-aware terminal history and command intelligence"
 )]
 pub struct Cli {

@@ -4,6 +4,10 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.2.1] - 2026-09-15
+- Fixed PowerShell prompt hooking conflict with VS Code shell integration, Starship, and Oh-My-Posh.
+- Refactored async runspace logging into a disposable RunspacePool to resolve concurrency drops.
+
 ## [1.2.0] - 2026-08-28
 ### ✨ Added
 - **Command Limitations**: You can now limit the number of returned suggestions using `termim suggest --limit <NUMBER>`.

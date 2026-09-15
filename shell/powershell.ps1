@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.2.0
+# Version 1.2.1
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
@@ -39,22 +39,31 @@ foreach ($p in $possiblePaths) {
 }
 
 
-# Background logging with runspaces (Silenced v1.2.0)
-$null = ($Global:TermimLogger = [powershell]::Create())
-$null = ($Global:TermimLogger.Runspace = [runspacefactory]::CreateRunspace())
-$null = $Global:TermimLogger.Runspace.Open()
+# Background logging with runspaces (Silenced v1.2.0, Concurrency-Safe v1.2.1)
+if (-not $Global:TermimRunspacePool) {
+    try {
+        $Global:TermimRunspacePool = [runspacefactory]::CreateRunspacePool(1, 5)
+        $Global:TermimRunspacePool.Open()
+    } catch {}
+}
+if ($null -eq $Global:TermimLoggers) {
+    $Global:TermimLoggers = @()
+}
 
 # Cleanup on session exit to prevent runspace memory leaks
 $null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
-    if ($Global:TermimLogger) {
+    if ($Global:TermimLoggers) {
+        foreach ($logger in $Global:TermimLoggers) {
+            try { $logger.Dispose() } catch {}
+        }
+    }
+    if ($Global:TermimRunspacePool) {
         try {
-            $Global:TermimLogger.Runspace.Close()
-            $Global:TermimLogger.Runspace.Dispose()
-            $Global:TermimLogger.Dispose()
+            $Global:TermimRunspacePool.Close()
+            $Global:TermimRunspacePool.Dispose()
         } catch {}
     }
 } -ErrorAction SilentlyContinue
-
 
 function Global:Invoke-TermimLogAsync {
     param([string]$command, [int]$exitCode = 0, [string]$cwd = "", [string]$branch = "none", [switch]$preExec, [switch]$postExec)
@@ -70,9 +79,22 @@ function Global:Invoke-TermimLogAsync {
         $preFlag = if ($preExec) { "--pre-exec" } else { "" }
         $postFlag = if ($postExec) { "--post-exec" } else { "" }
         $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' --branch '$($branch.Replace("'", "''"))' $preFlag $postFlag 2>>`"$Global:TermimHome\termim.log`"")
-        $Global:TermimLogger.Commands.Clear() | Out-Null
-        $Global:TermimLogger.AddScript($sb) | Out-Null
-        $Global:TermimLogger.BeginInvoke() | Out-Null
+        
+        # Clean up completed loggers
+        $Global:TermimLoggers = $Global:TermimLoggers | Where-Object { 
+            if ($_.InvocationStateInfo.State -eq 'Completed' -or $_.InvocationStateInfo.State -eq 'Failed' -or $_.InvocationStateInfo.State -eq 'Stopped') {
+                try { $_.Dispose() } catch {}
+                $false
+            } else {
+                $true
+            }
+        }
+
+        $ps = [powershell]::Create()
+        $ps.RunspacePool = $Global:TermimRunspacePool
+        $ps.AddScript($sb) | Out-Null
+        $ps.BeginInvoke() | Out-Null
+        $Global:TermimLoggers += $ps
     } catch {
         # Silent failure for background logging
     }
@@ -211,8 +233,22 @@ if (Get-Module PSReadLine) {
     }
 }
 
+# Non-Destructive Prompt Chaining
+# Securely capture the existing prompt to preserve VS Code Shell Integration, Starship, Oh-My-Posh, etc.
+if ($null -eq $Global:TermimOriginalPrompt) {
+    if (Test-Path Function:\prompt) {
+        $Global:TermimOriginalPrompt = (Get-Item Function:\prompt).ScriptBlock
+    } else {
+        $Global:TermimOriginalPrompt = { "PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) " }
+    }
+}
+
 # Post-Execution logic in the prompt function
-function prompt {
+function global:prompt {
+    # 1. Capture exit status immediately (Must be first action)
+    $lastExit = $LASTEXITCODE
+    if ($null -eq $lastExit) { $lastExit = if ($?) { 0 } else { 1 } }
+
     # Automatic self-cleanup if Termim binary was uninstalled
     if ($Global:TermimBin -and -not (Test-Path $Global:TermimBin)) {
         if (Get-Module PSReadLine) {
@@ -222,14 +258,8 @@ function prompt {
             Remove-PSReadLineKeyHandler -Key "Ctrl+p" -ErrorAction SilentlyContinue
         }
         $Global:TermimBin = $null
-        function Global:prompt { "PS $(Get-Location)> " }
-        return "PS $(Get-Location)> "
+        return & $Global:TermimOriginalPrompt
     }
-
-    # 1. Capture exit status immediately (Must be first action)
-    $lastExit = $LASTEXITCODE
-    if ($null -eq $lastExit) { $lastExit = if ($?) { 0 } else { 1 } }
-
 
     # 2. Perform background logging for any pending command (post-exec transition logic)
     if ($Global:TermimPendingCommand) {
@@ -240,13 +270,44 @@ function prompt {
         $Global:TermimPreExecDir = $null
     }
     
-    # 5. v1.1.0: Export last status for query-time context weighting
+    # 3. Export last status for query-time context weighting
     $env:TERMIM_LAST_EXIT = $lastExit
 
-    # 3. Reset navigation state for the new prompt
+    # 4. Reset navigation state for the new prompt
     $Global:TermimIdx = 0
     $Global:TermimCache = @()
     
-    # 4. Standard prompt output
-    "PS $(Get-Location)> "
+    # 5. Invoke original prompt
+    # Propagate original last exit code and success state to avoid breaking themes
+    $global:? = ($lastExit -eq 0)
+    $global:LASTEXITCODE = $lastExit
+    & $Global:TermimOriginalPrompt
+}
+
+# Fallback hook via PSConsoleHostReadLine for environments where prompt is aggressively overwritten
+if (Get-Module PSReadLine) {
+    if ($null -eq $Global:TermimOriginalPSConsoleHostReadLine) {
+        if (Test-Path Function:\PSConsoleHostReadLine) {
+            $Global:TermimOriginalPSConsoleHostReadLine = (Get-Item Function:\PSConsoleHostReadLine).ScriptBlock
+        }
+    }
+    
+    function global:PSConsoleHostReadLine {
+        # Check for any pending command that the prompt hook missed (e.g. prompt overwritten)
+        if ($Global:TermimPendingCommand) {
+            $lastExit = $LASTEXITCODE
+            if ($null -eq $lastExit) { $lastExit = if ($?) { 0 } else { 1 } }
+            if (Get-Command Invoke-TermimLogAsync -ErrorAction SilentlyContinue) {
+                Invoke-TermimLogAsync -command $Global:TermimPendingCommand -exitCode $lastExit -cwd $Global:TermimPreExecDir -postExec
+            }
+            $Global:TermimPendingCommand = $null
+            $Global:TermimPreExecDir = $null
+        }
+        
+        if ($Global:TermimOriginalPSConsoleHostReadLine) {
+            & $Global:TermimOriginalPSConsoleHostReadLine
+        } else {
+            [Microsoft.PowerShell.PSConsoleReadLine]::ReadLine()
+        }
+    }
 }
