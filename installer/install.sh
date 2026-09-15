@@ -53,7 +53,8 @@ echo -e "${BLUE}=== Termim: Directory & Context-Aware History Installer ===${NC}
 
 # 1. Prerequisites
 info "Verifying environment..."
-mkdir -p "$BIN_DIR" "$SHELL_DIR"
+mkdir -p "$BIN_DIR" "$SHELL_DIR" "$HOME_DIR/projects"
+touch "$HOME_DIR/registry.txt"
 
 # 2. Acquire Binary
 if [ "$DO_BUILD" = true ]; then
@@ -292,7 +293,7 @@ esac
 echo -e "\nOr just open a new terminal tab. Enjoy!"
 
 echo -e "\n${CYAN}====================================================${NC}"
-echo -e "  ${GREEN}Termim v1.2.4 Installed Successfully${NC}"
+echo -e "  ${GREEN}Termim v1.2.5 Installed Successfully${NC}"
 echo -e "${CYAN}====================================================${NC}"
 echo -e "  ${YELLOW}RESTART your terminal to activate Termim.${NC}"
 echo -e "  Once restarted, press UP-ARROW to see history."

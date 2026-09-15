@@ -4,6 +4,10 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.2.5] - 2026-09-15
+### 🐛 Bug Fixes
+- **Installer**: Install scripts now proactively create the `projects` directory and `registry.txt` files on initial install, preventing `termim doctor` from erroneously reporting them as missing before the first `init`.
+
 ## [1.2.4] - 2026-09-15
 ### 🚑 Hotfixes
 - **PowerShell Prompt Crash**: Fixed a fatal error where the prompt function would completely crash because of a read-only `$?` variable assignment constraint, which caused PowerShell to revert to the default `PS >` prompt with no path.

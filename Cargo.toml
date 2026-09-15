@@ -1,6 +1,6 @@
 [package]
 name = "termim"
-version = "1.2.4"
+version = "1.2.5"
 edition = "2021"
 authors = ["Md Mim Akhtar <mim@akhtarx.com>"]
 description = "Directory & Context-aware terminal history and command intelligence"

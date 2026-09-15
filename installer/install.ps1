@@ -30,6 +30,8 @@ Write-Host "`n=== Termim: Directory & Context-Aware History Installer ===" -Fore
 Write-Host "[info] Verifying environment..."
 if (-not (Test-Path $binDir)) { New-Item -ItemType Directory -Path $binDir -Force | Out-Null }
 if (-not (Test-Path $shellDir)) { New-Item -ItemType Directory -Path $shellDir -Force | Out-Null }
+if (-not (Test-Path (Join-Path $homeDir "projects"))) { New-Item -ItemType Directory -Path (Join-Path $homeDir "projects") -Force | Out-Null }
+if (-not (Test-Path (Join-Path $homeDir "registry.txt"))) { New-Item -ItemType File -Path (Join-Path $homeDir "registry.txt") -Force | Out-Null }
 
 # 2. Acquire Binary
 $targetExe = Join-Path $binDir "termim.exe"
@@ -242,7 +244,7 @@ try {
 }
 
 Write-Host "`n====================================================" -ForegroundColor Cyan
-Write-Host "  Termim v1.2.4 Installed Successfully" -ForegroundColor Green
+Write-Host "  Termim v1.2.5 Installed Successfully" -ForegroundColor Green
 Write-Host "====================================================" -ForegroundColor Cyan
 Write-Host "  RESTART your terminal to activate Termim."
 Write-Host "  Once restarted, press UP-ARROW to see context-aware history."
