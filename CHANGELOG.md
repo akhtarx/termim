@@ -4,6 +4,10 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.2.4] - 2026-09-15
+### 🚑 Hotfixes
+- **PowerShell Prompt Crash**: Fixed a fatal error where the prompt function would completely crash because of a read-only `$?` variable assignment constraint, which caused PowerShell to revert to the default `PS >` prompt with no path.
+
 ## [1.2.3] - 2026-09-15
 ### 🐛 Bug Fixes
 - **Installer**: Restored and improved visual block progress bar during downloads on Windows (via `curl.exe`).

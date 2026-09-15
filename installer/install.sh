@@ -292,7 +292,7 @@ esac
 echo -e "\nOr just open a new terminal tab. Enjoy!"
 
 echo -e "\n${CYAN}====================================================${NC}"
-echo -e "  ${GREEN}Termim v1.2.3 Installed Successfully${NC}"
+echo -e "  ${GREEN}Termim v1.2.4 Installed Successfully${NC}"
 echo -e "${CYAN}====================================================${NC}"
 echo -e "  ${YELLOW}RESTART your terminal to activate Termim.${NC}"
 echo -e "  Once restarted, press UP-ARROW to see history."

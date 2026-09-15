@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.2.3
+# Version 1.2.4
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
@@ -279,8 +279,8 @@ function global:prompt {
     
     # 5. Invoke original prompt
     # Propagate original last exit code and success state to avoid breaking themes
-    $global:? = ($lastExit -eq 0)
     $global:LASTEXITCODE = $lastExit
+    if ($lastExit -eq 0) { $null = 1 -eq 1 } else { $null = 1 -eq 0 } # Sets $? implicitly
     . $Global:TermimOriginalPrompt
 }
 
