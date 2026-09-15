@@ -474,13 +474,13 @@ pub fn handle_command(
             let t_start = std::time::Instant::now();
             let _bench_hash = hash_project_path(&current_dir);
             let elapsed = t_start.elapsed();
-            
+
             let ops_per_sec = if elapsed.as_secs_f64() > 0.0 {
                 (1.0 / elapsed.as_secs_f64()) as u64
             } else {
                 0
             };
-            
+
             // Format operations per second with commas
             let ops_str = ops_per_sec.to_string();
             let mut formatted_ops = String::new();
@@ -491,8 +491,11 @@ pub fn handle_command(
                 formatted_ops.push(c);
             }
             let formatted_ops: String = formatted_ops.chars().rev().collect();
-            
-            println!("  Core hash cost: {:?} (capable of {} operations in 1 second)", elapsed, formatted_ops);
+
+            println!(
+                "  Core hash cost: {:?} (capable of {} operations in 1 second)",
+                elapsed, formatted_ops
+            );
 
             // ── Summary ──────────────────────────────────────────────────
             println!("\n[Summary]");
