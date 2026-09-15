@@ -4,6 +4,11 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.2.3] - 2026-09-15
+### 🐛 Bug Fixes
+- **Installer**: Restored and improved visual block progress bar during downloads on Windows (via `curl.exe`).
+- **PowerShell Prompt Integration**: Dot-sourced the prompt wrapper to prevent execution in a child scope, fully preserving native local variables and preventing the directory path from disappearing in custom prompts.
+
 ## [1.2.2] - 2026-09-15
 - Show visible progress bar during download steps in `install.sh` and `install.ps1`.
 - Made `Core hash cost` diagnostic more human-readable (operations per second).
