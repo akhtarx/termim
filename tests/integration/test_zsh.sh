@@ -36,11 +36,13 @@ _TEST_CWD=$(mktemp -d)
 
 # Mock pre-exec
 _TERMIM_PREEXEC_DIR="$_TEST_CWD"
-"$_TERMIM_BIN" log "echo zsh_world" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec >> "$_TERMIM_LOG" 2>&1
+TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" log "echo zsh_world" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec >> "$_TERMIM_LOG" 2>&1
+_TERMIM_LOG_STATUS=$?
 
 # Mock post-exec
 _TERMIM_ORIGINAL_INPUT="echo zsh_world"
-"$_TERMIM_BIN" log "$_TERMIM_ORIGINAL_INPUT" --prev "none" --exit 0 --cwd "$_TEST_CWD" --post-exec >> "$_TERMIM_LOG" 2>&1
+TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" log "$_TERMIM_ORIGINAL_INPUT" --prev "none" --exit 0 --cwd "$_TEST_CWD" --post-exec >> "$_TERMIM_LOG" 2>&1
+_TERMIM_LOG_STATUS=$((_TERMIM_LOG_STATUS | $?))
 
 echo "Test UP Arrow..."
 
@@ -49,18 +51,25 @@ echo "Test UP Arrow..."
 _TERMIM_TMP=$(mktemp)
 BUFFER=""
 for _TERMIM_ATTEMPT in {1..20}; do
-    "$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" > "$_TERMIM_TMP" 2>/dev/null
+    TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" query --history-only --cwd "$_TEST_CWD" > "$_TERMIM_TMP" 2>>"$_TERMIM_LOG"
     BUFFER=$(head -n 1 "$_TERMIM_TMP")
     [[ "$BUFFER" == "echo zsh_world" ]] && break
     sleep 0.1
 done
-rm -f "$_TERMIM_TMP"
-
 if [[ "$BUFFER" != "echo zsh_world" ]]; then
     echo "FAIL: Expected BUFFER to be 'echo zsh_world', got '$BUFFER'"
+    echo "TERMIM_HOME: $_TERMIM_HOME"
+    echo "TEST_CWD: $_TEST_CWD"
+    echo "LOG_STATUS: $_TERMIM_LOG_STATUS"
+    echo "--- Termim files ---"
+    find "$_TERMIM_HOME" -maxdepth 3 -type f -print 2>&1
+    echo "--- Query output ---"
+    cat "$_TERMIM_TMP" 2>&1
     echo "--- termim.log ---"
     cat "$_TERMIM_LOG"
+    rm -f "$_TERMIM_TMP"
     exit 1
 fi
 
+rm -f "$_TERMIM_TMP"
 echo "PASS: Zsh integration successful."
