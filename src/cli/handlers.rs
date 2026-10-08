@@ -10,6 +10,7 @@ use crate::utils::constants::{
     MAX_FILE_SIZE_BYTES, MAX_GLOBAL_STATS_LINES, MAX_HISTORY_LINES, MAX_TRANSITION_LINES,
     PROJECTS_DIR,
 };
+use crate::utils::paths::termim_home_dir;
 use crate::utils::update::{check_for_updates, fetch_star_count_cached};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
@@ -46,10 +47,7 @@ pub fn handle_command(
             let do_history = pre_exec || !post_exec;
             let do_transitions = post_exec || !pre_exec;
 
-            let projects_dir = dirs::home_dir()
-                .unwrap_or_default()
-                .join(".termim")
-                .join(PROJECTS_DIR);
+            let projects_dir = termim_home_dir().join(PROJECTS_DIR);
 
             if do_history {
                 // Atomic Direct-to-Disk Logging
@@ -62,10 +60,7 @@ pub fn handle_command(
                 let _ = prune_log(&project_file, MAX_HISTORY_LINES);
 
                 // Global Stats backup (atomic append + prune)
-                let global_path = dirs::home_dir()
-                    .unwrap_or_default()
-                    .join(".termim")
-                    .join("global_stats.txt");
+                let global_path = termim_home_dir().join("global_stats.txt");
                 let _ = append_to_file_locked(&global_path, &sanitized_cmd);
                 let _ = prune_log(&global_path, MAX_GLOBAL_STATS_LINES);
             }
@@ -101,10 +96,7 @@ pub fn handle_command(
             history_only,
             suggest_only,
         } => {
-            let projects_dir = dirs::home_dir()
-                .unwrap_or_default()
-                .join(".termim")
-                .join(PROJECTS_DIR);
+            let projects_dir = termim_home_dir().join(PROJECTS_DIR);
             let hist_file = projects_dir.join(format!("{}.txt", hash));
             let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
 
@@ -203,10 +195,7 @@ pub fn handle_command(
             // Shell integrations use this mode for the local cache before
             // handing control back to the shell's native global history.
             if !suggest_only && !history_only {
-                let global_path = dirs::home_dir()
-                    .unwrap_or_default()
-                    .join(".termim")
-                    .join("global_stats.txt");
+                let global_path = termim_home_dir().join("global_stats.txt");
 
                 if let Ok(lines) = read_file_tail(&global_path, MAX_GLOBAL_STATS_LINES) {
                     for line in lines.iter().rev() {
@@ -226,10 +215,7 @@ pub fn handle_command(
         } => {
             let profile = analyze_project(&root);
             let mut counts = std::collections::HashMap::with_capacity(200);
-            let projects_dir = dirs::home_dir()
-                .unwrap_or_default()
-                .join(".termim")
-                .join(PROJECTS_DIR);
+            let projects_dir = termim_home_dir().join(PROJECTS_DIR);
 
             // 1. Behavioral Habits (Absolute Weight)
             if let Some(p) = prev {
@@ -332,14 +318,9 @@ pub fn handle_command(
 
         Commands::Stats { scope } => {
             let target_path = if scope.to_lowercase() == "all" || scope.to_lowercase() == "global" {
-                dirs::home_dir()
-                    .unwrap_or_default()
-                    .join(".termim")
-                    .join("global_stats.txt")
+                termim_home_dir().join("global_stats.txt")
             } else if scope.to_lowercase() == "this" || scope.to_lowercase() == "local" {
-                dirs::home_dir()
-                    .unwrap_or_default()
-                    .join(".termim")
+                termim_home_dir()
                     .join(PROJECTS_DIR)
                     .join(format!("{}.txt", hash))
             } else {
@@ -386,7 +367,7 @@ pub fn handle_command(
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
-            let home = dirs::home_dir().unwrap_or_default().join(".termim");
+            let home = termim_home_dir();
             let mut all_ok = true;
 
             // ── Directory checks ─────────────────────────────────────────
@@ -543,7 +524,7 @@ pub fn handle_command(
             let scope_lower = scope.to_lowercase();
             if scope_lower == "all" || scope_lower == "global" {
                 println!("Clearing global Termim data...");
-                let home = dirs::home_dir().unwrap_or_default().join(".termim");
+                let home = termim_home_dir();
 
                 let targets = vec![
                     (home.join(PROJECTS_DIR), true), // true if directory
@@ -571,10 +552,7 @@ pub fn handle_command(
                 println!("\n[DONE] Global Termim data cleared successfully.");
             } else if scope_lower == "this" || scope_lower == "local" {
                 println!("Clearing local Termim data...");
-                let projects_dir = dirs::home_dir()
-                    .unwrap_or_default()
-                    .join(".termim")
-                    .join(PROJECTS_DIR);
+                let projects_dir = termim_home_dir().join(PROJECTS_DIR);
 
                 let hash = hash_project_path(&current_dir);
                 let hist_file = projects_dir.join(format!("{}.txt", hash));
@@ -609,7 +587,7 @@ pub fn handle_command(
             }
 
             println!("Uninstalling Termim...");
-            let home = dirs::home_dir().unwrap_or_default().join(".termim");
+            let home = termim_home_dir();
 
             // 1. Delete data and scripts
             if home.exists() {
@@ -694,7 +672,7 @@ pub fn handle_command(
             }
 
             // 2.7. Automatically remove integration from Bash, Zsh, and Fish profile files
-            let home_dir = dirs::home_dir().unwrap_or_default();
+            let home_dir = termim_home_dir();
             let rc_files = vec![
                 home_dir.join(".bashrc"),
                 home_dir.join(".zshrc"),

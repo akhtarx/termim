@@ -1,4 +1,6 @@
 #[cfg(feature = "update-check")]
+use crate::utils::paths::termim_home_dir;
+#[cfg(feature = "update-check")]
 use serde::Deserialize;
 #[cfg(feature = "update-check")]
 use std::io::Read;
@@ -69,10 +71,7 @@ pub fn check_for_updates() {
 #[cfg(feature = "update-check")]
 pub fn fetch_star_count_cached() -> Option<u64> {
     use std::time::SystemTime;
-    let cache_path = dirs::home_dir()
-        .unwrap_or_default()
-        .join(".termim")
-        .join(".star_cache");
+    let cache_path = termim_home_dir().join(".star_cache");
 
     // Check if cache exists and is fresh (< 24 hours)
     if let Ok(metadata) = std::fs::metadata(&cache_path) {

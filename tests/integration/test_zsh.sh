@@ -7,11 +7,12 @@ echo "Running zsh integration test..."
 
 export HOME=$(mktemp -d)
 export USERPROFILE="$HOME"
+export TERMIM_HOME="$HOME/.termim"
 export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=1000
 export SAVEHIST=1000
 setopt inc_append_history
-_TERMIM_HOME="$HOME/.termim"
+_TERMIM_HOME="$TERMIM_HOME"
 _TERMIM_LOG="$_TERMIM_HOME/termim.log"
 mkdir -p "$_TERMIM_HOME"
 
