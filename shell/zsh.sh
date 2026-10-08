@@ -3,7 +3,7 @@
 # Compatible with MSYS/Git Bash and macOS
 
 # [v1.1.1] Universal Home Discovery
-_TERMIM_HOME="$HOME/.termim"
+_TERMIM_HOME="${TERMIM_HOME:-$HOME/.termim}"
 if [[ ! -d "$_TERMIM_HOME" ]]; then
     # Fallback for Windows MSYS2/Git Bash: Map virtual home to physical Windows profile
     winHome="/c/Users/$USER/.termim"

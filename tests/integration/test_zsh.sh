@@ -7,7 +7,7 @@ echo "Running zsh integration test..."
 
 export HOME=$(mktemp -d)
 export USERPROFILE="$HOME"
-export TERMIM_HOME="$HOME/.termim"
+export TERMIM_HOME=$(mktemp -d)
 export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=1000
 export SAVEHIST=1000
@@ -32,7 +32,7 @@ echo "Log command 1..."
 
 # NOTE: In zsh, PWD is a special shell-managed variable and cannot be overridden
 # with `export PWD=...`. Use _TEST_CWD for a consistent directory across log+query.
-_TEST_CWD="$HOME"
+_TEST_CWD=$(mktemp -d)
 
 # Mock pre-exec
 _TERMIM_PREEXEC_DIR="$_TEST_CWD"
