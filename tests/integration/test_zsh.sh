@@ -33,15 +33,16 @@ echo "Log command 1..."
 # NOTE: In zsh, PWD is a special shell-managed variable and cannot be overridden
 # with `export PWD=...`. Use _TEST_CWD for a consistent directory across log+query.
 _TEST_CWD=$(mktemp -d)
+cd "$_TEST_CWD" || exit 1
 
 # Mock pre-exec
 _TERMIM_PREEXEC_DIR="$_TEST_CWD"
-TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" log "echo zsh_world" --cwd "$_TERMIM_PREEXEC_DIR" --pre-exec >> "$_TERMIM_LOG" 2>&1
+TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" log "echo zsh_world" --pre-exec >> "$_TERMIM_LOG" 2>&1
 _TERMIM_LOG_STATUS=$?
 
 # Mock post-exec
 _TERMIM_ORIGINAL_INPUT="echo zsh_world"
-TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" log "$_TERMIM_ORIGINAL_INPUT" --prev "none" --exit 0 --cwd "$_TEST_CWD" --post-exec >> "$_TERMIM_LOG" 2>&1
+TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" log "$_TERMIM_ORIGINAL_INPUT" --prev "none" --exit 0 --post-exec >> "$_TERMIM_LOG" 2>&1
 _TERMIM_LOG_STATUS=$((_TERMIM_LOG_STATUS | $?))
 
 echo "Test UP Arrow..."
@@ -51,7 +52,7 @@ echo "Test UP Arrow..."
 _TERMIM_TMP=$(mktemp)
 BUFFER=""
 for _TERMIM_ATTEMPT in {1..20}; do
-    TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" query --history-only --cwd "$_TEST_CWD" > "$_TERMIM_TMP" 2>>"$_TERMIM_LOG"
+    TERMIM_HOME="$_TERMIM_HOME" "$_TERMIM_BIN" query --history-only > "$_TERMIM_TMP" 2>>"$_TERMIM_LOG"
     BUFFER=$(head -n 1 "$_TERMIM_TMP")
     [[ "$BUFFER" == "echo zsh_world" ]] && break
     sleep 0.1
