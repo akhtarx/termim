@@ -44,12 +44,15 @@ _TERMIM_ORIGINAL_INPUT="echo zsh_world"
 echo "Test UP Arrow..."
 
 # Write query output to a temp file and read the first line from it.
-# This avoids all process-substitution scoping and array-split edge cases in
-# non-interactive zsh (while-read loops and (@f) both silently fail here).
+# Retry briefly because shell hooks may still be flushing asynchronous writes.
 _TERMIM_TMP=$(mktemp)
-"$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" > "$_TERMIM_TMP" 2>/dev/null
 BUFFER=""
-IFS= read -r BUFFER < "$_TERMIM_TMP"
+for _TERMIM_ATTEMPT in {1..20}; do
+    "$_TERMIM_BIN" query --history-only --prev "" --cwd "$_TEST_CWD" > "$_TERMIM_TMP" 2>/dev/null
+    BUFFER=$(head -n 1 "$_TERMIM_TMP")
+    [[ "$BUFFER" == "echo zsh_world" ]] && break
+    sleep 0.1
+done
 rm -f "$_TERMIM_TMP"
 
 if [[ "$BUFFER" != "echo zsh_world" ]]; then
