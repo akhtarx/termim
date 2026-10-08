@@ -94,7 +94,7 @@ _termim_log() {
 
 # Log path already initialized above (before DEBUG trap)
 
-# Add logging hook to PROMPT_COMMAND (Hardened v1.2.6)
+# Add logging hook to PROMPT_COMMAND (Hardened v1.2.7)
 if [[ "$PROMPT_COMMAND" != *"_termim_log"* ]]; then
     if [[ -z "$PROMPT_COMMAND" ]]; then
         PROMPT_COMMAND="_termim_log"
@@ -112,7 +112,7 @@ _termim_up() {
         local prev_cmd
         prev_cmd=$(fc -ln -1 2>/dev/null | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-        # Termim: Directory-aware terminal history and command intelligence v1.2.6
+        # Termim: Directory-aware terminal history and command intelligence v1.2.7
         _TERMIM_CACHE=()
         while IFS= read -r line || [[ -n "$line" ]]; do
             [[ -n "$line" ]] && _TERMIM_CACHE+=("$line")

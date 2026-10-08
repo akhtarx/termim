@@ -4,7 +4,7 @@ use crate::core::history::{
     append_to_file_locked, prune_log, read_file_locked, read_file_tail, sanitize_command,
 };
 use crate::core::intelligence::analyze_project;
-use crate::core::project::{hash_project_path, normalize_path_str};
+use crate::core::project::hash_project_path;
 use crate::core::risk::{assess_risk, RiskLevel};
 use crate::utils::constants::{
     MAX_FILE_SIZE_BYTES, MAX_GLOBAL_STATS_LINES, MAX_HISTORY_LINES, MAX_TRANSITION_LINES,
@@ -199,8 +199,10 @@ pub fn handle_command(
                 }
             }
 
-            // 3. Global History Fallback — cross-project recovery
-            if !suggest_only {
+            // Global history is intentionally excluded from --history-only.
+            // Shell integrations use this mode for the local cache before
+            // handing control back to the shell's native global history.
+            if !suggest_only && !history_only {
                 let global_path = dirs::home_dir()
                     .unwrap_or_default()
                     .join(".termim")
@@ -364,7 +366,11 @@ pub fn handle_command(
                 println!("Top 10 Most Used Commands:");
 
                 for (cmd, count) in ranked.iter().take(10) {
-                    let pct = (*count as f64 / total as f64) * 100.0;
+                    let pct = if total == 0 {
+                        0.0
+                    } else {
+                        (*count as f64 / total as f64) * 100.0
+                    };
                     let bar_len = (pct / 5.0) as usize;
                     let bar = "■".repeat(bar_len);
                     println!("{:>5.1}% | {:<10} | {}", pct, bar, cmd);
@@ -376,7 +382,7 @@ pub fn handle_command(
         }
 
         Commands::Doctor => {
-            println!("=== Termim Diagnostic Check (v1.2.6) ===\n");
+            println!("=== Termim Diagnostic Check (v1.2.7) ===\n");
             println!("Mode: Pure CLI (Zero-Daemon / Zero-DB)");
             println!("Version: {}", env!("CARGO_PKG_VERSION"));
 
@@ -507,28 +513,10 @@ pub fn handle_command(
         }
 
         Commands::Init => {
-            let mut registry = dirs::home_dir().unwrap_or_default();
-            registry.push(".termim/registry.txt");
-            let _ = std::fs::create_dir_all(registry.parent().unwrap());
-            if let Ok(content) = read_file_locked(&registry) {
-                let current_dir_norm = normalize_path_str(&current_dir.to_string_lossy());
-                if content
-                    .lines()
-                    .any(|l| normalize_path_str(l) == current_dir_norm)
-                {
-                    println!("Directory already registered locally.");
-                    return Ok(());
-                }
-            }
-
-            if let Err(e) = append_to_file_locked(&registry, &current_dir.to_string_lossy()) {
-                eprintln!("Error: Failed to update project registry: {}", e);
-            } else {
-                println!(
-                    "Initialized Termim directory boundary in {}",
-                    current_dir.display()
-                );
-            }
+            println!(
+                "Termim already tracks each working directory independently: {}",
+                current_dir.display()
+            );
         }
 
         Commands::Update => {
@@ -798,7 +786,7 @@ pub fn show_banner(root: &std::path::Path) {
     | |  __/ |  | | | | | | | | | | | |
     |_|\___|_|  |_| |_| |_|_|_| |_| |_|
 
-  Project-aware terminal history + intelligence v1.2.6
+  Project-aware terminal history + intelligence v1.2.7
   ----------------------------------------------------
   GitHub: https://github.com/akhtarx/termim
   {}If you find Termim useful, please star the repo!

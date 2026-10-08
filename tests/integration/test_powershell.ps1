@@ -9,6 +9,11 @@ $env:HOME = $tempHome
 
 $binPath = if ($env:TERMIM_BIN) { $env:TERMIM_BIN } else { "termim" }
 $hookPath = Resolve-Path "shell\powershell.ps1"
+$hookContent = Get-Content $hookPath -Raw
+if ($hookContent -match "--branch") {
+    Write-Host "FAIL: PowerShell hook passes unsupported --branch argument"
+    exit 1
+}
 Set-Location $tempHome
 
 # Load module
@@ -32,6 +37,16 @@ $Global:TermimCache = @(& $Global:TermimBin query --history-only --prev "none" -
 
 if ($Global:TermimCache.Count -eq 0 -or $Global:TermimCache[0] -ne "Write-Host hello_world") {
     Write-Host "FAIL: Expected cache[0] to be 'Write-Host hello_world', got '$($Global:TermimCache[0])'"
+    exit 1
+}
+
+Write-Host "Test local-only history..."
+$otherDir = Join-Path $tempHome "other"
+New-Item -ItemType Directory -Path $otherDir -Force | Out-Null
+& $Global:TermimBin log "other-directory-command" --cwd $otherDir --pre-exec
+$localOnly = @(& $Global:TermimBin query --history-only --cwd $Global:TermimPreExecDir 2>$null)
+if ($localOnly -contains "other-directory-command") {
+    Write-Host "FAIL: --history-only returned global history"
     exit 1
 }
 

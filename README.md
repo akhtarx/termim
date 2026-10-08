@@ -30,7 +30,7 @@
 curl -fsSL https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.sh | bash
 ```
 
-**Windows (PowerShell):**
+**Windows (PowerShell 7+):**
 ```powershell
 iex (iwr -useb https://raw.githubusercontent.com/akhtarx/termim/main/installer/install.ps1)
 ```
@@ -99,12 +99,8 @@ Termim automatically prunes the "junk" so your history stays pristine.
 
 ## 🏁 Quick Start
 1. **Install** via the one-liner above.
-2. **Initialize** a directory to start tracking it:
-   ```bash
-   termim init
-   ```
-3. **Use your terminal** as usual. Termim works silently in the background.
-4. **Recall** commands with **Up Arrow** or open the **Fuzzy Palette** with **Ctrl + P**.
+2. **Use your terminal** as usual. Termim works silently in the background.
+3. **Recall** commands with **Up Arrow** or open the **Fuzzy Palette** with **Ctrl + P**.
 
 ---
 
@@ -153,9 +149,9 @@ Termim is more than just a history filter; it's a context engine.
 While Termim handles history automatically, the CLI provides powerful tools for manual management and diagnostics.
 
 ### `termim init`
-Explicitly mark a directory as a "Boundary".
+Confirm that the current directory is tracked independently. Initialization is automatic; parent and child directories are never associated.
 ```bash
-# Register current folder as a project context
+# Verify the current directory context
 termim init
 ```
 
@@ -225,6 +221,7 @@ Termim provides a 1:1 symmetrical experience across all major shells. Because sh
 | Shell | Platform | Context Isolation | Fuzzy Palette (`Ctrl+P`) | Contextual Suggestions | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **PowerShell 7+** | Windows | ✅ | ✅ | ✅ | **Beta** |
+| **Windows CMD** | Windows | ❌ | ❌ | ❌ | **Not supported** |
 | **Bash 5.x** | Linux / macOS / WSL | ✅ | ✅ | ✅ | **Beta** |
 | **Zsh** | macOS / Linux | ✅ | ✅ | ✅ | **Beta** |
 | **Fish** | Linux / macOS | ✅ | ✅ | ✅ | **Beta** |
@@ -232,6 +229,9 @@ Termim provides a 1:1 symmetrical experience across all major shells. Because sh
 > [!WARNING]
 > **Compatibility Testing Ongoing**
 > Modifying shell lifecycles is a minefield. While Termim generally works out-of-the-box, edge cases may arise in environments with heavy shell customizations (e.g., highly customized Oh My Zsh configs, older Bash 4.x environments, nested shells, or non-interactive SSH sessions). If you encounter prompt lagging or history hijacking, please [open an issue](https://github.com/akhtarx/termim/issues).
+
+> [!NOTE]
+> Windows Command Prompt (`cmd.exe`) is not currently supported because it has no equivalent built-in hook for Termim's automatic command logging and interactive key handlers. Use PowerShell 7+ or a supported Unix-like shell such as Git Bash.
 
 ### 🛡️ Cross-Platform Testing
 To ensure the highest reliability possible, Termim's shell hooks are backed by a **cross-platform integration test suite**. On every commit, our CI matrix (Ubuntu, macOS, Windows) spawns real instances of Bash, Zsh, Fish, and PowerShell. The tests emulate command executions and lifecycle hooks via the shell's native APIs, ensuring the history bindings and buffer manipulations work safely across all supported platforms.

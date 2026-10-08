@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "termim",
-    version = "1.2.6",
+    version = "1.2.7",
     about = "Directory & Context-aware terminal history and command intelligence"
 )]
 pub struct Cli {
@@ -75,7 +75,7 @@ pub enum Commands {
     },
     /// Perform a diagnostic health check of the Termim installation and shell plugins.
     Doctor,
-    /// Manually register a directory as a Termim project (Zero-Pollution via Global Registry).
+    /// Confirm the current directory's independent Termim history context.
     Init,
     /// Check for the latest version of Termim from GitHub.
     Update,

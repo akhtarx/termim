@@ -1,6 +1,6 @@
 [package]
 name = "termim"
-version = "1.2.6"
+version = "1.2.7"
 edition = "2021"
 authors = ["Md Mim Akhtar <mim@akhtarx.com>"]
 description = "Directory & Context-aware terminal history and command intelligence"
@@ -34,4 +34,3 @@ update-check = ["dep:ureq"]
 [[bin]]
 name = "termim"
 path = "src/main.rs"
-

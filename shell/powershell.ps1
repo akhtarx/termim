@@ -1,5 +1,5 @@
 # Termim PowerShell Integration
-# Version 1.2.6
+# Version 1.2.7
 # Source from $PROFILE: . "$HOME\.termim\shell\powershell.ps1"
 
 # [v1.1.1] Universal Home Discovery: Find the physical .termim home on any platform
@@ -22,7 +22,7 @@ if (-not (Test-Path $Global:TermimHome)) {
 }
 
 # Find the termim binary
-$Global:TermimBin = ""
+$Global:TermimBin = if ($env:TERMIM_BIN) { $env:TERMIM_BIN } else { "termim" }
 $possiblePaths = @(
     "$Global:TermimHome\bin\termim.exe", 
     "$Global:TermimHome\bin\termim",
@@ -30,11 +30,18 @@ $possiblePaths = @(
 )
 
 foreach ($p in $possiblePaths) {
-    if (Test-Path $p) {
+    if ($Global:TermimBin -eq "termim" -and (Test-Path $p)) {
         $Global:TermimBin = $p
         $binDir = [System.IO.Path]::GetDirectoryName($p)
         if ($env:PATH -notlike "*$binDir*") { $env:PATH = "$binDir;$env:PATH" }
         break
+    }
+
+    if ($Global:TermimBin -eq "termim") {
+        $resolvedTermim = Get-Command termim -ErrorAction SilentlyContinue
+        if ($resolvedTermim) {
+            $Global:TermimBin = $resolvedTermim.Source
+        }
     }
 }
 
@@ -78,7 +85,7 @@ function Global:Invoke-TermimLogAsync {
         
         $preFlag = if ($preExec) { "--pre-exec" } else { "" }
         $postFlag = if ($postExec) { "--post-exec" } else { "" }
-        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' --branch '$($branch.Replace("'", "''"))' $preFlag $postFlag 2>>`"$Global:TermimHome\termim.log`"")
+        $sb = [scriptblock]::Create("& '$Global:TermimBin' log '$($command.Replace("'", "''"))' --prev '$($prev.Replace("'", "''"))' --exit $exitCode --cwd '$($cwd.Replace("'", "''"))' $preFlag $postFlag 2>>`"$Global:TermimHome\termim.log`"")
         
         # Clean up completed loggers
         $Global:TermimLoggers = $Global:TermimLoggers | Where-Object { 
@@ -96,7 +103,8 @@ function Global:Invoke-TermimLogAsync {
         $ps.BeginInvoke() | Out-Null
         $Global:TermimLoggers += $ps
     } catch {
-        # Silent failure for background logging
+        "[termim] PowerShell logging error: $($_.Exception.Message)" |
+            Add-Content -Path "$Global:TermimHome\termim.log"
     }
 }
 

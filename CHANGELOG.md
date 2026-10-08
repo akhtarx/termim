@@ -4,6 +4,14 @@ All notable changes to the **Termim** project will be documented in this file.
 
 ---
 
+## [1.2.7] - 2026-10-08
+### 🐛 Bug Fixes
+- Fixed PowerShell logging by removing the unsupported `--branch` argument.
+- Restored strict per-directory history isolation without parent/child directory association.
+- Corrected `--history-only` so it excludes global history.
+- Added regression coverage for PowerShell integration and local-only history queries.
+- Documented that regular Windows CMD is not supported.
+
 ## [1.2.6] - 2026-09-15
 ### 🚑 Hotfixes
 - **Installer Crash**: Fixed a typo in the installer script where `$homeDir` was used instead of the correct variable, causing the install script to crash during directory creation.
